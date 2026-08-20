@@ -184,16 +184,20 @@ input{font:inherit;color:inherit}
 .wpRow{height:44px}
 .wpHint{min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .wpSummon{
-  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
-  padding:11px 14px;border-radius:12px;
-  background:linear-gradient(180deg,#F7D45B,#E0A81A);color:#3D2B02;
-  border:1px solid rgba(122,90,8,.45);
+  display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+  padding:14px 16px;border-radius:15px;border:0;
+  background:linear-gradient(180deg,#FFDE7A,#F5B301 46%,#DC9A05);color:#3D2B02;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(120,84,6,.28),
+             0 3.5px 0 #A9760A,0 6px 14px rgba(180,120,0,.3);
+  font-size:14px;letter-spacing:.05em;
   font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:12px;
   letter-spacing:.06em;text-transform:uppercase;
 }
 .wpSummon small{font-weight:600;font-size:11px;opacity:.8;letter-spacing:.02em;text-transform:none}
-.wpSummon.no{background:var(--surface);color:var(--ink-3);border-color:var(--edge)}
-.wpSummon:active{transform:scale(.985)}
+.wpSummon.no{background:linear-gradient(180deg,#F4F7FA,#E6ECF3);color:var(--ink-3);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),0 3px 0 #CBD5E1,0 5px 11px rgba(16,22,37,.14)}
+.wpSummon:active{transform:translateY(3.5px);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 0 0 #A9760A,0 2px 6px rgba(180,120,0,.3)}
 .wpHint{font-size:10.5px;color:var(--ink-3);line-height:1.5;text-align:center;padding:2px 6px 1px}
 .wpHint b{color:var(--ink-2);font-weight:600}
 .wpEmpty{font-size:11px;color:var(--ink-3);text-align:center;line-height:1.6}
@@ -239,7 +243,23 @@ input{font:inherit;color:inherit}
 /* the magnitude is not part of the number — set it down a step */
 .cur .n .u{font-size:.56em;font-weight:700;letter-spacing:.03em;opacity:.48;
   margin-left:.13em;font-variant-numeric:normal}
-#sporeWrap .n{font-size:17px;letter-spacing:-.02em}
+/* the gems chip: pressable, and it says where it goes */
+.gemBtn{
+  border:0;padding:4px 5px 4px 4px;border-radius:999px;
+  background:linear-gradient(180deg,#9B6BFF,#7C3AED);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 2.5px 0 #5B23BE,0 4px 10px rgba(16,22,37,.22);
+  display:flex;align-items:center;gap:6px;
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.gemBtn:active{transform:translateY(2.5px);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 0 0 #5B23BE,0 2px 5px rgba(16,22,37,.22)}
+.gemBtn .pip.spore{background:transparent;width:20px;height:20px}
+.gemBtn .pip.spore svg{fill:#fff;width:15px;height:15px}
+#sporeWrap .n{font-size:16px;letter-spacing:-.01em;color:#fff}
+.gemBtn .plus{
+  width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.24);color:#fff;
+  display:grid;place-items:center;font-size:13px;line-height:1;font-weight:700;flex:none;
+}
 .pip svg{width:13px;height:13px;display:block;fill:#fff}
 #sporeWrap .pip svg{width:12px;height:12px}
 
@@ -1039,7 +1059,7 @@ input{font:inherit;color:inherit}
 
   <div id="top">
     <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
-    <div class="cur" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg></span><span class="n mono-n" id="sporeN">0</span></div>
+    <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2 21.8 12 12 21.8 2.2 12z"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
 
   <div id="banner"></div>
@@ -1228,18 +1248,14 @@ const UP={
   reach:  {tab:"touch",g:"◜",nm:"Size", base:10, gr:1.16, max:60,
            d:"How wide your swipe cuts.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
-  cascade:{tab:"touch",g:"⁘",nm:"Double",base:90,gr:1.24, max:50,
+  cascade:{tab:"touch",g:"✳",nm:"Multiply",base:90,gr:1.24, max:50,
            d:"Chance a split splits its halves again, all the way down.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
-  rupture:{tab:"touch",g:"✷",nm:"Instant",base:60,gr:1.21, max:45,
-           d:"Chance a tap pops a whole ball at once, whatever its size.",
-           v:l=>Math.min(.4,l*.009), fmt:l=>(Math.min(40,l*.9)).toFixed(1)+"%"},
-
   cap:    {tab:"arena",g:"⬢",nm:"Space",base:46,gr:1.20,max:46,
            d:"How many balls the dish will hold.",
            v:l=>16+l*3, fmt:l=>(16+l*3)+" max"},
-  purity: {tab:"arena",g:"✦",nm:"Lucky",base:130,gr:1.24, max:40,
-           d:"Chance a new ball is a lucky one, worth twenty-five times as much.",
+  purity: {tab:"arena",g:"✦",nm:"Income",base:130,gr:1.24, max:40,
+           d:"Chance a new ball pays out twenty-five times over.",
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
@@ -1264,21 +1280,18 @@ const UP={
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
            d:"Balls drift toward your finger while you hold it down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
-  reson:  {tab:"field",g:"≋",nm:"Streak",base:150,gr:1.22,max:50,
-           d:"How long your streak survives between breaks.",
-           v:l=>l, fmt:l=>(1.05+l*0.02).toFixed(2)+"s"},
 };
 const UPK=Object.keys(UP);
 
 const POWERS=[
-  {id:"scatter",g:"✳",nm:"Scatter",cd:12, dur:0, cost:0,  d:"Hits every ball in the dish at once."},
-  {id:"crush",  g:"⬤",nm:"Crush",  cd:55, dur:0, cost:4,  d:"Bursts the four largest balls completely."},
-  {id:"chain",  g:"⌁",nm:"Chain",  cd:80, dur:10,cost:9,  d:"For ten seconds every split jumps to two neighbours."},
-  {id:"storm",  g:"❋",nm:"Storm",  cd:110,dur:9, cost:16, d:"For nine seconds the dish tears itself apart."},
+  {id:"scatter",g:"✳",nm:"Scatter",cd:120,dur:0, cost:0,  d:"Hits every ball in the dish at once. Free, every two minutes."},
+  {id:"crush",  g:"⬤",nm:"Crush",  cd:55, dur:0, cost:4,  d:"Bursts the four largest balls completely.", ad:1},
+  {id:"chain",  g:"⌁",nm:"Chain",  cd:80, dur:10,cost:9,  d:"For ten seconds every split jumps to two neighbours.", ad:1},
+  {id:"storm",  g:"❋",nm:"Storm",  cd:110,dur:9, cost:16, d:"For nine seconds the dish tears itself apart.", ad:1},
 ];
 const BOOSTS=[
-  {id:"rain",g:"❉",nm:"Rain",cd:20, d:"Empties the hopper into the dish at once."},
-  {id:"lucky",g:"✦",nm:"Lucky",cd:25, d:"Drops a lucky ball, worth twenty-five times as much."},
+  {id:"rain",g:"❉",nm:"Rain",cd:45, cost:6, d:"Empties the hopper into the dish at once."},
+  {id:"lucky",g:"✦",nm:"Gold Ball",cd:60, cost:10, d:"Drops a gold ball, worth twenty-five times as much."},
 ];
 
 const OBJPOOL=[
@@ -1449,6 +1462,7 @@ const AR={x0:0,y0:0,x1:0,y1:0};
 
 
 function resize(){
+  obsChanged();
   const r=roomArena.getBoundingClientRect();
   W=Math.round(r.width); H=Math.round(r.height);
   DPR=Math.min(devicePixelRatio||1,2);
@@ -1784,7 +1798,7 @@ function dropKind(){
   return "plain";
 }
 function bumpCombo(){
-  combo++; comboT=1.05+val("reson")*0.02;
+  combo++; comboT=1.55;   // Streak used to stretch this
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
   objProg("combo",0,combo);
   const c=document.getElementById("combo"), m=totalMul(), cap=2*(x2On()?2:1);
@@ -1896,7 +1910,6 @@ function strike(b,dmg,src,forced){
   b.sq=.30; b.wob=.16; b.hit=1;
 
   if(b.kind==="unstable"){ detonate(b,0); return; }
-  if(Math.random()<val("rupture")){ burstWhole(b); return; }
 
   b.hp-=(dmg===undefined?val("force"):dmg);
   if(b.hp>0){
@@ -2126,9 +2139,14 @@ function firePower(p){
   thud(70,{vol:.2,len:.3});
   haptic(30);
 }
+function boState(bo){ return G.boost[bo.id]||(G.boost[bo.id]={cd:0,owned:!bo.cost}); }
 function fireBoost(bo){
-  const s=G.boost[bo.id]||(G.boost[bo.id]={cd:0});
-  G.boost[bo.id]=s;
+  const s=boState(bo);
+  if(bo.cost && !s.owned){
+    if(G.spore>=bo.cost){ G.spore-=bo.cost; s.owned=true; toast(bo.nm+" unlocked"); save(); syncTop(); syncRails(); }
+    else toast("Needs "+bo.cost+" gems");
+    return;
+  }
   if(s.cd>0){ toast(bo.nm+" recharging — "+Math.ceil(s.cd)+"s"); return; }
   s.cd=bo.cd;
   if(bo.id==="rain"){
@@ -2152,7 +2170,7 @@ function fireBoost(bo){
 /* ---------------------------------------------------------------- objectives */
 function rollObjectives(){
   const tier=Math.min(4,Math.floor(G.objDone/6));
-  G.obj=OBJPOOL.slice().sort(()=>Math.random()-.5).slice(0,3)
+  G.obj=OBJPOOL.slice().sort(()=>Math.random()-.5).slice(0,4)
     .map(o=>({k:o.k,goal:o.goals[tier],prog:0,sp:o.sp+tier,done:false}));
 }
 function objProg(k,amt,abs){
@@ -2325,6 +2343,7 @@ function buildWizGrid(){
     wgridEl.appendChild(c);
   }
   layoutWizards();
+  obsChanged();
 }
 function layoutWizards(){
   if(!wgridEl||!wgridEl.children.length||camBusy>0) return;
@@ -3009,7 +3028,7 @@ function drawBH(x){
 let camBusy=0;
 function goRoom(to){
   if(room===to) return;
-  room=to; camBusy=1;
+  room=to; camBusy=1; obsChanged();
   setTimeout(()=>{ camBusy=0; world.classList.remove("moving");
     if(to==="wiz"){ layoutWizards(); syncWizGrid(); } },440);
   world.classList.add("slide"); world.classList.add("moving");
@@ -3030,8 +3049,52 @@ function goRoom(to){
 function areaSum(){ let a=0; for(const b of balls) a+=b.r*b.r*Math.PI; return a; }
 function arenaArea(){ return W*Math.max(1,AR.y1-AR.y0); }
 
+/* ---- the chrome is solid ------------------------------------------------
+   Balls used to drift in behind the rails and sit there, out of reach and out
+   of sight. Every button on top of the dish is measured once into arena
+   coordinates and treated as something to bounce off. Measured on layout, not
+   per frame — reading a rect per ball per frame is what would actually cost. */
+let OBS=[], obsDirty=true;
+function obsChanged(){ obsDirty=true; }
+function measureObstacles(){
+  obsDirty=false;
+  OBS.length=0;
+  const a=roomArena.getBoundingClientRect();
+  if(!a.width) return;
+  for(const e2 of document.querySelectorAll("#railL .orb,#railR .pw,#railR .prof,#goUp,#dockHandle")){
+    const r=e2.getBoundingClientRect();
+    if(!r.width||!r.height) continue;
+    OBS.push({x:r.left-a.left, y:r.top-a.top, w:r.width, h:r.height});
+  }
+}
+function bounceChrome(b){
+  for(let i=0;i<OBS.length;i++){
+    const o=OBS[i];
+    // cheap reject before the maths
+    if(b.x+b.r<o.x||b.x-b.r>o.x+o.w||b.y+b.r<o.y||b.y-b.r>o.y+o.h) continue;
+    const cx=clamp(b.x,o.x,o.x+o.w), cy=clamp(b.y,o.y,o.y+o.h);
+    const dx=b.x-cx, dy=b.y-cy, d=Math.hypot(dx,dy);
+    if(d>b.r) continue;
+    if(d<0.001){
+      // centre already inside: leave by the nearest edge
+      const L=b.x-o.x, R=o.x+o.w-b.x, T=b.y-o.y, B=o.y+o.h-b.y;
+      const m=Math.min(L,R,T,B);
+      if(m===L){ b.x=o.x-b.r; b.vx=-Math.abs(b.vx)*.9; }
+      else if(m===R){ b.x=o.x+o.w+b.r; b.vx=Math.abs(b.vx)*.9; }
+      else if(m===T){ b.y=o.y-b.r; b.vy=-Math.abs(b.vy)*.9; }
+      else { b.y=o.y+o.h+b.r; b.vy=Math.abs(b.vy)*.9; }
+    } else {
+      const nx=dx/d, ny=dy/d;
+      b.x=cx+nx*b.r; b.y=cy+ny*b.r;
+      const vn=b.vx*nx+b.vy*ny;
+      if(vn<0){ b.vx-=2*vn*nx*.9; b.vy-=2*vn*ny*.9; }
+    }
+    b.wob=Math.max(b.wob,.12);
+  }
+}
 function step(dt){
   el+=dt; G.stat.play+=dt;
+  if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
 
   for(const p of POWERS){ const s=pwState(p); if(s.cd>0) s.cd=Math.max(0,s.cd-dt); }
@@ -3072,6 +3135,7 @@ function step(dt){
     if(b.x<b.r){ b.x=b.r; b.vx=Math.abs(b.vx)*.92; b.wob=Math.max(b.wob,.1); }
     if(b.x>W-b.r){ b.x=W-b.r; b.vx=-Math.abs(b.vx)*.92; b.wob=Math.max(b.wob,.1); }
     if(b.y<AR.y0+b.r){ b.y=AR.y0+b.r; b.vy=Math.abs(b.vy)*.92; b.wob=Math.max(b.wob,.1); }
+    bounceChrome(b);
     if(b.y>AR.y1-b.r){
       // a rising floor should nudge, not fling — only bounce a ball that was
       // actually travelling into it
@@ -3872,6 +3936,7 @@ function buildRails(){
                  '<span class="pill"></span>';
     b.onclick=it.fn; L.appendChild(b);
   }
+  obsChanged();
   const R=$("railR"); R.innerHTML="";
   const pr=document.createElement("div");
   pr.className="prof"; pr.id="profCard";
@@ -3887,14 +3952,13 @@ function buildRails(){
     b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d);};
     R.appendChild(b);
   };
-  // the three you always have, on short cooldowns
+  // Scatter is the one everybody has; everything else is earned
   add(POWERS[0],false);
-  for(const bo of BOOSTS) add(bo,true);
-  // then anything bought from the shop, below a rule so the split is legible
-  const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned);
+  const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned)
+    .concat(BOOSTS.filter(b2=>boState(b2).owned));
   if(bought.length){
     const sep=document.createElement("i"); sep.className="railSep"; R.appendChild(sep);
-    for(const p of bought) add(p,false);
+    for(const p of bought) add(p,!("cost" in p && p.dur!==undefined) && !POWERS.includes(p));
   }
 }
 /* The shop badge alternates between the two rarities actually on the shelf,
@@ -4683,6 +4747,15 @@ function fmtClock(ms){
 }
 function sheetMissions(){
   if(!G.obj) rollObjectives();
+  // a save rolled before the count changed comes up short; top it up
+  while(G.obj.length<4){
+    const tier=Math.min(4,Math.floor(G.objDone/6));
+    const used=G.obj.map(x=>x.k);
+    const pool=OBJPOOL.filter(p=>!used.includes(p.k));
+    if(!pool.length) break;
+    const p=pool[(Math.random()*pool.length)|0];
+    G.obj.push({k:p.k,goal:p.goals[tier],prog:0,sp:p.sp+tier,done:false,claimed:false});
+  }
   if(!G.objT) G.objT=Date.now();
   if(missionsLeft()<=0) rollDaily();
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#F97316">'+ICONS.target+'</svg>',
@@ -4698,18 +4771,6 @@ function sheetMissions(){
     const ordered=[...G.obj].sort((a,c)=>(a.claimed?1:0)-(c.claimed?1:0));
     for(const o of ordered) b.appendChild(msCard(o));
 
-    const all=document.createElement("div");
-    all.className="msAll";
-    all.innerHTML='<span class="ic" style="width:26px;height:26px;border-radius:50%;'+
-      'display:grid;place-items:center;background:var(--surface);flex:none">\u2691</span>'+
-      '<span class="l"><span class="t">Clear all three</span>'+
-      '<span class="s">A bonus for finishing the set</span></span>'+
-      '<span class="status" style="font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;'+
-      'color:var(--ink-3)">'+done+"/"+G.obj.length+' complete</span>';
-    b.appendChild(all);
-
-    b.appendChild(lbl("Career"));
-    achRows(b);
   });
 }
 
@@ -5026,7 +5087,7 @@ function slingshot(){
   let tracking=false;
   h.onclick=()=>{
     G.opt.dockMin=!G.opt.dockMin;
-    apply(); save(); tick(G.opt.dockMin?420:560,.07);
+    apply(); save(); obsChanged(); tick(G.opt.dockMin?420:560,.07);
     slingshot();
     // Only the dish floor moves. resize() would reallocate and clear every
     // canvas on each frame, which is what made this stutter and made the
@@ -5107,6 +5168,7 @@ $("tutSkip").onclick=tutEnd;
 $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
+$("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
 $("begin").onclick=begin;
 document.addEventListener("visibilitychange",()=>{ if(document.hidden){ save(); last=0; } });
 addEventListener("pagehide",save);
