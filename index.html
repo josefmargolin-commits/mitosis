@@ -227,9 +227,9 @@ input{font:inherit;color:inherit}
 .pip{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}
 /* the money reads as money: a banknote on pale green, the amount in deep
    green and set much larger than anything else on the bar */
-.pip.bio{background:#D9F5E1;border-radius:9px;width:30px;height:24px}
-.pip.bio svg{fill:#177A3C;width:19px;height:19px}
-#bioWrap .n{color:#14532D;font-size:31px;letter-spacing:-.038em}
+.pip.bio{background:#DCFCE7;border-radius:9px;width:32px;height:25px}
+.pip.bio svg{fill:#16A34A;width:20px;height:20px}
+#bioWrap .n{color:#16A34A;font-size:32px;letter-spacing:-.04em}
 #bioWrap .n .u{opacity:.62;font-size:.5em}
 .pip.spore{background:linear-gradient(140deg,var(--blue),var(--purple))}
 .cur .n{font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:23px;line-height:1;
@@ -954,6 +954,34 @@ input{font:inherit;color:inherit}
 .dchip{position:relative}
 .dchip .tk{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
   font-size:8px;color:#16A34A;line-height:1}
+/* the card the reference draws: level in the corner, the name in caps, the
+   price carrying the card, and an ad offered when you cannot afford it */
+.card .ad{display:none;font-size:9.5px;font-weight:700;color:#16A34A;
+  align-items:center;gap:3px;margin-top:1px}
+.card.canAd .ad{display:flex}
+.card.canAd{border-color:rgba(34,197,94,.5);background:#F6FDF8}
+.card .alt{display:none;font-size:8.5px;color:var(--yellow);margin-top:1px}
+.card.canAd .alt{display:block}
+.card.locked{border-style:dashed;background:transparent;opacity:.55}
+.card.locked .ct{color:var(--ink-3);font-size:9px;font-weight:500}
+
+/* the profile card at the head of the power rail */
+.prof{width:58px;border-radius:13px;background:var(--panel);border:1px solid var(--edge);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 5px 11px rgba(16,22,37,.18);
+  padding:7px 6px 8px;text-align:center;flex:none}
+.prof .hi{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.prof .lv{font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:14px;line-height:1.05;margin-top:1px}
+.prof .rk{font-size:6.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:1px}
+.prof .bar{height:4px;border-radius:99px;background:#E4E9F1;overflow:hidden;margin-top:5px}
+.prof .bar i{display:block;height:100%;border-radius:99px;background:#2F6BFF;transition:width .3s}
+
+/* a power you can watch an ad to fire early */
+.pw .adb{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;
+  background:linear-gradient(180deg,#A78BFA,#7C3AED);color:#fff;display:none;
+  align-items:center;justify-content:center;font-size:9px;
+  box-shadow:0 2px 5px rgba(16,22,37,.3)}
+.pw.adReady .adb{display:flex}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1090,12 +1118,12 @@ const fuseTime=(tier)=>{
    slot the old ball classes occupied. Rank r spawns ball tier 5-r, so tier 6
    (the rung that cashes out) and tier 0 (the top) are always earned by hand. */
 const WRANK=[
-  {nm:"Apprentice", tier:7, taps:1, mass:16,   size:1.00, delay:1.7, upBase:90},
-  {nm:"Adept",      tier:6, taps:1, mass:58,   size:1.05, delay:2.4, upBase:630},
-  {nm:"Magus",      tier:5, taps:2, mass:208,  size:1.10, delay:3.2, upBase:4410},
-  {nm:"Archon",     tier:4, taps:3, mass:750,  size:1.15, delay:4.3, upBase:30870},
-  {nm:"Sovereign",  tier:3, taps:4, mass:2700, size:1.20, delay:5.7, upBase:216090},
-  {nm:"Ascendant",  tier:2, taps:6, mass:9700, size:1.25, delay:7.6, upBase:1512630},
+  {nm:"Apprentice", tier:7, taps:1, mass:2,    size:1.00, delay:1.7, upBase:60},
+  {nm:"Adept",      tier:6, taps:1, mass:9,    size:1.05, delay:2.4, upBase:520},
+  {nm:"Magus",      tier:5, taps:2, mass:44,   size:1.10, delay:3.2, upBase:4200},
+  {nm:"Archon",     tier:4, taps:3, mass:230,  size:1.15, delay:4.3, upBase:34000},
+  {nm:"Sovereign",  tier:3, taps:4, mass:1250, size:1.20, delay:5.7, upBase:290000},
+  {nm:"Ascendant",  tier:2, taps:6, mass:7000, size:1.25, delay:7.6, upBase:2600000},
 ];
 WRANK.forEach((w,i)=>w.i=i);
 const SLOTS=16, WCOLS=4, TOPRANK=WRANK.length-1;
@@ -1165,19 +1193,19 @@ const SCALES=[
   {n:"Atomic",    ball:"a proton",       mult:1,      spd:1.00,
    form:{lobes:4, rough:.000, oval:1.00, paint:"core"},
    bg:["#FFFFFF","#F1F5FE"], stars:0,   neb:false, dark:false},
-  {n:"Cellular",  ball:"a living cell",  mult:8,      spd:1.14,
+  {n:"Cellular",  ball:"a living cell",  mult:34,     spd:1.14,
    form:{lobes:3, rough:.055, oval:1.22, paint:"nucleus"},
    bg:["#FFFCFB","#F5E8EE"], stars:0,   neb:false, dark:false},
-  {n:"Planetary", ball:"a moon",         mult:70,     spd:1.30,
+  {n:"Planetary", ball:"a moon",         mult:1600,   spd:1.30,
    form:{lobes:2, rough:.008, oval:1.02, paint:"planet"},
    bg:["#CFE0F4","#7B99C2"], stars:0,   neb:false, dark:false},
-  {n:"Stellar",   ball:"a star",         mult:800,    spd:1.46,
+  {n:"Stellar",   ball:"a star",         mult:90000,  spd:1.46,
    form:{lobes:6, rough:.030, oval:1.00, paint:"star"},
    bg:["#1A2236","#080C16"], stars:110, neb:false, dark:true},
-  {n:"Galactic",  ball:"a galaxy",       mult:12000,  spd:1.62,
+  {n:"Galactic",  ball:"a galaxy",       mult:6.2e6,  spd:1.62,
    form:{lobes:3, rough:.030, oval:1.42, paint:"spiral"},
    bg:["#0A0E1B","#02040A"], stars:260, neb:false, dark:true},
-  {n:"Cosmic",    ball:"a supercluster", mult:250000, spd:1.80,
+  {n:"Cosmic",    ball:"a supercluster", mult:5.4e8,  spd:1.80,
    form:{lobes:4, rough:.020, oval:1.30, paint:"halo"},
    bg:["#06040F","#010103"], stars:360, neb:true,  dark:true},
 ];
@@ -1194,10 +1222,10 @@ const TABS=[
 ];
 
 const UP={
-  force:  {tab:"touch",g:"✥",nm:"Damage", base:26, gr:1.42, max:24,
+  force:  {tab:"touch",g:"✥",nm:"Damage", base:12, gr:1.42, max:24,
            d:"Damage every tap deals. Tougher balls need more of it.",
            v:l=>1+Math.floor(l/4), fmt:l=>(1+Math.floor(l/4))+" dmg"},
-  reach:  {tab:"touch",g:"◜",nm:"Size", base:14, gr:1.16, max:60,
+  reach:  {tab:"touch",g:"◜",nm:"Size", base:10, gr:1.16, max:60,
            d:"How wide your swipe cuts.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
   cascade:{tab:"touch",g:"⁘",nm:"Double",base:90,gr:1.24, max:50,
@@ -1256,7 +1284,7 @@ const BOOSTS=[
 const OBJPOOL=[
   {k:"split", t:n=>"Split "+fmt(n)+" balls",         goals:[60,220,700,2200,7000],  sp:2},
   {k:"pop",   t:n=>"Break down "+fmt(n)+" balls",    goals:[40,150,500,1600,5000],  sp:2},
-  {k:"earn",  t:n=>"Bank "+fmt(n)+" cash",           goals:[900,9e3,1e5,1.4e6,2e7], sp:3},
+  {k:"earn",  t:n=>"Bank "+fmt(n)+" cash",           goals:[150,2e3,3e4,6e5,1.2e7], sp:3},
   {k:"combo", t:n=>"Reach a ×"+(1+n*COMBO_STEP).toFixed(2)+" streak", goals:[25,50,80,110,140], sp:3},
   {k:"gold",  t:n=>"Break "+n+" lucky balls",       goals:[2,6,14,30,60],          sp:4},
   {k:"burst", t:n=>"Detonate "+n+" unstable balls",  goals:[3,10,26,60,140],        sp:4},
@@ -1281,7 +1309,7 @@ const ACHV=[
    src:()=>G.stat.bestCombo, tiers:[25,60,100,200],
    rw:[{g:800},{sp:4,trail:"arc"},{g:3e6},{sp:14,skin:"circuit"}]},
   {k:"earn", ic:"\u25C9", nm:"Rich", t:n=>"Bank "+fmt(n)+" cash in total",
-   src:()=>G.totalEarned, tiers:[10e3,1e6,1e9,1e12],
+   src:()=>G.totalEarned, tiers:[2e3,2e5,5e8,1e12],
    rw:[{sp:2},{g:120e3,skin:"bloom"},{sp:8},{sp:20,skin:"orbit"}]},
   {k:"gold", ic:"\u2726", nm:"Lucky", t:n=>"Break "+fmt(n)+" lucky balls",
    src:()=>G.stat.gold, tiers:[5,50,500,5e3],
@@ -1323,13 +1351,13 @@ function rwText(r){
 
 /* ---------------------------------------------------------------- state */
 const OFFLINE_RATE=0.5;   // was a 20-card track; a flat half is plenty
-const SAVE_KEY="mitosis.save.v6";
+const SAVE_KEY="mitosis.save.v7";
 let G=null;
 const CAN_STORE=(()=>{ try{ localStorage.setItem("m.probe","1"); localStorage.removeItem("m.probe"); return true; }catch(e){ return false; } })();
 
 function freshState(){
+  // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
-  up.yield=1; up.cap=1;
   return {
     v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0,
     up, tab:"touch",
@@ -1339,7 +1367,7 @@ function freshState(){
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
     pet:"void", ownPet:["void"],
     sid:"", obj:null, objDone:0, objT:0, achv:{}, ad:{}, stTab:"shop", cosTab:"trail", streakDay:1,
-    opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
+    opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:false, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
   };
@@ -2225,8 +2253,8 @@ let coreFrom=0, coreTo=0, fromScale=null;
 function applyAscent(){
   G.strain++; G.stat.strains++;
   G.bio=0; G.earned=0;
+  // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
-  up.yield=1; up.cap=1;
   G.up=up;
   parts.length=0; fuses.length=0; rings.length=0; pops.length=0;
   G.wiz=Array(SLOTS).fill(null); G.wlvl=[0,0,0,0,0,0]; G.summons=0;
@@ -3817,6 +3845,17 @@ function banner(txt){
 }
 function alertOrb(id,on){ const o=$("orb-"+id); if(o) o.classList.toggle("alert",on); }
 
+const RANKS=["Recruit","Cadet","Ensign","Pilot","Captain","Major","Colonel","Commander","Admiral","Legend"];
+function playerLevel(){
+  const e=Math.max(0,G.totalEarned);
+  return Math.max(1,Math.floor(Math.log10(e+1)*3.2)+1);
+}
+function levelProgress(){
+  const l=playerLevel();
+  const at=n=>Math.pow(10,(n-1)/3.2)-1;
+  const a=at(l), b=at(l+1);
+  return clamp((G.totalEarned-a)/Math.max(1,b-a),0,1);
+}
 function buildRails(){
   const L=$("railL"); L.innerHTML="";
   for(const it of [
@@ -3834,10 +3873,16 @@ function buildRails(){
     b.onclick=it.fn; L.appendChild(b);
   }
   const R=$("railR"); R.innerHTML="";
+  const pr=document.createElement("div");
+  pr.className="prof"; pr.id="profCard";
+  pr.innerHTML='<div class="hi">Hey</div><div class="lv"></div>'+
+    '<div class="rk"></div><div class="bar"><i></i></div>';
+  R.appendChild(pr);
   const add=(p,isBoost)=>{
     const b=document.createElement("button");
     b.className="pw"; b.id=(isBoost?"bo-":"pw-")+p.id;
-    b.innerHTML='<span class="g">'+p.g+'</span><span class="l">'+p.nm+'</span><span class="cd"></span>';
+    b.innerHTML='<span class="g">'+p.g+'</span><span class="l">'+p.nm+'</span>'+
+                 '<span class="cd"></span><span class="adb">\u25B6</span>';
     b.onclick=()=>isBoost?fireBoost(p):firePower(p);
     b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d);};
     R.appendChild(b);
@@ -3866,6 +3911,32 @@ function syncShopPill(){
 }
 function syncRails(){
   syncShopPill();
+  // any power sitting on a cooldown can be watched back to ready
+  for(const p of POWERS.concat(BOOSTS)){
+    const isB=!("cost" in p);
+    const b=document.getElementById((isB?"bo-":"pw-")+p.id); if(!b) continue;
+    const st=isB?(G.boost[p.id]||{cd:0}):pwState(p);
+    const on=st.cd>0 && (!("cost" in p) || st.owned) && adReady("pw_"+p.id);
+    b.classList.toggle("adReady",on);
+    const ab=b.querySelector(".adb");
+    if(ab && !ab.dataset.w){
+      ab.dataset.w="1";
+      ab.onclick=e=>{
+        e.stopPropagation();
+        const t=isB?(G.boost[p.id]||(G.boost[p.id]={cd:0})):pwState(p);
+        if(t.cd<=0) return;
+        t.cd=0; G.ad["pw_"+p.id]=el+180;
+        toast(p.nm+" ready"); save(); syncRails();
+      };
+    }
+  }
+  const pc=document.getElementById("profCard");
+  if(pc){
+    const l=playerLevel();
+    pc.querySelector(".lv").textContent="Lv."+l;
+    pc.querySelector(".rk").textContent=RANKS[Math.min(RANKS.length-1,Math.floor((l-1)/3))];
+    pc.querySelector(".bar i").style.width=(levelProgress()*100).toFixed(0)+"%";
+  }
   for(const p of POWERS){
     const s=pwState(p), b=$("pw-"+p.id); if(!b) continue;
     const cd=b.querySelector(".cd"), lab=b.querySelector(".l");
@@ -3915,8 +3986,20 @@ function buildCards(){
         '<span class="g">'+u.g+'</span></span>'+
       '<span class="nm">'+u.nm+'</span>'+
       '<span class="ef">'+u.fmt(lv(k))+'</span>'+
-      '<span class="ct"></span>';
-    b.onclick=()=>buy(k);
+      '<span class="ct"></span>'+
+      '<span class="ad">\u25B6 Ad</span>'+
+      '<span class="alt"></span>';
+    b.onclick=()=>{
+      // tapping the ad half takes the level for a watch instead of the cash
+      if(b.classList.contains("canAd") && G.bio<cost(k)){
+        G.ad["up_"+k]=el+180;
+        G.up[k]=(G.up[k]|0)+1;
+        toast(UP[k].nm+" +1");
+        rewardPill(b,"+1"); save(); buildCards(); syncCards(); syncRails();
+        return;
+      }
+      buy(k);
+    };
     b.oncontextmenu=e=>{ e.preventDefault(); toast(u.nm+" — "+u.d); };
     c.appendChild(b);
   }
@@ -3933,6 +4016,10 @@ function syncCards(){
       b.querySelector(".lv").textContent=m?"MAX":"L"+lv(k);
       b.querySelector(".ef").textContent=u.fmt(lv(k));
       b.querySelector(".ct").innerHTML=m?"MAXED":"$"+fmt(cost(k));
+      // the reference offers an ad on a card you cannot reach yet
+      const canAd=!m && !af && adReady("up_"+k);
+      b.classList.toggle("canAd",canAd);
+      if(canAd) b.querySelector(".alt").textContent="or $"+fmt(cost(k));
       // every purchase closes the ring a little further; it completes at max
       const ring=b.querySelector(".rfg");
       if(ring) ring.style.strokeDashoffset=(RINGC*(1-(u.max?clamp(lv(k)/u.max,0,1):0))).toFixed(2);
