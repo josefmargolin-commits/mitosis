@@ -12,7 +12,7 @@
 <link rel="icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Syne:wght@700;800&family=Chivo+Mono:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Fredoka:wght@600;700&family=Syne:wght@700;800&family=Chivo+Mono:wght@300;400;500;600&display=swap">
 
 <style>
 :root{
@@ -1400,7 +1400,29 @@ function earn(base,x,y,col){
   const v=base*yieldMul()*comboMul();
   G.bio+=v; G.earned+=v; G.totalEarned+=v;
   objProg("earn",v);
-  if(v>=0.5) pops.push({x,y,t:0,life:.72,txt:"+"+fmt(v),col:col||"#EAF1FA",vy:-44});
+  if(v>=0.5) pushPop(x,y,"+"+fmt(v));
+}
+/* A number was drawn in the colour of the ball that produced it, with a white
+   outline, on a white dish — lime and yellow simply vanished. One fixed
+   scheme now: cream fill, green outline, so every amount reads the same
+   wherever it lands. And a busy dish used to stack them into one illegible
+   pile, so a new pop steps off anything already sitting where it wants to be. */
+if(document.fonts&&document.fonts.load){ document.fonts.load("700 26px Fredoka").catch(()=>{}); }
+function pushPop(x,y,txt){
+  let px=x, py=y;
+  // walk a ladder rather than guessing: alternate sides and climb, so eight
+  // simultaneous breaks read as eight numbers instead of one smear
+  for(let pass=1;pass<=8;pass++){
+    let clash=false;
+    for(const p of pops){
+      if(p.t>.30) continue;
+      if(Math.abs(p.x-px)<38*S && Math.abs(p.y-py)<20*S){ clash=true; break; }
+    }
+    if(!clash) break;
+    px = x + (pass%2?1:-1)*(12+pass*8)*S + rnd(-3,3)*S;
+    py = y - pass*15*S;
+  }
+  pops.push({x:px, y:py, t:0, life:.85, txt});
 }
 function goo(x,y,r,c,life,vx,vy){ parts.push({x,y,vx,vy,r,col:c,t:0,life,goo:true,drag:.9}); }
 function spark(x,y,c){
@@ -1444,7 +1466,7 @@ function fuse(a,b){
   for(let i=0;i<8;i++) spark(x,y,"#fff");
   rings.push({x,y,r:n.r*1.5,R:n.r*.6,t:0,life:.34,col:"#fff",w:2.6});
   rings.push({x,y,r:n.r*.5,R:n.r*1.9,t:0,life:.42,col,w:2});
-  pops.push({x,y:y-n.r*.7,t:0,life:.7,txt:"●"+fmt(n.mass),col,vy:-40});
+  pushPop(x,y-n.r*.7,fmt(n.mass));
   shake=Math.max(shake,2.2+(DROPT-nt)*1.6);
   flash=Math.max(flash,.10+(DROPT-nt)*.06);
   if(nt<=1) freeze=Math.max(freeze,.045);
@@ -1569,7 +1591,7 @@ function burstWhole(b){
   shake=Math.max(shake,7); flash=Math.max(flash,.32); freeze=Math.max(freeze,.045);
   bumpCombo();
   earn(b.mass*(b.kind==="golden"?25:1),b.x,b.y,"#FFFFFF");
-  pops.push({x:b.x,y:b.y-24,t:0,life:.8,txt:"RUPTURE",col:"#fff",vy:-30});
+  pushPop(b.x,b.y-24,"INSTANT");
   const rp=panAt(b.x);
   chime(NOTE[b.tier]*4,{pan:rp,vol:.17,len:.7});
   pop(NOTE[b.tier]*3*semi(noteStep()),{pan:rp,vol:.2,wet:.28});
@@ -2695,7 +2717,7 @@ function step(dt){
   }
   for(let i=rings.length-1;i>=0;i--){ const r=rings[i]; r.t+=dt; if(r.t>=r.life) rings.splice(i,1); }
   for(let i=pops.length-1;i>=0;i--){
-    const p=pops[i]; p.t+=dt; p.y+=p.vy*dt; p.vy*=Math.pow(.2,dt);
+    const p=pops[i]; p.t+=dt;   // the rise is computed from t at draw time
     if(p.t>=p.life) pops.splice(i,1);
   }
   for(let i=trail.length-1;i>=0;i--){ trail[i].t+=dt; if(trail[i].t>.34) trail.splice(i,1); }
@@ -3172,14 +3194,30 @@ function draw(){
   xFx.restore();
 
   for(const p of pops){
-    const k=p.t/p.life;
-    xFx.save(); xFx.globalAlpha=(1-k)*(1-k);
-    xFx.font="800 "+Math.round(15*S+7)+"px 'Archivo',system-ui,sans-serif";
+    const k=clamp(p.t/p.life,0,1);
+    // 85% -> 115% -> 100%, then hold
+    const sc = k<.16 ? .85+(k/.16)*.30
+             : k<.34 ? 1.15-((k-.16)/.18)*.15
+             : 1;
+    const rise = 35*S*(1-Math.pow(1-k,2.2));      // ~35px, easing out
+    const a = k<.06 ? k/.06 : (k<.58 ? 1 : 1-(k-.58)/.42);
+    const size=clamp(Math.round(18*S+16),20,28);
+    xFx.save();
+    xFx.globalAlpha=Math.max(0,a);
+    xFx.translate(p.x, p.y-rise);
+    xFx.scale(sc,sc);
+    xFx.font="700 "+size+"px 'Fredoka','Archivo',system-ui,sans-serif";
     xFx.textAlign="center"; xFx.textBaseline="middle";
-    xFx.lineWidth=4; xFx.lineJoin="round";
-    xFx.strokeStyle=curScale().dark?"rgba(3,5,12,.85)":"rgba(255,255,255,.95)";
-    xFx.strokeText(p.txt,p.x,p.y);
-    xFx.fillStyle=p.col; xFx.fillText(p.txt,p.x,p.y);
+    // one soft shadow, carried by the outline pass so the fill does not double it
+    xFx.shadowColor="rgba(30,58,22,.25)";
+    xFx.shadowBlur=5; xFx.shadowOffsetY=2;
+    xFx.lineWidth=Math.max(2,Math.round(3*Math.max(.8,S)));
+    xFx.lineJoin="round"; xFx.miterLimit=2;
+    xFx.strokeStyle="#67B82F";
+    xFx.strokeText(p.txt,0,0);
+    xFx.shadowColor="transparent"; xFx.shadowBlur=0; xFx.shadowOffsetY=0;
+    xFx.fillStyle="#F7FFD9";
+    xFx.fillText(p.txt,0,0);
     xFx.restore();
   }
 
