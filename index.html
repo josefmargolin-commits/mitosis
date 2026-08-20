@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Mitosis</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,minimum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#FFFFFF">
@@ -57,7 +58,7 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 
 /* ============ frame ============ */
 #app{
-  position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);
+  position:fixed;top:0;bottom:0;left:0;right:0;margin-inline:auto;
   width:min(100vw,560px);overflow:hidden;
   background:var(--ground);
   box-shadow:0 0 60px rgba(15,23,32,.14);
@@ -309,10 +310,11 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
 #tabs{display:flex;height:38px;flex:none;border-bottom:1px solid var(--edge);
-  overflow-x:auto;scrollbar-width:none;transition:opacity .16s}
+  overflow-x:auto;scrollbar-width:none;
+  transition:opacity .26s ease,visibility .26s}
 #dock.min{height:calc(16px + env(safe-area-inset-bottom))}
 #dock.min #tabs,#dock.min #cards{opacity:0;visibility:hidden;pointer-events:none}
-#cards{transition:opacity .16s}
+#cards{transition:opacity .26s ease,visibility .26s}
 #tabs::-webkit-scrollbar{display:none}
 .tab{
   flex:1 0 auto;min-width:0;padding:0 8px;
