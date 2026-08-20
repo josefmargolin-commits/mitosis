@@ -658,6 +658,65 @@ input{font:inherit;color:inherit}
              0 3px 12px rgba(16,22,37,.28);
 }
 @media (max-height:540px){ #wizPop{font-size:14px;padding:5px 11px} }
+/* ---- daily missions, laid out like the reference ---- */
+.msTop{display:flex;align-items:center;gap:9px;margin:2px 2px -2px}
+.msTop .k{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.msTop .n{font-size:10px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+.msBar{height:7px;border-radius:99px;background:#E6EBF2;overflow:hidden;flex:1;max-width:100%}
+.msBar i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,#F5A623,#F5C53A);transition:width .3s}
+.ms{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);
+  padding:11px 12px 10px;display:flex;flex-direction:column;gap:7px;position:relative}
+.ms.ready{border-color:rgba(34,197,94,.55);background:#F3FDF7}
+.ms.prog{border-color:rgba(245,166,35,.42);background:#FFFCF4}
+.ms.done{border-color:var(--edge);background:var(--surface)}
+.ms .top{display:flex;align-items:flex-start;gap:9px}
+.ms .ic{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:var(--surface);font-size:12px;color:var(--ink-2)}
+.ms.ready .ic{background:#DCFCE7;color:#15803D}
+.ms.done .ic{background:#22C55E;color:#fff}
+.ms .nm{flex:1;min-width:0;font-size:12.5px;font-weight:600;line-height:1.3}
+.ms.done .nm{text-decoration:line-through;color:var(--ink-3)}
+.ms .stars{flex:none;font-size:10px;letter-spacing:1.5px;color:#F5A623}
+.ms .stars i{opacity:.26;font-style:normal}
+.ms .stars i.on{opacity:1}
+.ms .met{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.ms .foot{display:flex;align-items:center;gap:7px}
+.ms .rw{flex:1;min-width:0;font-size:10.5px;color:var(--ink-2);display:flex;align-items:center;gap:4px}
+.ms .status{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.ms.done .status{color:#16A34A}
+.msBtn{padding:7px 13px;border-radius:9px;border:0;flex:none;color:#fff;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:600;font-size:10.5px;
+  transition:transform .1s ease, box-shadow .1s ease}
+.msBtn.claim{background:linear-gradient(180deg,#3BDD7F,#16A34A);box-shadow:0 2.5px 0 #12833B}
+.msBtn.x2{background:linear-gradient(180deg,#FB923C,#EA580C);box-shadow:0 2.5px 0 #C2410C}
+.msBtn:active{transform:translateY(2.5px);box-shadow:none}
+.msAll{border:1.5px dashed var(--edge-2);border-radius:14px;padding:11px 12px;
+  display:flex;align-items:center;gap:10px;background:transparent}
+.msAll .l{flex:1;min-width:0}
+.msAll .t{font-size:11.5px;font-weight:600}
+.msAll .s{font-size:9.5px;color:var(--ink-3);margin-top:1px}
+
+/* the reward that pops out of the row you just claimed */
+#rwPill{
+  position:absolute;z-index:26;pointer-events:none;opacity:0;left:0;top:0;
+  transform:translate(-50%,-50%);
+  padding:7px 16px;border-radius:999px;white-space:nowrap;
+  background:linear-gradient(180deg,#43E489,#16A34A);color:#fff;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;font-size:17px;
+  box-shadow:0 5px 16px rgba(22,163,74,.44), inset 0 1px 0 rgba(255,255,255,.42);
+}
+
+/* ---- the board ---- */
+.bd{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:13px;
+  background:var(--panel);border:1px solid var(--edge)}
+.bd.me{border-color:rgba(124,58,237,.5);background:#F8F5FF}
+.bd .pos{width:26px;text-align:center;font-family:"Fredoka",system-ui,sans-serif;
+  font-weight:700;font-size:14px;color:var(--ink-3);flex:none}
+.bd.g1 .pos{color:#E8A200}.bd.g2 .pos{color:#94A3B8}.bd.g3 .pos{color:#B87333}
+.bd .who{flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bd .sc{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -722,6 +781,7 @@ input{font:inherit;color:inherit}
   <div id="banner"></div>
   <div id="toast"></div>
   <div id="frenzy"></div>
+  <div id="rwPill"></div>
   <canvas id="burst"></canvas>
   <div id="scrim"></div>
   <div id="sheet">
@@ -1830,7 +1890,7 @@ function objProg(k,amt,abs){
   for(const o of G.obj){
     if(o.k!==k||o.done) continue;
     o.prog=abs!==undefined?Math.max(o.prog,abs):o.prog+amt;
-    if(o.prog>=o.goal){ o.prog=o.goal; o.done=true; alertOrb("ach",true); toast("Goal complete"); }
+    if(o.prog>=o.goal){ o.prog=o.goal; o.done=true; alertOrb("mis",true); toast("Goal complete"); }
   }
 }
 function objLabel(o){ return (OBJPOOL.find(p=>p.k===o.k)||OBJPOOL[0]).t(o.goal); }
@@ -2815,6 +2875,20 @@ function appPt(el){
   const a=app.getBoundingClientRect(), r=el.getBoundingClientRect();
   return {x:r.left-a.left+r.width/2, y:r.top-a.top+r.height/2};
 }
+/* the green chip the reference pops over the row you just claimed */
+function rewardPill(srcEl,txt){
+  const p=document.getElementById("rwPill"); if(!p) return;
+  const r=srcEl.getBoundingClientRect(), a=app.getBoundingClientRect();
+  p.textContent=txt;
+  p.style.left=(r.left-a.left+r.width/2)+"px";
+  p.style.top=(r.top-a.top+r.height/2)+"px";
+  p.animate([
+    {opacity:0,transform:"translate(-50%,-50%) scale(.5)"},
+    {opacity:1,transform:"translate(-50%,-72%) scale(1.14)",offset:.3},
+    {opacity:1,transform:"translate(-50%,-86%) scale(1)",offset:.62},
+    {opacity:0,transform:"translate(-50%,-150%) scale(.96)"}
+  ],{duration:1500,easing:"cubic-bezier(.2,.9,.3,1)"});
+}
 function celebrate(src,n,col,homeEl){
   const p=appPt(src);
   const home=homeEl?appPt(homeEl):null;
@@ -3400,6 +3474,18 @@ const ICONS={
       '<circle fill="currentColor" stroke="none" cx="9.5" cy="19.4" r="1.9"/>'+
       '<circle fill="currentColor" stroke="none" cx="17.2" cy="19.4" r="1.9"/>',
 
+  /* the reference's target, for the daily missions */
+  target:'<circle fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" cx="12" cy="12" r="8.3"/>'+
+         '<circle fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" cx="12" cy="12" r="3.7"/>'+
+         '<circle fill="currentColor" stroke="none" cx="12" cy="12" r="1.7"/>'+
+         '<path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" d="M12 1.2v3.3M12 19.5v3.3M1.2 12h3.3M19.5 12h3.3"/>',
+
+  /* a podium, since the trophy now opens a board of other people */
+  podium:'<rect fill="currentColor" stroke="none" x="9.1" y="6.4" width="5.8" height="14.4" rx="1.1"/>'+
+         '<rect fill="currentColor" stroke="none" x="2.6" y="11.2" width="5.8" height="9.6" rx="1.1"/>'+
+         '<rect fill="currentColor" stroke="none" x="15.6" y="13.6" width="5.8" height="7.2" rx="1.1"/>'+
+         '<path fill="currentColor" stroke="none" d="M12 1.1l1.05 2.2 2.4.34-1.74 1.72.42 2.4L12 6.64 9.87 7.76l.42-2.4L8.55 3.64l2.4-.34z"/>',
+
   /* two balls mid-merge: the silhouette the game is named for */
   brush:'<circle fill="currentColor" stroke="none" cx="9.1" cy="14.4" r="5.9"/>'+
         '<circle fill="currentColor" stroke="none" cx="16.5" cy="8.9" r="4.4"/>'+
@@ -3427,9 +3513,10 @@ function buildRails(){
   for(const it of [
     {id:"set", svg:ICONS.gear,   fn:sheetSettings,     c:"#232B39", ic:"#FFFFFF"},
     {id:"stat",svg:ICONS.chart,  fn:sheetStats,        c:"#FFFFFF", ic:"#3A4A5E"},
-    {id:"ach", svg:ICONS.trophy, fn:sheetAchievements, c:"#F7B500", ic:"#5A3B00"},
+    {id:"ach", svg:ICONS.podium, fn:sheetBoard,        c:"#F7B500", ic:"#5A3B00"},
     {id:"shop",svg:ICONS.bag,    fn:sheetShop,         c:"#22C55E", ic:"#FFFFFF"},
-    {id:"cos", svg:ICONS.brush,  fn:sheetCustomise,    c:"#F97316", ic:"#FFFFFF"},
+    {id:"mis", svg:ICONS.target, fn:sheetMissions,     c:"#F97316", ic:"#FFFFFF"},
+    {id:"cos", svg:ICONS.brush,  fn:sheetCustomise,    c:"#7C3AED", ic:"#FFFFFF"},
   ]){
     const b=document.createElement("button");
     b.className="orb"; b.id="orb-"+it.id;
@@ -3474,7 +3561,8 @@ function syncRails(){
     if(s.cd>0){ cd.style.display="grid"; cd.textContent=Math.ceil(s.cd); }
     else cd.style.display="none";
   }
-  alertOrb("ach",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
+  alertOrb("ach",false);
+  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
 }
 
 function buildTabs(){
@@ -3735,12 +3823,133 @@ function sheetShop(){
     b.appendChild(n);
   });
 }
+
+/* ---- daily missions -----------------------------------------------------
+   Card per goal: icon, name, difficulty stars, a count and a percent, a bar,
+   the reward, then Claim beside a doubled Claim that costs an ad. The whole
+   set pays a bonus when all four are in. */
+function msCard(o){
+  const d=document.createElement("div");
+  const pct=clamp(o.prog/o.goal,0,1);
+  d.className="ms "+(o.done?"ready":"prog");
+  const stars=[0,1,2].map(i=>'<i class="'+(i<=Math.min(2,Math.floor(o.sp/3))?"on":"")+'">\u2605</i>').join("");
+  d.innerHTML=
+    '<div class="top">'+
+      '<span class="ic">'+(o.done?"\u2713":"\u25CB")+'</span>'+
+      '<span class="nm">'+objLabel(o)+'</span>'+
+      '<span class="stars">'+stars+'</span>'+
+    '</div>'+
+    '<div class="met"><span>'+fmt(Math.min(o.prog,o.goal))+" / "+fmt(o.goal)+'</span>'+
+      '<span>'+Math.round(pct*100)+'%</span></div>'+
+    '<div class="msBar"><i style="width:'+(pct*100).toFixed(0)+'%"></i></div>'+
+    '<div class="foot"><span class="rw">'+ICO_SPORE+o.sp+'</span></div>';
+  const foot=d.querySelector(".foot");
+  if(o.done){
+    const b=document.createElement("button");
+    b.className="msBtn claim"; b.textContent="Claim";
+    b.onclick=function(){ claimObj(o,this,1); };
+    foot.appendChild(b);
+    const x=document.createElement("button");
+    x.className="msBtn x2"; x.innerHTML="2\u00D7 ("+(o.sp*2)+")";
+    x.onclick=function(){
+      if(!adReady("ms")){ toast("Another in "+adWait("ms")); return; }
+      G.ad.ms=el+300; claimObj(o,this,2);
+    };
+    foot.appendChild(x);
+  } else {
+    const st=document.createElement("span");
+    st.className="status"; st.textContent="In progress";
+    foot.appendChild(st);
+  }
+  return d;
+}
+function claimObj(o,btn,mult){
+  if(!o.done) return;
+  const sp=o.sp*mult;
+  G.spore+=sp; G.bio+=180*yieldMul()*(1+G.objDone*0.6);
+  G.objDone++;
+  G.obj.splice(G.obj.indexOf(o),1);
+  const tier=Math.min(4,Math.floor(G.objDone/6));
+  const used=G.obj.map(x=>x.k);
+  const pool=OBJPOOL.filter(p=>!used.includes(p.k));
+  const p=pool[(Math.random()*pool.length)|0]||OBJPOOL[0];
+  G.obj.push({k:p.k,goal:p.goals[tier],prog:0,sp:p.sp+tier,done:false});
+  celebrate(btn, 46+sp*5, "#F5B301", document.querySelector("#sporeWrap .pip"));
+  rewardPill(btn,"+"+sp);
+  chime(523,{vol:.16,len:.9,wet:.5});
+  chime(659,{vol:.13,len:.85,delay:.07,wet:.5});
+  chime(784,{vol:.11,len:.9,delay:.14,wet:.55});
+  noiseHit(.4,{vol:.09,cut:6000,type:"highpass",to:.4,wet:.4});
+  thud(78,{vol:.2,len:.26});
+  haptic([14,26,14,40]);
+  save(); syncTop(); sheetSync&&sheetSync();
+  alertOrb("mis",!!(G.obj&&G.obj.some(x=>x.done)));
+}
+function sheetMissions(){
+  if(!G.obj) rollObjectives();
+  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#F97316">'+ICONS.target+'</svg>',
+    "Daily Missions","Three at a time",b=>{
+    const done=G.obj.filter(o=>o.done).length;
+    const top=document.createElement("div");
+    top.className="msTop";
+    top.innerHTML='<span class="k">Progress</span>'+
+      '<div class="msBar"><i style="width:'+(done/G.obj.length*100).toFixed(0)+'%"></i></div>'+
+      '<span class="n">'+done+"/"+G.obj.length+'</span>';
+    b.appendChild(top);
+    for(const o of G.obj) b.appendChild(msCard(o));
+
+    const all=document.createElement("div");
+    all.className="msAll";
+    all.innerHTML='<span class="ic" style="width:26px;height:26px;border-radius:50%;'+
+      'display:grid;place-items:center;background:var(--surface);flex:none">\u2691</span>'+
+      '<span class="l"><span class="t">Clear all three</span>'+
+      '<span class="s">A bonus for finishing the set</span></span>'+
+      '<span class="status" style="font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;'+
+      'color:var(--ink-3)">'+done+"/"+G.obj.length+' complete</span>';
+    b.appendChild(all);
+
+    b.appendChild(lbl("Career"));
+    achRows(b);
+  });
+}
+
+/* ---- the board ----------------------------------------------------------
+   Everyone below the line is generated from your own best, because there is
+   nowhere for a real score to go from a single HTML file. */
+const BOARD_NAMES=["Nebula","Petri","Quark","Zoe","Marrow","Kelvin","Iris","Bantam",
+  "Cobalt","Wren","Solace","Ozone","Tally","Vesper","Fen"];
+function boardRows(){
+  const mine=Math.max(1,Math.floor(G.totalEarned));
+  let seed=1337, rr=()=>((seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff);
+  const rows=BOARD_NAMES.map((n,i)=>({n, v:Math.floor(mine*(2.6-i*0.17)*(0.72+rr()*0.6))}));
+  rows.push({n:"You", v:mine, me:true});
+  rows.sort((a,b)=>b.v-a.v);
+  return rows.slice(0,12);
+}
+function sheetBoard(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#F7B500">'+ICONS.podium+'</svg>',
+    "Scoreboard","Gold banked, all time",b=>{
+    boardRows().forEach((r,i)=>{
+      const d=document.createElement("div");
+      d.className="bd"+(r.me?" me":"")+(i<3?" g"+(i+1):"");
+      d.innerHTML='<span class="pos">'+(i<3?["\u2460","\u2461","\u2462"][i]:(i+1))+'</span>'+
+        '<span class="who">'+r.n+'</span>'+
+        '<span class="sc">'+ICO_MASS+" "+fmt(r.v)+'</span>';
+      b.appendChild(d);
+    });
+    const n=document.createElement("div");
+    n.className="wpHint";
+    n.innerHTML="<span>These are stand-ins. A real board needs a server to post "+
+      "scores to \u2014 a single HTML file has nowhere to send them.</span>";
+    b.appendChild(n);
+  });
+}
+
 function sheetAchievements(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.trophy+'</svg>',
-    "Goals","Rotating and permanent",b=>{
-    b.appendChild(lbl("Right now — three at a time"));
-    objRows(b);
-    b.appendChild(lbl("Permanent"));
+    "Goals","Rotating and permanent",b=>{ achRows(b); });
+}
+function achRows(b){
     for(const a of ACHV){
       const done=achDone(a), all=done>=a.tiers.length;
       const goal=all?a.tiers[a.tiers.length-1]:a.tiers[done];
@@ -3759,11 +3968,11 @@ function sheetAchievements(){
           const got=achGive(r);
           toast(a.nm+" \u2014 "+got);
           save(); syncTop(); buildCards();
-          alertOrb("ach",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
+          alertOrb("ach",false);
+  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
         }:null
       }));
     }
-  });
 }
 function sheetSettings(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.gear+'</svg>',
@@ -3809,40 +4018,6 @@ function sheetStats(){
       ["☾","Time in the dish",fmtTime(s.play)],
     ]) b.appendChild(row({ic:i,t,v}));
   });
-}
-function objRows(b){
-  if(!G.obj) rollObjectives();
-  {
-    for(const o of G.obj){
-      b.appendChild(row({
-        ic:o.done?"✓":"○", t:objLabel(o),
-        s:fmt(Math.min(o.prog,o.goal))+" / "+fmt(o.goal),
-        bar:o.prog/o.goal,
-        btn:o.done?"Claim "+ICO_SPORE+o.sp:"…", btnOn:o.done,
-        fn:function(){
-          if(!o.done) return;
-          G.spore+=o.sp; G.bio+=180*yieldMul()*(1+G.objDone*0.6);
-          G.objDone++;
-          G.obj.splice(G.obj.indexOf(o),1);
-          const tier=Math.min(4,Math.floor(G.objDone/6));
-          const used=G.obj.map(x=>x.k);
-          const pool=OBJPOOL.filter(p=>!used.includes(p.k));
-          const p=pool[(Math.random()*pool.length)|0]||OBJPOOL[0];
-          G.obj.push({k:p.k,goal:p.goals[tier],prog:0,sp:p.sp+tier,done:false});
-          celebrate(this, 46+o.sp*5, "#F5B301", document.querySelector("#sporeWrap .pip"));
-          banner("+"+o.sp+" SHARDS");
-          chime(523,{vol:.16,len:.9,wet:.5});
-          chime(659,{vol:.13,len:.85,delay:.07,wet:.5});
-          chime(784,{vol:.11,len:.9,delay:.14,wet:.55});
-          noiseHit(.4,{vol:.09,cut:6000,type:"highpass",to:.4,wet:.4});
-          thud(78,{vol:.2,len:.26});
-          haptic([14,26,14,40]);
-          save();
-        }
-      }));
-    }
-    b.appendChild(row({ic:"✓",t:"Goals cleared",s:"They get bigger every six",v:fmt(G.objDone)}));
-  }
 }
 function sheetCustomise(){
   openSheet("◑","Your Balls","Cleave colour and powers",b=>{
