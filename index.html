@@ -834,17 +834,17 @@ const UP={
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
-           d:"Automatic hits per second. Keeps going while you are away.",
+           d:"How often the black hole strikes. Buy the first one and it appears.",
            v:l=>l*0.16, fmt:l=>(l*0.16).toFixed(2)+"/s"},
-  depth:  {tab:"lysis",g:"◎",nm:"Power", base:300,gr:1.30, max:40,
-           d:"Damage each automatic hit deals.",
+  depth:  {tab:"lysis",g:"◎",nm:"Damage", base:300,gr:1.30, max:40,
+           d:"Damage the black hole does with each hit.",
            v:l=>1+Math.floor(l/8), fmt:l=>(1+Math.floor(l/8))+" dmg"},
   spread: {tab:"lysis",g:"⁙",nm:"Targets",base:480,gr:1.32, max:36,
-           d:"Balls hit at the same time.",
+           d:"Balls it hits at the same time. Also makes it bigger.",
            v:l=>1+Math.floor(l/6), fmt:l=>(1+Math.floor(l/6))+" balls"},
-  dorm:   {tab:"lysis",g:"☾",nm:"Offline",base:560,gr:1.36,max:20,
-           d:"Share of idle earnings kept while the game is closed. Caps at eight hours.",
-           v:l=>Math.min(1,.2+l*.04), fmt:l=>Math.round(Math.min(1,.2+l*.04)*100)+"%"},
+  pull:   {tab:"lysis",g:"◌",nm:"Pull",  base:220,gr:1.28, max:44,
+           d:"How far it drags balls in from. Anything inside is in range to be hit.",
+           v:l=>150+l*20, fmt:l=>Math.round(150+l*20)+"px"},
 
   fusion: {tab:"field",g:"⊕",nm:"Merge", base:60, gr:1.20, max:40,
            d:"Two balls of the same colour that touch turn into one bigger ball. This is the wait before that happens.",
@@ -892,6 +892,7 @@ const OBJPOOL=[
 ];
 
 /* ---------------------------------------------------------------- state */
+const OFFLINE_RATE=0.5;   // was a 20-card track; a flat half is plenty
 const SAVE_KEY="mitosis.save.v6";
 let G=null;
 const CAN_STORE=(()=>{ try{ localStorage.setItem("m.probe","1"); localStorage.removeItem("m.probe"); return true; }catch(e){ return false; } })();
@@ -2372,6 +2373,56 @@ function wizPortrait(rank,size){
   return c;
 }
 
+/* ---- the black hole ----------------------------------------------------
+   The idle hitter used to be invisible: a timer that struck the smallest
+   balls wherever they happened to be. Now it is a thing in the dish that you
+   can watch. It wanders, drags what is near it inward, and eats whatever ends
+   up inside. Buying the first level of Speed is what brings it into being. */
+const BH={x:0,y:0,ph:0,init:false,fed:0};
+function bhOn(){ return val("pulse")>0; }
+function bhR(){ return (34+val("spread")*6)*S; }
+function bhPull(){ return val("pull")*S; }
+function bhStep(dt){
+  if(!bhOn()) return;
+  if(!BH.init){ BH.x=W*.5; BH.y=(AR.y0+AR.y1)*.5; BH.init=true; }
+  BH.ph+=dt;
+  // two incommensurate rates, so it crosses the whole dish and never repeats
+  BH.x=W*.5+Math.sin(BH.ph*.23)*(W*.31);
+  BH.y=(AR.y0+AR.y1)*.5+Math.sin(BH.ph*.31+1.1)*((AR.y1-AR.y0)*.29);
+  BH.fed*=Math.pow(.06,dt);
+  const R=bhPull();
+  for(const b of balls){
+    const dx=BH.x-b.x, dy=BH.y-b.y, d=Math.hypot(dx,dy);
+    if(d<R&&d>1){ const f=(1-d/R)*170*dt*S; b.vx+=dx/d*f; b.vy+=dy/d*f; }
+  }
+}
+function drawBH(x){
+  if(!bhOn()||!BH.init) return;
+  const r=bhR(), R=bhPull(), k=1+BH.fed*.16;
+  x.save();
+  // its reach, stated faintly — everything inside is fair game
+  x.globalAlpha=.14; x.strokeStyle="#5B3FA8"; x.lineWidth=1.4;
+  x.setLineDash([5*S,7*S]); x.lineDashOffset=-BH.ph*14*S;
+  x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
+  x.setLineDash([]); x.globalAlpha=1;
+  const g=x.createRadialGradient(BH.x,BH.y,r*.75,BH.x,BH.y,r*2.7*k);
+  g.addColorStop(0,"rgba(158,96,255,.44)");
+  g.addColorStop(.45,"rgba(96,62,196,.20)");
+  g.addColorStop(1,"rgba(60,40,140,0)");
+  x.fillStyle=g;
+  x.beginPath(); x.arc(BH.x,BH.y,r*2.7*k,0,TAU); x.fill();
+  // accretion: two arcs, opposite sides, spinning
+  x.strokeStyle="rgba(198,160,255,.9)"; x.lineWidth=Math.max(1.3,r*.15);
+  x.lineCap="round";
+  const a=BH.ph*3.1;
+  x.beginPath(); x.arc(BH.x,BH.y,r*1.30*k,a,a+2.2); x.stroke();
+  x.beginPath(); x.arc(BH.x,BH.y,r*1.30*k,a+Math.PI,a+Math.PI+1.4); x.stroke();
+  // and the hole
+  x.fillStyle="#0B0616";
+  x.beginPath(); x.arc(BH.x,BH.y,r*k,0,TAU); x.fill();
+  x.restore();
+}
+
 /* ---- the camera ---- */
 let camBusy=0;
 function goRoom(to){
@@ -2419,14 +2470,20 @@ function step(dt){
 
   stepWizards(dt);
 
-  // lysis, the autonomous hitter
+  // the black hole: drift, drag, then eat whatever is inside the pull radius
+  bhStep(dt);
   const pr=val("pulse");
   if(pr>0){
     pulseT-=dt;
     if(pulseT<=0&&balls.length){
       pulseT=1/pr;
-      balls.slice().sort((a,b)=>a.tier-b.tier).slice(0,Math.min(val("spread"),balls.length))
-        .forEach((b,i)=>fuses.push({b,t:i*.03,d:val("depth")}));
+      const R=bhPull(), d2=b=>(b.x-BH.x)*(b.x-BH.x)+(b.y-BH.y)*(b.y-BH.y);
+      const inside=balls.filter(b=>d2(b)<R*R).sort((a,b)=>d2(a)-d2(b))
+                        .slice(0,Math.max(1,val("spread")));
+      if(inside.length){
+        BH.fed=Math.min(1.6,BH.fed+.5);
+        inside.forEach((b,i)=>fuses.push({b,t:i*.03,d:val("depth")}));
+      }
     }
   }
 
@@ -2990,6 +3047,7 @@ function draw(){
     }
   }
 
+  drawBH(xFx);          // over the balls it is eating, under the cleave
   drawTrail(xFx,1,.72);
 
   xFx.save();
@@ -3478,7 +3536,7 @@ function sheetCustomise(){
 }
 function sheetWelcome(secs,gain){
   openSheet("☾","While you were away",fmtTime(secs)+" dormant",b=>{
-    b.appendChild(row({ic:"◍",t:"Idle hits kept going",s:"At "+Math.round(val("dorm")*100)+"% offline rate",v:fmt(gain)}));
+    b.appendChild(row({ic:"◍",t:"Idle hits kept going",s:"At "+Math.round(OFFLINE_RATE*100)+"% offline rate",v:fmt(gain)}));
     b.appendChild(row({ic:ICO_MASS,t:"Gold now",s:"Ready to spend",v:fmt(G.bio)}));
     const d=document.createElement("button");
     d.className="dangerBtn"; d.style.borderColor="rgba(255,210,63,.4)"; d.style.color="var(--yellow)";
@@ -3528,7 +3586,7 @@ function offlineCatchUp(){
   if(!G.t) return;
   const secs=clamp((Date.now()-G.t)/1000,0,8*3600);
   if(secs<90) return;
-  const gain=passiveRate()*secs*val("dorm");
+  const gain=passiveRate()*secs*OFFLINE_RATE;
   if(gain<1) return;
   G.bio+=gain; G.earned+=gain; G.totalEarned+=gain;
   setTimeout(()=>sheetWelcome(secs,gain),700);
