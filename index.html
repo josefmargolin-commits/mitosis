@@ -3932,7 +3932,8 @@ function syncTop(){
 /* ---------------------------------------------------------------- sheets */
 let sheetSync=null;
 function openSheet(icon,title,sub,build){
-  $("sheetIcon").textContent=icon;
+  // every sheet passes an inline svg for its icon, so this has to be markup
+  $("sheetIcon").innerHTML=icon;
   $("sheetTitle").textContent=title;
   $("sheetSub").textContent=sub;
   const body=$("sheetBody");
