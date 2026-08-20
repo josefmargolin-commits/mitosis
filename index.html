@@ -3228,6 +3228,9 @@ function sheetSettings(){
     b.appendChild(row({ic:"✦",t:"Spores",s:"From objectives. Spend on powers and looks.",v:fmt(G.spore)}));
     b.appendChild(row({ic:"⌾",t:"Scale",s:"One ball is "+curScale().ball,v:ROMAN[G.strain]+" · "+curScale().n}));
     if(!CAN_STORE) b.appendChild(row({ic:"⚠",t:"Progress is not saving",s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
+    b.appendChild(row({ic:"⧖",t:"Build",
+      s:"If a change is missing, this page is cached — reload after a minute.",
+      v:(document.lastModified||"").replace(/:dd /," ").slice(0,16)}));
     b.appendChild(lbl("Danger"));
     const d=document.createElement("button");
     d.className="dangerBtn"; d.textContent="Reset everything";
