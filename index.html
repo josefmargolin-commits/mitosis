@@ -685,7 +685,12 @@ const TIER=[
 const LAST=TIER.length-1;
 const DROPT=4;
 const NOTE=[92,118,150,190,240,300,380,470];
-const fuseTime=()=>val("fusion");
+const fuseTime=(tier)=>{
+  const base=val("fusion");
+  // small balls move 4.75x faster than big ones, so a flat hold time is a
+  // much harder ask down the ladder — scale it back to match
+  return tier===undefined ? base : base*clamp(1-0.125*(tier-3),.5,1);
+};
 
 /* the balls you buy. taps = hits to break the whole ball at its top size;
    lower tiers need proportionally fewer. mass = total yield of the lineage. */
@@ -2432,7 +2437,7 @@ function step(dt){
       const same=canFuse(a,b);
 
       if(same && d2<seek2 && d2>1){
-        const d=Math.sqrt(d2), f=(1-d/seek)*46*dt;
+        const d=Math.sqrt(d2), f=(1-d/seek)*(46+16*Math.max(0,a.tier-3))*dt;
         a.vx+=dx/d*f; a.vy+=dy/d*f;
         b.vx-=dx/d*f; b.vy-=dy/d*f;
       }
@@ -2442,9 +2447,14 @@ function step(dt){
       if(same && (!a.mate||a.mate===b) && (!b.mate||b.mate===a)){
         // locked together — let them sink into one another instead of bouncing
         a.mate=b; b.mate=a;
-        const pull=120*dt;
+        const pull=(120+26*Math.max(0,a.tier-3))*dt;
         a.vx+=nx*pull; a.vy+=ny*pull;
         b.vx-=nx*pull; b.vy-=ny*pull;
+        // bleed the relative velocity so the pair drifts as one; without this
+        // a fast small pair separates past the tolerance before it can fuse
+        const dm=(1-Math.pow(a.tier>=4?4e-6:0.02,dt))*.5;
+        const rvx=(b.vx-a.vx)*dm, rvy=(b.vy-a.vy)*dm;
+        a.vx+=rvx; a.vy+=rvy; b.vx-=rvx; b.vy-=rvy;
         a.wob=Math.max(a.wob,.05); b.wob=Math.max(b.wob,.05);
         continue;
       }
@@ -2469,10 +2479,10 @@ function step(dt){
     if(!b) continue;
     if(b.gone||b.mate!==a){ unmate(a); continue; }
     const gap=Math.hypot(b.x-a.x,b.y-a.y)-(a.r+b.r);
-    if(gap>Math.min(a.r,b.r)*0.34){ unmate(a); continue; }
+    if(gap>Math.max(Math.min(a.r,b.r)*0.34, 9*S)){ unmate(a); continue; }
     if(a.id>b.id) continue;             // only one of the pair drives the clock
     a.fuseT+=dt; b.fuseT=a.fuseT;
-    if(a.fuseT>=fuseTime()) fuse(a,b);
+    if(a.fuseT>=fuseTime(a.tier)) fuse(a,b);
   }
 
   for(let i=parts.length-1;i>=0;i--){
@@ -2841,7 +2851,7 @@ function draw(){
     // the design stops short of the rim, leaving a flat band of the ball's own
     // colour — that band is what a neck is made of, so merges read seamlessly.
     // While a pair is locked the design dissolves so they finish as one shape.
-    const lock=b.mate?clamp(b.fuseT/fuseTime(),0,1):0;
+    const lock=b.mate?clamp(b.fuseT/fuseTime(b.tier),0,1):0;
     const grow=b.skinFade===undefined?1:clamp((el-b.skinFade)/.34,0,1);
     const skinA=(1-lock)*grow;
     if(skinA>.01){
@@ -2899,7 +2909,7 @@ function draw(){
 
     // the fusion lock: a closing bracket while two of a colour pull together
     if(b.mate && b.id<b.mate.id){
-      const m=b.mate, k=clamp(b.fuseT/fuseTime(),0,1);
+      const m=b.mate, k=clamp(b.fuseT/fuseTime(b.tier),0,1);
       const mx=(b.x+m.x)/2, my=(b.y+m.y)/2;
       xFx.save();
       xFx.globalAlpha=.35+k*.65;
