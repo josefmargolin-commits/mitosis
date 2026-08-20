@@ -2348,7 +2348,14 @@ function step(dt){
     if(b.x<b.r){ b.x=b.r; b.vx=Math.abs(b.vx)*.92; b.wob=Math.max(b.wob,.1); }
     if(b.x>W-b.r){ b.x=W-b.r; b.vx=-Math.abs(b.vx)*.92; b.wob=Math.max(b.wob,.1); }
     if(b.y<AR.y0+b.r){ b.y=AR.y0+b.r; b.vy=Math.abs(b.vy)*.92; b.wob=Math.max(b.wob,.1); }
-    if(b.y>AR.y1-b.r){ b.y=AR.y1-b.r; b.vy=-Math.abs(b.vy)*.92; b.wob=Math.max(b.wob,.1); }
+    if(b.y>AR.y1-b.r){
+      // a rising floor should nudge, not fling — only bounce a ball that was
+      // actually travelling into it
+      const into=b.vy>0;
+      b.y=AR.y1-b.r;
+      if(into){ b.vy=-Math.abs(b.vy)*.92; b.wob=Math.max(b.wob,.1); }
+      else b.vy=Math.min(b.vy,0);
+    }
     b.wob=.019+(b.wob-.019)*Math.pow(.02,dt);
     b.sq*=Math.pow(.0009,dt); b.hit*=Math.pow(.004,dt);
     b.wp+=dt*b.ws*(1+b.wob*10); b.pulse+=dt*3.2;
@@ -3498,12 +3505,21 @@ function actOn(from,to){
   const dock=$("dock"), h=$("dockHandle");
   const apply=()=>dock.classList.toggle("min",!!G.opt.dockMin);
   apply();
+  let tracking=false;
   h.onclick=()=>{
     G.opt.dockMin=!G.opt.dockMin;
     apply(); save(); tick(G.opt.dockMin?420:560,.07); haptic(8);
-    // follow the height while it animates, so the dish grows smoothly
+    // Only the dish floor moves. resize() would reallocate and clear every
+    // canvas on each frame, which is what made this stutter and made the
+    // balls look like they were being reset.
+    if(tracking) return;
+    tracking=true;
     const t0=now();
-    const track=()=>{ resize(); if(now()-t0<340) requestAnimationFrame(track); };
+    const track=()=>{
+      AR.y1=H-dock.offsetHeight;
+      if(now()-t0<430) requestAnimationFrame(track);
+      else { tracking=false; AR.y1=H-dock.offsetHeight; }
+    };
     requestAnimationFrame(track);
   };
 })();
