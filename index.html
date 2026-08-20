@@ -596,10 +596,12 @@ input{font:inherit;color:inherit}
   -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
   transition:opacity .4s;
 }
-#intro.hide{opacity:0}
+/* opacity alone still swallows taps, so the faded intro was eating them */
+#intro.hide{opacity:0;pointer-events:none}
+#intro.hide .panel{pointer-events:none}
 /* one card, so the title and the rules read as a single object rather than
    three things floating in the middle of the dish */
-#intro .card{
+#intro .panel{
   pointer-events:auto;width:100%;max-width:330px;
   background:var(--panel);border:1px solid var(--edge);border-radius:24px;
   padding:26px 22px 22px;text-align:center;
@@ -638,14 +640,14 @@ input{font:inherit;color:inherit}
 /* short windows: landscape phones, small browser panes */
 @media (max-height:600px){
   #intro{padding:14px}
-  #intro .card{padding:18px 16px 16px;gap:11px}
+  #intro .panel{padding:18px 16px 16px;gap:11px}
   #intro h1{font-size:clamp(32px,11vw,44px)}
   #intro .rules li{padding:8px 10px;font-size:11px}
   #begin{padding:12px;font-size:14px}
 }
 @media (max-height:420px){
   #intro .eb,#introHint{display:none}
-  #intro .card{gap:8px}
+  #intro .panel{gap:8px}
   #intro h1{font-size:clamp(26px,9vw,34px)}
   #intro .rules li{padding:7px 9px;font-size:10.5px}
 }
@@ -1076,12 +1078,12 @@ input{font:inherit;color:inherit}
 .acTier .tick{color:#16A34A;flex:none}
 /* ---- welcome back: its own dark screen, not a sheet row ---- */
 #wb{
-  position:absolute;inset:0;z-index:28;display:none;align-items:center;justify-content:center;
+  position:absolute;inset:0;z-index:34;display:none;align-items:center;justify-content:center;
   padding:26px 22px;background:rgba(8,12,22,.82);
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
 }
 #wb.on{display:flex}
-#wb .card{
+#wb .panel{
   width:100%;max-width:330px;border-radius:26px;padding:26px 22px 22px;text-align:center;
   background:linear-gradient(180deg,#151C2B,#111726);
   border:1px solid rgba(255,255,255,.09);
@@ -1213,7 +1215,7 @@ input{font:inherit;color:inherit}
   <div id="banner"></div>
   <div id="toast"></div>
   <div id="frenzy"></div>
-  <div id="wb"><div class="card">
+  <div id="wb"><div class="panel">
     <span class="tile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3.6"/><path d="M12 1.4v3.2M12 19.4v3.2M1.4 12h3.2M19.4 12h3.2"/></svg></span>
     <h2>Welcome back</h2>
     <div class="sub" id="wbRank">Commander</div>
@@ -1241,7 +1243,7 @@ input{font:inherit;color:inherit}
   </div>
 
   <div id="intro">
-    <div class="card">
+    <div class="panel">
       <div class="eb">You are somewhere inside an atom</div>
       <h1>Mitosis</h1>
       <ul class="rules">
