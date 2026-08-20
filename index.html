@@ -355,16 +355,38 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 
 /* prestige card */
 .pcard{
-  flex:1 1 auto;border-radius:13px;padding:10px 13px;
-  background:linear-gradient(120deg,#F2F5FF,#FAF2FF);
-  border:1px solid rgba(47,107,255,.28);
+  flex:1 1 auto;border-radius:15px;padding:11px 13px;
+  background:linear-gradient(125deg,#F4F6FF 0%,#FBF3FF 55%,#FFF6F2 100%);
+  border:1px solid rgba(47,107,255,.22);
+  box-shadow:0 1px 2px rgba(16,22,37,.05);
   display:flex;align-items:center;gap:12px;text-align:left;min-width:0;
+  transition:box-shadow .25s,border-color .25s;
 }
+.pcard.ready{
+  border-color:rgba(232,178,27,.55);
+  box-shadow:0 0 0 2px rgba(232,178,27,.16), 0 2px 10px rgba(232,178,27,.16);
+  animation:readyGlow 2.2s ease-in-out infinite;
+}
+@keyframes readyGlow{50%{box-shadow:0 0 0 4px rgba(232,178,27,.10), 0 2px 14px rgba(232,178,27,.24)}}
+.pcard .prev{
+  flex:none;width:46px;height:46px;border-radius:13px;
+  display:grid;place-items:center;
+  background:rgba(255,255,255,.72);border:1px solid rgba(16,22,37,.07);
+}
+.pcard .prev canvas{position:static;display:block}
 .pcard .l{flex:1;min-width:0}
 .pcard .k{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
-.pcard .t{font-family:"Syne",var(--sym),sans-serif;font-weight:800;font-size:19px;line-height:1.15}
-.pcard .m{font-size:9px;color:var(--ink-2);line-height:1.5;margin-top:2px}
+.pcard .t{font-family:"Archivo",var(--sym),sans-serif;font-weight:800;font-size:20px;
+  line-height:1.1;letter-spacing:-.02em;margin-top:1px}
+.pcard .m{font-size:9.5px;color:var(--ink-2);line-height:1.45;margin-top:2px}
 .pcard .m b{color:var(--orange);font-weight:400}
+.pcard .pgw{display:flex;align-items:center;gap:8px;margin-top:6px}
+.pcard .pg{flex:1;height:5px;border-radius:99px;background:rgba(16,22,37,.09);overflow:hidden;min-width:0}
+.pcard .pg i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .3s}
+.pcard.ready .pg i{background:linear-gradient(90deg,#F5C53A,#E8901B)}
+.pcard .pgn{font-size:8.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;
+  white-space:nowrap;letter-spacing:.02em}
 .pbtn{flex:none;padding:9px 16px;border-radius:11px;background:var(--ink);color:#fff;
   font-family:"Archivo",var(--sym),sans-serif;font-weight:800;font-size:12px;
   letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1.25}
@@ -3055,10 +3077,52 @@ function buy(k){
   if(k==="pulse"&&lv(k)===1) toast("Lysis online — it keeps hitting while you are away");
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
+/* A preview of what a ball looks like at another scale: swap FORM for the
+   render and put it straight back, so the arena is never affected. */
+function scaleBallPreview(idx, size){
+  const sc = SCALES[Math.min(idx, SCALES.length - 1)];
+  const c = document.createElement("canvas");
+  const d = Math.min(devicePixelRatio || 1, 2);
+  c.width = size * d; c.height = size * d;
+  c.style.width = size + "px"; c.style.height = size + "px";
+  const x = c.getContext("2d");
+  x.scale(d, d);
+
+  const keep = FORM;
+  FORM = sc.form;
+  try {
+    const col = PAL()[sc.form.paint === "core" ? 5 : 3];
+    const r = size * 0.36;
+    const fake = { wob: 0.02, wp: 1.1, sq: 0, sqA: 0, rot: 0.5 };
+    x.save();
+    x.translate(size / 2, size / 2);
+    if (FORM.oval !== 1) { x.rotate(0.4); x.scale(1, 1 / FORM.oval); }
+    membrane(x, fake, r);
+    x.fillStyle = col; x.fill();
+    x.save();
+    x.beginPath(); x.arc(0, 0, r * 0.87, 0, TAU); x.clip();
+    scalePaint(x, r, col, -0.35, null);
+    x.restore();
+    membrane(x, fake, r);
+    x.lineWidth = Math.max(1.2, r * 0.075);
+    x.strokeStyle = sc.dark ? shade(col, 0.46) : shade(col, -0.34);
+    x.stroke();
+    x.restore();
+  } finally { FORM = keep; }
+  return c;
+}
+
 function buildStrainCard(c){
   const d=document.createElement("div");
   d.className="pcard";
-  d.innerHTML='<div class="l"><div class="k"></div><div class="t"></div><div class="m"></div></div>';
+  d.innerHTML=
+    '<div class="prev"></div>'+
+    '<div class="l">'+
+      '<div class="k"></div>'+
+      '<div class="t"></div>'+
+      '<div class="m"></div>'+
+      '<div class="pgw"><div class="pg"><i></i></div><span class="pgn"></span></div>'+
+    '</div>';
   const btn=document.createElement("button");
   btn.className="pbtn";
   btn.onclick=()=>{
@@ -3066,22 +3130,37 @@ function buildStrainCard(c){
     else toast("Bank "+fmt(nextScaleCost()-G.earned)+" more before the camera can pull back");
   };
   d.appendChild(btn); c.appendChild(d);
-  PC={card:d, btn, k:d.querySelector(".k"), t:d.querySelector(".t"), m:d.querySelector(".m")};
+  PC={card:d, btn, prev:d.querySelector(".prev"),
+      k:d.querySelector(".k"), t:d.querySelector(".t"), m:d.querySelector(".m"),
+      bar:d.querySelector(".pg i"), num:d.querySelector(".pgn")};
+  PC.shown=-1;
   syncStrainCard();
 }
 function syncStrainCard(){
   if(!PC||!PC.card.isConnected) return;
-  const cur=curScale(), nx=SCALES[Math.min(G.strain+1,SCALES.length-1)];
-  const at=G.strain>=SCALES.length-1, need=nextScaleCost(), ok=canPrestige();
+  const cur=curScale(), at=G.strain>=SCALES.length-1;
+  const nxi=Math.min(G.strain+1,SCALES.length-1), nx=SCALES[nxi];
+  const need=nextScaleCost(), ok=canPrestige();
+  const pct=at?1:clamp(G.earned/need,0,1);
+
+  if(PC.shown!==nxi){                     // only redraw the ball when it changes
+    PC.shown=nxi;
+    PC.prev.innerHTML="";
+    PC.prev.appendChild(scaleBallPreview(at?G.strain:nxi,46));
+  }
   PC.k.textContent=at?"Widest view":"Go up to";
   PC.t.textContent=at?cur.n:nx.n;
   PC.m.innerHTML=at
-    ? "One ball is "+cur.ball+". There is nothing further out."
-    : "One ball becomes <b>"+nx.ball+"</b> · yield <b>×"+fmt(nx.mult)+"</b><br>"+
-      "Banked <b>"+fmt(Math.min(G.earned,need))+"</b> of "+fmt(need)+" at this scale";
+    ? "One ball is "+cur.ball+". Nothing further out."
+    : "One ball becomes <b>"+nx.ball+"</b> · yield <b>×"+fmt(nx.mult)+"</b>";
+  PC.bar.style.width=(pct*100).toFixed(1)+"%";
+  PC.num.textContent=at?"complete":(fmt(Math.min(G.earned,need))+" / "+fmt(need));
+  PC.card.classList.toggle("ready",ok);
   PC.btn.className="pbtn"+(ok?"":" no");
-  PC.btn.innerHTML=at ? "Complete" : "Go up<small>◉ "+fmt(need)+"</small>";
+  PC.btn.innerHTML=at ? "Complete"
+    : (ok ? "Go up<small>ready</small>" : "Go up<small>◉ "+fmt(need)+"</small>");
 }
+
 function syncTop(){
   $("bioN").textContent=fmt(G.bio);
   $("sporeN").textContent=fmt(G.spore);
