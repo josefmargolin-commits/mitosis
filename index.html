@@ -289,14 +289,30 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ============ dock ============ */
+#dockHandle{
+  position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  width:60px;height:30px;border-radius:15px 15px 0 0;
+  background:var(--panel);border:1px solid var(--edge);border-bottom:0;
+  box-shadow:0 -3px 10px rgba(16,22,37,.07);
+  display:grid;place-items:center;z-index:2;padding-bottom:2px;
+}
+#dockHandle svg{width:18px;height:18px;stroke:var(--ink-2);fill:none;
+  stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .26s cubic-bezier(.3,.8,.3,1)}
+#dock.min #dockHandle svg{transform:rotate(180deg)}
+#dockHandle:active{transform:translateX(-50%) scale(.94)}
 #dock{
   position:absolute;z-index:5;left:0;right:0;bottom:0;
   height:calc(var(--dock-h) + env(safe-area-inset-bottom));
+  transition:height .26s cubic-bezier(.3,.8,.3,1);
   background:var(--panel);border-top:1px solid var(--edge);box-shadow:var(--shadow-up);
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
 #tabs{display:flex;height:38px;flex:none;border-bottom:1px solid var(--edge);
-  overflow-x:auto;scrollbar-width:none}
+  overflow-x:auto;scrollbar-width:none;transition:opacity .16s}
+#dock.min{height:calc(16px + env(safe-area-inset-bottom))}
+#dock.min #tabs,#dock.min #cards{opacity:0;visibility:hidden;pointer-events:none}
+#cards{transition:opacity .16s}
 #tabs::-webkit-scrollbar{display:none}
 .tab{
   flex:1 0 auto;min-width:0;padding:0 8px;
@@ -530,6 +546,9 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
       <div id="dock">
+        <button id="dockHandle" aria-label="Show or hide upgrades">
+          <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
+        </button>
         <nav id="tabs"></nav>
         <div id="cards"></div>
       </div>
@@ -778,7 +797,7 @@ function freshState(){
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
     obj:null, objDone:0,
-    opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true},
+    opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
   };
@@ -1130,6 +1149,24 @@ function tick(f,vol){ try{
 }catch(e){ Sn.dead=true; } }
 
 /* every voice lands on a pentatonic step, so a cascade plays a run */
+let audioPrimed=false;
+function unlockAudio(){
+  const c=actx(); if(!c) return;
+  if(c.state!=="running"){ try{ c.resume(); }catch(e){} }
+  if(!audioPrimed){
+    // iOS only really wakes up once a buffer has actually been played
+    try{
+      const b=c.createBuffer(1,1,22050);
+      const src=c.createBufferSource();
+      src.buffer=b; src.connect(Sn.master||c.destination); src.start(0);
+      audioPrimed=true;
+    }catch(e){}
+  }
+}
+addEventListener("pointerdown",unlockAudio,{passive:true,capture:true});
+addEventListener("touchstart",unlockAudio,{passive:true,capture:true});
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) unlockAudio(); });
+
 const LADDER=[0,2,4,7,9,12,14,16,19,21,24,26,28,31,33,36];
 const semi=n=>Math.pow(2,n/12);
 const noteStep=()=>LADDER[Math.min(combo,LADDER.length-1)];
@@ -1667,7 +1704,7 @@ function buildWizGrid(){
   layoutWizards();
 }
 function layoutWizards(){
-  if(!wgridEl||!wgridEl.children.length) return;
+  if(!wgridEl||!wgridEl.children.length||camBusy>0) return;
   const root=document.documentElement;
   // square cells: whichever of width or height is tighter decides the size
   const sr=document.getElementById("wizStage").getBoundingClientRect();
@@ -2220,7 +2257,7 @@ let camBusy=0;
 function goRoom(to){
   if(room===to) return;
   room=to; camBusy=1;
-  setTimeout(()=>{ camBusy=0; },420);
+  setTimeout(()=>{ camBusy=0; if(to==="wiz"){ layoutWizards(); syncWizGrid(); } },440);
   world.classList.add("slide");
   world.style.setProperty("--cam", to==="wiz"?"0%":"-50%");
   document.documentElement.style.setProperty("--chrome-b",
@@ -2879,9 +2916,10 @@ function frame(t){
   if(dt>.028){ if(++slowN>60&&G.opt.goo){ app.classList.add("lowfx"); slowN=-1e9; } }
   else if(slowN>0) slowN--;
   stepCele(dt); drawCele();
-  if(freeze>0){ freeze-=dt; if(room==="arena") draw(); drawWizards(); return; }
+  const showArena = room==="arena" || camBusy>0;
+  if(freeze>0){ freeze-=dt; if(showArena) draw(); drawWizards(); return; }
   step(dt);
-  if(room==="arena") draw();
+  if(showArena) draw();
   drawWizards();
 }
 
@@ -3279,6 +3317,13 @@ function begin(){
     setTimeout(()=>toast("Swipe across balls to cleave a whole line"),2600);
     setTimeout(()=>toast("Tap the arrow up top — your wizards live up there"),6400);
   }
+  unlockAudio();
+  setTimeout(()=>{
+    if(!G.opt.sound) return;
+    const c=Sn.ctx;
+    if(!c||c.state!=="running"||Sn.dead)
+      toast("No sound? Tap once more — and check the side switch is not on silent");
+  },1500);
   offlineCatchUp();
   save();
 }
@@ -3370,6 +3415,19 @@ function actOn(from,to){
   wgridEl.addEventListener("pointercancel",()=>{ down=-1; id=null; wizDrag=-1; dragOver=-1; clearDragHint(); syncWizGrid(); });
 })();
 
+(function dockToggle(){
+  const dock=$("dock"), h=$("dockHandle");
+  const apply=()=>dock.classList.toggle("min",!!G.opt.dockMin);
+  apply();
+  h.onclick=()=>{
+    G.opt.dockMin=!G.opt.dockMin;
+    apply(); save(); tick(G.opt.dockMin?420:560,.07); haptic(8);
+    // follow the height while it animates, so the dish grows smoothly
+    const t0=now();
+    const track=()=>{ resize(); if(now()-t0<340) requestAnimationFrame(track); };
+    requestAnimationFrame(track);
+  };
+})();
 document.getElementById("goUp").onclick=()=>goRoom("wiz");
 document.getElementById("goDown").onclick=()=>goRoom("arena");
 /* swipe down works in the wizard room; the arena keeps swipe for cleaving */
