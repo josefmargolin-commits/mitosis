@@ -835,14 +835,11 @@ const UP={
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
-           d:"How often the black hole strikes. Buy the first one and it appears.",
+           d:"How fast it moves and how quickly it can swallow the next one. Buy the first level and it appears.",
            v:l=>l*0.16, fmt:l=>(l*0.16).toFixed(2)+"/s"},
-  depth:  {tab:"lysis",g:"◎",nm:"Damage", base:300,gr:1.30, max:40,
-           d:"Damage the black hole does with each hit.",
-           v:l=>1+Math.floor(l/8), fmt:l=>(1+Math.floor(l/8))+" dmg"},
-  spread: {tab:"lysis",g:"⁙",nm:"Targets",base:480,gr:1.32, max:36,
-           d:"Balls it hits at the same time. Also makes it bigger.",
-           v:l=>1+Math.floor(l/6), fmt:l=>(1+Math.floor(l/6))+" balls"},
+  size:   {tab:"lysis",g:"◎",nm:"Size",  base:6000,gr:6.2,  max:7,
+           d:"How big it is. It can only swallow balls its own size or smaller, so every level opens up the next size up.",
+           v:l=>l, fmt:l=>"eats "+(l+1)+" size"+(l?"s":"")},
   pull:   {tab:"lysis",g:"◌",nm:"Pull",  base:220,gr:1.28, max:44,
            d:"How far it drags balls in from. Anything inside is in range to be hit.",
            v:l=>150+l*20, fmt:l=>Math.round(150+l*20)+"px"},
@@ -850,9 +847,6 @@ const UP={
   fusion: {tab:"field",g:"⊕",nm:"Merge", base:60, gr:1.20, max:40,
            d:"Two balls of the same colour that touch turn into one bigger ball. This is the wait before that happens.",
            v:l=>Math.max(0.12,0.42*Math.pow(0.955,l)), fmt:l=>Math.max(0.12,0.42*Math.pow(0.955,l)).toFixed(2)+"s"},
-  attract:{tab:"field",g:"◑",nm:"Seek",base:75,gr:1.19, max:44,
-           d:"How far balls of the same colour drift toward each other on their own.",
-           v:l=>72+l*10, fmt:l=>Math.round(72+l*10)+"px"},
   // a global multiplier on every source of income cannot also be the cheapest
   // and longest track in the game. Diminishing returns, steeper cost, half the
   // levels: it still ends up the biggest single buy, without eclipsing the rest.
@@ -862,9 +856,6 @@ const UP={
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
            d:"Balls drift toward your finger while you hold it down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
-  chain:  {tab:"field",g:"⌁",nm:"Spread", base:190,gr:1.23, max:44,
-           d:"Chance a split jumps to a nearby ball.",
-           v:l=>Math.min(.7,l*.016), fmt:l=>(Math.min(70,l*1.6)).toFixed(0)+"%"},
   reson:  {tab:"field",g:"≋",nm:"Streak",base:150,gr:1.22,max:50,
            d:"Your combo lasts longer and each link pays more.",
            v:l=>l, fmt:l=>"+"+(l*4)+"%"},
@@ -893,8 +884,8 @@ const OBJPOOL=[
 ];
 
 /* ---- achievements ------------------------------------------------------
-   Objectives rotate and pay spores. These are fixed, permanent, and pay in
-   things you keep — gold, spores, and every cosmetic in the game, so the
+   Objectives rotate and pay shards. These are fixed, permanent, and pay in
+   things you keep — gold, shards, and every cosmetic in the game, so the
    whole wardrobe is reachable by playing rather than only by spending. */
 const ACHV=[
   {k:"splits", ic:"\u2725", nm:"Splitter", t:n=>"Split "+fmt(n)+" balls",
@@ -934,7 +925,7 @@ function achAny(){ return ACHV.some(achClaimable); }
 function achGive(r){
   const bits=[];
   if(r.g){ G.bio+=r.g; G.earned+=r.g; G.totalEarned+=r.g; bits.push(fmt(r.g)+" gold"); }
-  if(r.sp){ G.spore+=r.sp; bits.push(r.sp+" spores"); }
+  if(r.sp){ G.spore+=r.sp; bits.push(r.sp+" shards"); }
   if(r.skin&&!G.ownSkin.includes(r.skin)){
     G.ownSkin.push(r.skin); bits.push((SKINS.find(x=>x.id===r.skin)||{}).nm+" skin"); }
   if(r.trail&&!G.ownTrail.includes(r.trail)){
@@ -966,7 +957,7 @@ function freshState(){
     pw:{}, boost:{},
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
-    obj:null, objDone:0, achv:{},
+    obj:null, objDone:0, achv:{}, ad:{},
     opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
@@ -980,7 +971,7 @@ function load(){
     m.up=Object.assign(f.up,s.up||{});
     m.opt=Object.assign(f.opt,s.opt||{});
     m.stat=Object.assign(f.stat,s.stat||{});
-    m.achv=s.achv||{};
+    m.achv=s.achv||{}; m.ad={};   // cooldowns are per session
     m.pw=s.pw||{}; m.boost=s.boost||{};
     if(!Array.isArray(m.wiz)||m.wiz.length!==16) m.wiz=Array(16).fill(null);
     if(!Array.isArray(m.wlvl)||m.wlvl.length!==6) m.wlvl=[0,0,0,0,0,0];
@@ -997,6 +988,9 @@ const curScale=()=>SCALES[Math.min(G.strain,SCALES.length-1)];
 /* a rewarded-ad window. The multiplier and the countdown are real; only the
    ad call itself is stubbed, since no ad SDK can load inside one HTML file. */
 let x2Until=0;
+/* one cooldown per reward so a watch is worth something */
+function adReady(k){ return !G.ad || !G.ad[k] || G.ad[k]<=el; }
+function adWait(k){ return Math.ceil((G.ad[k]-el)/60)+"m"; }
 const x2On=()=>x2Until>el;
 const yieldMul=()=>val("yield")*curScale().mult*(x2On()?2:1);
 const comboMul=()=>1+combo*0.05*(1+val("reson")*0.04);
@@ -1518,7 +1512,7 @@ function divide(b){
   const casc=val("cascade");
   for(const k of kids){
     if(Math.random()<casc) fuses.push({b:k,t:.05+Math.random()*.04,d:999});
-    else if(Math.random()<val("chain")+(timers.chain>0?1:0)){
+    else if(timers.chain>0){                 // now only the Chain power does this
       const n=nearest(k.x,k.y,b.r*3.4,k);
       if(n) fuses.push({b:n,t:.06+Math.random()*.06,d:999});
     }
@@ -1665,7 +1659,7 @@ function firePower(p){
   const s=pwState(p);
   if(!s.owned){
     if(G.spore>=p.cost){ G.spore-=p.cost; s.owned=true; toast(p.nm+" unlocked"); save(); }
-    else toast("Needs "+p.cost+" spores");
+    else toast("Needs "+p.cost+" shards");
     return;
   }
   if(s.cd>0){ toast(p.nm+" recharging — "+Math.ceil(s.cd)+"s"); return; }
@@ -1721,7 +1715,7 @@ function objProg(k,amt,abs){
   for(const o of G.obj){
     if(o.k!==k||o.done) continue;
     o.prog=abs!==undefined?Math.max(o.prog,abs):o.prog+amt;
-    if(o.prog>=o.goal){ o.prog=o.goal; o.done=true; alertOrb("obj",true); toast("Objective complete"); }
+    if(o.prog>=o.goal){ o.prog=o.goal; o.done=true; alertOrb("ach",true); toast("Goal complete"); }
   }
 }
 function objLabel(o){ return (OBJPOOL.find(p=>p.k===o.k)||OBJPOOL[0]).t(o.goal); }
@@ -2442,22 +2436,51 @@ function wizPortrait(rank,size){
    balls wherever they happened to be. Now it is a thing in the dish that you
    can watch. It wanders, drags what is near it inward, and eats whatever ends
    up inside. Buying the first level of Speed is what brings it into being. */
-const BH={x:0,y:0,ph:0,init:false,fed:0};
+const BH={x:0,y:0,vx:0,vy:0,ph:0,eatT:0,init:false,fed:0};
 function bhOn(){ return val("pulse")>0; }
-function bhR(){ return (34+val("spread")*6)*S; }
+// tier indices run big-to-small, so LAST is the lime rung it starts on and
+// every Size level lets it reach one rung further up the ladder
+function bhTier(){ return Math.max(0, LAST - val("size")); }
+function bhR(){ return tierRadius(bhTier(), WRANK[0])*0.92; }
 function bhPull(){ return val("pull")*S; }
 function bhStep(dt){
   if(!bhOn()) return;
-  if(!BH.init){ BH.x=W*.5; BH.y=(AR.y0+AR.y1)*.5; BH.init=true; }
+  const r=bhR();
+  if(!BH.init){
+    BH.x=W*.5; BH.y=(AR.y0+AR.y1)*.5;
+    const a=rnd(0,TAU); BH.vx=Math.cos(a); BH.vy=Math.sin(a);
+    BH.init=true;
+  }
   BH.ph+=dt;
-  // two incommensurate rates, so it crosses the whole dish and never repeats
-  BH.x=W*.5+Math.sin(BH.ph*.23)*(W*.31);
-  BH.y=(AR.y0+AR.y1)*.5+Math.sin(BH.ph*.31+1.1)*((AR.y1-AR.y0)*.29);
+  // it travels like a ball: constant speed, reflecting off the dish
+  const spd=(70+val("pulse")*14)*S;
+  BH.x+=BH.vx*spd*dt; BH.y+=BH.vy*spd*dt;
+  if(BH.x<r){ BH.x=r; BH.vx=Math.abs(BH.vx); }
+  if(BH.x>W-r){ BH.x=W-r; BH.vx=-Math.abs(BH.vx); }
+  if(BH.y<AR.y0+r){ BH.y=AR.y0+r; BH.vy=Math.abs(BH.vy); }
+  if(BH.y>AR.y1-r){ BH.y=AR.y1-r; BH.vy=-Math.abs(BH.vy); }
   BH.fed*=Math.pow(.06,dt);
   const R=bhPull();
   for(const b of balls){
     const dx=BH.x-b.x, dy=BH.y-b.y, d=Math.hypot(dx,dy);
     if(d<R&&d>1){ const f=(1-d/R)*170*dt*S; b.vx+=dx/d*f; b.vy+=dy/d*f; }
+  }
+  // one at a time, and only what it is big enough for
+  BH.eatT-=dt;
+  if(BH.eatT<=0){
+    const maxT=bhTier(); let best=null, bd=1e9;
+    for(const b of balls){
+      if(b.tier<maxT||b.gone) continue;          // smaller index = bigger ball
+      // its mouth is wider than its body, or a lime-sized hole would need a
+      // ball centred inside 9px and would never actually catch anything
+      const d=Math.hypot(b.x-BH.x,b.y-BH.y);
+      if(d<r*1.9+b.r && d<bd){ bd=d; best=b; }
+    }
+    if(best){
+      BH.eatT=1/Math.max(.6,val("pulse"));
+      BH.fed=1.4;
+      fuses.push({b:best,t:0,d:best.maxHp*4});   // swallowed whole
+    }
   }
 }
 function drawBH(x){
@@ -2469,18 +2492,20 @@ function drawBH(x){
   x.setLineDash([5*S,7*S]); x.lineDashOffset=-BH.ph*14*S;
   x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
   x.setLineDash([]); x.globalAlpha=1;
-  const g=x.createRadialGradient(BH.x,BH.y,r*.75,BH.x,BH.y,r*2.7*k);
+  const glow=Math.max(r*2.9*k,15*S);
+  const g=x.createRadialGradient(BH.x,BH.y,r*.6,BH.x,BH.y,glow);
   g.addColorStop(0,"rgba(158,96,255,.44)");
   g.addColorStop(.45,"rgba(96,62,196,.20)");
   g.addColorStop(1,"rgba(60,40,140,0)");
   x.fillStyle=g;
-  x.beginPath(); x.arc(BH.x,BH.y,r*2.7*k,0,TAU); x.fill();
+  x.beginPath(); x.arc(BH.x,BH.y,glow,0,TAU); x.fill();
   // accretion: two arcs, opposite sides, spinning
-  x.strokeStyle="rgba(198,160,255,.9)"; x.lineWidth=Math.max(1.3,r*.15);
+  x.strokeStyle="rgba(198,160,255,.9)"; x.lineWidth=Math.max(1.1,r*.22);
   x.lineCap="round";
   const a=BH.ph*3.1;
-  x.beginPath(); x.arc(BH.x,BH.y,r*1.30*k,a,a+2.2); x.stroke();
-  x.beginPath(); x.arc(BH.x,BH.y,r*1.30*k,a+Math.PI,a+Math.PI+1.4); x.stroke();
+  const ar=Math.max(r*1.42*k,6*S);
+  x.beginPath(); x.arc(BH.x,BH.y,ar,a,a+2.2); x.stroke();
+  x.beginPath(); x.arc(BH.x,BH.y,ar,a+Math.PI,a+Math.PI+1.4); x.stroke();
   // and the hole
   x.fillStyle="#0B0616";
   x.beginPath(); x.arc(BH.x,BH.y,r*k,0,TAU); x.fill();
@@ -2534,22 +2559,8 @@ function step(dt){
 
   stepWizards(dt);
 
-  // the black hole: drift, drag, then eat whatever is inside the pull radius
+  // the black hole drifts, drags, and swallows on contact
   bhStep(dt);
-  const pr=val("pulse");
-  if(pr>0){
-    pulseT-=dt;
-    if(pulseT<=0&&balls.length){
-      pulseT=1/pr;
-      const R=bhPull(), d2=b=>(b.x-BH.x)*(b.x-BH.x)+(b.y-BH.y)*(b.y-BH.y);
-      const inside=balls.filter(b=>d2(b)<R*R).sort((a,b)=>d2(a)-d2(b))
-                        .slice(0,Math.max(1,val("spread")));
-      if(inside.length){
-        BH.fed=Math.min(1.6,BH.fed+.5);
-        inside.forEach((b,i)=>fuses.push({b,t:i*.03,d:val("depth")}));
-      }
-    }
-  }
 
   // motion
   const mag=val("magnet")*S;
@@ -2583,7 +2594,7 @@ function step(dt){
 
   // one pass for both jobs: same-colour balls reach for each other and fuse,
   // everything else just bumps
-  const seek=val("attract")*S, seek2=seek*seek;
+  const seek=190*S, seek2=seek*seek;   // fixed: this was the Seek card
   // sweep and prune on x: with a dish full of small balls the old all-pairs
   // loop was the frame budget. sorted order also means we can stop early.
   balls.sort((p,q)=>(p.x-p.r)-(q.x-q.r));
@@ -3250,7 +3261,6 @@ function buildRails(){
   for(const it of [
     {id:"set",svg:ICONS.gear,fn:sheetSettings},
     {id:"stat",svg:ICONS.chart,fn:sheetStats},
-    {id:"obj",svg:ICONS.flag,fn:sheetObjectives},
     {id:"ach",svg:ICONS.trophy,fn:sheetAchievements},
     {id:"shop",svg:ICONS.bag,fn:sheetShop},
     {id:"cos",svg:ICONS.brush,fn:sheetCustomise},
@@ -3297,8 +3307,7 @@ function syncRails(){
     if(s.cd>0){ cd.style.display="grid"; cd.textContent=Math.ceil(s.cd); }
     else cd.style.display="none";
   }
-  alertOrb("obj",!!(G.obj&&G.obj.some(o=>o.done)));
-  alertOrb("ach",achAny());
+  alertOrb("ach",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
 }
 
 function buildTabs(){
@@ -3509,12 +3518,29 @@ function sheetShop(){
     const left=Math.max(0,Math.ceil(x2Until-el));
     b.appendChild(row({ic:"◑",t:x2On()?"Double gold is running":"Watch an ad for double gold",
       s:x2On()?left+"s left":"Everything pays twice as much for sixty seconds.",
-      btn:x2On()?left+"s":"Watch", btnOn:!x2On(),
-      fn:x2On()?null:function(){
+      btn:x2On()?left+"s":(adReady("x2")?"Watch":adWait("x2")), btnOn:!x2On()&&adReady("x2"),
+      fn:(x2On()||!adReady("x2"))?null:function(){
         // the reward loop is real; swap this line for the SDK callback in a
         // store build, because no ad network can load inside one HTML file
-        x2Until=el+60; toast("Double gold for 60s"); sheetSync&&sheetSync();
+        x2Until=el+60; G.ad.x2=el+300;
+        toast("Double gold for 60s"); sheetSync&&sheetSync();
       }}));
+
+    b.appendChild(row({ic:ICO_MASS,t:"Watch an ad for gold",
+      s:"A lump scaled to what you are earning now.",
+      btn:adReady("gold")?"Watch":adWait("gold"), btnOn:adReady("gold"),
+      fn:adReady("gold")?function(){
+        const v=Math.max(500,passiveRate()*240+throughput()*120);
+        G.bio+=v; G.earned+=v; G.totalEarned+=v; G.ad.gold=el+300;
+        toast("+"+fmt(v)+" gold"); save(); syncTop(); sheetSync&&sheetSync();
+      }:null}));
+    b.appendChild(row({ic:ICO_SPORE,t:"Watch an ad for shards",
+      s:"Three shards. Once every five minutes.",
+      btn:adReady("sp")?"Watch":adWait("sp"), btnOn:adReady("sp"),
+      fn:adReady("sp")?function(){
+        G.spore+=3; G.ad.sp=el+300;
+        toast("+3 shards"); save(); syncTop(); sheetSync&&sheetSync();
+      }:null}));
 
     b.appendChild(lbl("Powers"));
     for(const p of POWERS){
@@ -3523,17 +3549,17 @@ function sheetShop(){
       b.appendChild(row({ic:p.g,t:p.nm,s:p.d+" · "+p.cd+"s cooldown",
         btn:st.owned?"Owned":ICO_SPORE+p.cost, btnOn:!st.owned,
         fn:st.owned?null:function(){
-          if(G.spore<p.cost){ toast("Needs "+p.cost+" spores"); return; }
+          if(G.spore<p.cost){ toast("Needs "+p.cost+" shards"); return; }
           G.spore-=p.cost; st.owned=true; toast(p.nm+" unlocked");
           save(); syncTop(); buildRails(); syncRails();
         }}));
     }
 
-    b.appendChild(lbl("Gold and artifacts"));
+    b.appendChild(lbl("Buy outright"));
     for(const it of [
       {ic:"◉",t:"Pouch of gold",   s:"A leg-up when a scale is dragging."},
       {ic:"◉",t:"Chest of gold",   s:"Ten times the pouch."},
-      {ic:"✦",t:"Artifact shards", s:"The premium currency, bought outright."},
+      {ic:"✦",t:"Shard bundle",    s:"A pile of shards, bought outright."},
     ]) b.appendChild(row({ic:it.ic,t:it.t,s:it.s,btn:"Soon",btnOn:false}));
     const n=document.createElement("div");
     n.className="wpHint";
@@ -3544,7 +3570,10 @@ function sheetShop(){
 }
 function sheetAchievements(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.trophy+'</svg>',
-    "Achievements","Permanent, and they pay",b=>{
+    "Goals","Rotating and permanent",b=>{
+    b.appendChild(lbl("Right now — three at a time"));
+    objRows(b);
+    b.appendChild(lbl("Permanent"));
     for(const a of ACHV){
       const done=achDone(a), all=done>=a.tiers.length;
       const goal=all?a.tiers[a.tiers.length-1]:a.tiers[done];
@@ -3562,7 +3591,8 @@ function sheetAchievements(){
           G.achv[a.k]=done+1;
           const got=achGive(r);
           toast(a.nm+" \u2014 "+got);
-          save(); syncTop(); buildCards(); alertOrb("ach",achAny());
+          save(); syncTop(); buildCards();
+          alertOrb("ach",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
         }:null
       }));
     }
@@ -3577,7 +3607,7 @@ function sheetSettings(){
       fn:()=>{G.opt.haptic=!G.opt.haptic; save();}}));
     b.appendChild(row({ic:"◱",t:"Screen shake",s:"Screen kicks on big breaks",sw:G.opt.shake,
       fn:()=>{G.opt.shake=!G.opt.shake; save();}}));
-    b.appendChild(row({ic:"∞",t:"Sandbox",s:"Unlimited money and every scale unlocked. For testing — turn off for a real run.",sw:G.opt.sandbox,
+    b.appendChild(row({ic:"∞",t:"Sandbox",s:"Unlimited gold and shards, every scale unlocked. For testing — turn off for a real run.",sw:G.opt.sandbox,
       fn:()=>{G.opt.sandbox=!G.opt.sandbox; save();}}));
     if(!CAN_STORE) b.appendChild(row({ic:"⚠",t:"Progress is not saving",s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
     b.appendChild(row({ic:"?",t:"How to play",s:"Replay the three-step walkthrough.",
@@ -3613,9 +3643,9 @@ function sheetStats(){
     ]) b.appendChild(row({ic:i,t,v}));
   });
 }
-function sheetObjectives(){
+function objRows(b){
   if(!G.obj) rollObjectives();
-  openSheet("⚑","Objectives","Three at a time",b=>{
+  {
     for(const o of G.obj){
       b.appendChild(row({
         ic:o.done?"✓":"○", t:objLabel(o),
@@ -3633,7 +3663,7 @@ function sheetObjectives(){
           const p=pool[(Math.random()*pool.length)|0]||OBJPOOL[0];
           G.obj.push({k:p.k,goal:p.goals[tier],prog:0,sp:p.sp+tier,done:false});
           celebrate(this, 46+o.sp*5, "#F5B301", document.querySelector("#sporeWrap .pip"));
-          banner("+"+o.sp+" SPORES");
+          banner("+"+o.sp+" SHARDS");
           chime(523,{vol:.16,len:.9,wet:.5});
           chime(659,{vol:.13,len:.85,delay:.07,wet:.5});
           chime(784,{vol:.11,len:.9,delay:.14,wet:.55});
@@ -3644,9 +3674,8 @@ function sheetObjectives(){
         }
       }));
     }
-    b.appendChild(lbl("Completed"));
-    b.appendChild(row({ic:"✓",t:"Objectives cleared",s:"Goals scale every six",v:fmt(G.objDone)}));
-  });
+    b.appendChild(row({ic:"✓",t:"Goals cleared",s:"They get bigger every six",v:fmt(G.objDone)}));
+  }
 }
 function sheetCustomise(){
   openSheet("◑","Your Balls","Cleave colour and powers",b=>{
@@ -3660,10 +3689,26 @@ function sheetCustomise(){
           if(sel) return;
           if(own){ G.trail=t.id; save(); }
           else if(G.spore>=t.cost){ G.spore-=t.cost; G.ownTrail.push(t.id); G.trail=t.id; toast(t.nm+" unlocked"); save(); }
-          else toast("Needs "+t.cost+" spores");
+          else toast("Needs "+t.cost+" shards");
         }
       }));
     }
+
+    b.appendChild(row({ic:ICO_MASS,t:"Watch an ad for gold",
+      s:"A lump scaled to what you are earning now.",
+      btn:adReady("gold")?"Watch":adWait("gold"), btnOn:adReady("gold"),
+      fn:adReady("gold")?function(){
+        const v=Math.max(500,passiveRate()*240+throughput()*120);
+        G.bio+=v; G.earned+=v; G.totalEarned+=v; G.ad.gold=el+300;
+        toast("+"+fmt(v)+" gold"); save(); syncTop(); sheetSync&&sheetSync();
+      }:null}));
+    b.appendChild(row({ic:ICO_SPORE,t:"Watch an ad for shards",
+      s:"Three shards. Once every five minutes.",
+      btn:adReady("sp")?"Watch":adWait("sp"), btnOn:adReady("sp"),
+      fn:adReady("sp")?function(){
+        G.spore+=3; G.ad.sp=el+300;
+        toast("+3 shards"); save(); syncTop(); sheetSync&&sheetSync();
+      }:null}));
 
     b.appendChild(lbl("Powers"));
     for(const p of POWERS){
@@ -3688,8 +3733,7 @@ function passiveRate(){ return throughput()*0.55; }
 function passiveRateOld(){
   const rate=val("pulse"); if(rate<=0) return 0;
   const cls=bestBall();
-  const hitsPerBreak=cls.taps*2.6/Math.max(1,val("depth"));
-  return rate*val("spread")/Math.max(1,hitsPerBreak)*cls.mass*0.34*yieldMul();
+  return rate*cls.mass*0.34*yieldMul();
 }
 
 /* ---------------------------------------------------------------- boot */
