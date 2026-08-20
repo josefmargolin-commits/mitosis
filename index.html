@@ -225,8 +225,12 @@ input{font:inherit;color:inherit}
 }
 .cur{display:flex;align-items:center;gap:7px;pointer-events:auto}
 .pip{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}
-.pip.bio{background:linear-gradient(140deg,#F7D45B,#D99B0E)}
-.pip.bio svg{fill:#8A5B00}
+/* the money reads as money: a banknote on pale green, the amount in deep
+   green and set much larger than anything else on the bar */
+.pip.bio{background:#D9F5E1;border-radius:9px;width:30px;height:24px}
+.pip.bio svg{fill:#177A3C;width:19px;height:19px}
+#bioWrap .n{color:#14532D;font-size:31px;letter-spacing:-.038em}
+#bioWrap .n .u{opacity:.62;font-size:.5em}
 .pip.spore{background:linear-gradient(140deg,var(--blue),var(--purple))}
 .cur .n{font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:23px;line-height:1;
   letter-spacing:-.032em;font-variant-numeric:tabular-nums lining-nums;
@@ -391,9 +395,10 @@ input{font:inherit;color:inherit}
   transition:transform .1s,border-color .15s,background .15s;text-align:center;
 }
 .card:active{transform:scale(.95)}
-.card.afford{border-color:rgba(232,162,0,.6);background:#FFFBF0}
+.card.afford{border-color:rgba(34,197,94,.55);background:#F2FDF6}
 .card.maxed{border-color:rgba(15,185,129,.5);background:#F0FCF8}
-.card .lv{position:absolute;top:5px;right:6px;font-size:8px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.card .lv{position:absolute;top:5px;right:7px;font-size:8.5px;color:var(--ink-3);
+  font-variant-numeric:tabular-nums;font-weight:600}
 .card .g{font-size:15px;line-height:1;color:var(--ink)}
 /* the level ring: progressive, so a card shows how far along it is at a glance */
 .card .gw{position:relative;width:30px;height:30px;display:grid;place-items:center;
@@ -406,11 +411,14 @@ input{font:inherit;color:inherit}
   stroke-dasharray:106.81;stroke-dashoffset:106.81;
   transition:stroke-dashoffset .5s cubic-bezier(.2,.9,.25,1),stroke .3s}
 .card.maxed .rfg{stroke:var(--mint)}
-.card .nm{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);line-height:1.2}
+.card.afford .rfg{stroke:#22C55E}
+.card .nm{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-2);
+  line-height:1.2;font-weight:600}
 .card .ef{font-size:9px;color:var(--ink);line-height:1.2;font-variant-numeric:tabular-nums}
-.card .ct{margin-top:auto;font-size:10px;font-weight:500;color:var(--ink-3);
+.card .ct{margin-top:auto;font-size:12px;font-weight:700;color:var(--ink);
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;
   font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:3px}
-.card.afford .ct{color:var(--yellow)}
+.card.afford .ct{color:#15803D}
 .card.maxed .ct{color:var(--mint)}
 .card .ct i{width:7px;height:7px;border-radius:50%;background:#D99B0E;display:block;font-style:normal}
 /* the two currency marks, same shapes as the HUD pips, at text size */
@@ -941,7 +949,7 @@ input{font:inherit;color:inherit}
   </div>
 
   <div id="top">
-    <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.6" fill="none" stroke="#8A5B00" stroke-width="1.8" opacity=".55"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
+    <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
     <div class="cur" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg></span><span class="n mono-n" id="sporeN">0</span></div>
   </div>
 
@@ -1081,10 +1089,8 @@ const TRAILS=[
 /* Six scales, and the ascent has to read as one continuous pull-back: every
    ball in the dish collapses into a single one, and that single ball is what
    you are looking at when the camera settles at the next scale up. */
-const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">'+
-  '<circle cx="12" cy="12" r="9"/>'+
-  '<circle cx="12" cy="12" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".45"/>'+
-  '</svg>';
+const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">' +
+  '<rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/>' + '</svg>';
 const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg>';
 
 const SCALES=[
@@ -3784,7 +3790,7 @@ function buildCards(){
     const b=document.createElement("button");
     b.className="card"; b.dataset.k=k;
     b.innerHTML=
-      '<span class="lv">'+(maxed(k)?"MAX":lv(k))+'</span>'+
+      '<span class="lv">'+(maxed(k)?"MAX":"L"+lv(k))+'</span>'+
       '<span class="gw"><svg class="ring" viewBox="0 0 40 40" aria-hidden="true">'+
         '<circle class="rbg" cx="20" cy="20" r="17"/>'+
         '<circle class="rfg" cx="20" cy="20" r="17"/></svg>'+
@@ -3806,9 +3812,9 @@ function syncCards(){
     if(k){
       const u=UP[k], m=maxed(k), af=!m&&G.bio>=cost(k);
       b.classList.toggle("afford",af); b.classList.toggle("maxed",m);
-      b.querySelector(".lv").textContent=m?"MAX":lv(k);
+      b.querySelector(".lv").textContent=m?"MAX":"L"+lv(k);
       b.querySelector(".ef").textContent=u.fmt(lv(k));
-      b.querySelector(".ct").innerHTML=m?"MAXED":ICO_MASS+" "+fmt(cost(k));
+      b.querySelector(".ct").innerHTML=m?"MAXED":"$"+fmt(cost(k));
       // every purchase closes the ring a little further; it completes at max
       const ring=b.querySelector(".rfg");
       if(ring) ring.style.strokeDashoffset=(RINGC*(1-(u.max?clamp(lv(k)/u.max,0,1):0))).toFixed(2);
@@ -3917,7 +3923,8 @@ function setCur(id,v){
   if(CURC[id]===str) return;
   CURC[id]=str;
   const m=CURSPLIT.exec(str);
-  $(id).innerHTML = m ? m[1]+'<span class="u">'+m[2]+'</span>' : str;
+  const pre = id==="bioN" ? "$" : "";
+  $(id).innerHTML = m ? pre+m[1]+'<span class="u">'+m[2]+'</span>' : pre+str;
 }
 function syncTop(){
   setCur("bioN",G.bio);
