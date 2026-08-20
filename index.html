@@ -94,7 +94,17 @@ input{font:inherit;color:inherit}
   white-space:nowrap;
 }
 #goUp{top:calc(var(--top-h) + 6px)}
-#goDown{position:relative;left:auto;transform:none;margin:0 auto}
+/* back to the dish is the way out of the tower, so it earns its size */
+#goDown{
+  position:relative;left:auto;transform:none;margin:0 auto;width:100%;
+  padding:14px 18px;border-radius:15px;border:0;justify-content:center;
+  background:linear-gradient(180deg,#FFFFFF,#EDF2F8);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 6px 14px rgba(16,22,37,.16);
+  font-size:12px;letter-spacing:.14em;
+}
+#goDown svg{width:17px!important;height:17px!important}
+#goDown:active{transform:translateY(3px);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 6px rgba(16,22,37,.16)}
 #goUp svg,#goDown svg{width:14px;height:14px;flex:none;stroke:var(--ink);fill:none;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #goUp:active{transform:scale(.94)}
@@ -1027,6 +1037,119 @@ input{font:inherit;color:inherit}
   align-items:center;justify-content:center;font-size:9px;
   box-shadow:0 2px 5px rgba(16,22,37,.3)}
 .pw.adReady .adb{display:flex}
+/* ---- achievements, from the shot: a level banner then a list you open ---- */
+.lvlCard{
+  border-radius:20px;padding:18px 18px 16px;position:relative;overflow:hidden;color:#fff;
+  background:linear-gradient(120deg,#7C3AED 0%,#6D3BEF 46%,#4F46E5 100%);
+}
+.lvlCard .hey{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+.lvlCard .row{display:flex;align-items:flex-end;gap:12px;margin-top:4px}
+.lvlCard .big{font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:34px;line-height:1;flex:1}
+.lvlCard .rk{font-size:13px;font-weight:600;text-align:right;line-height:1.2}
+.lvlCard .xp{font-size:11px;opacity:.72;text-align:right;font-variant-numeric:tabular-nums;
+  margin-top:2px}
+.lvlCard .bar{height:9px;border-radius:99px;background:rgba(255,255,255,.26);overflow:hidden;
+  margin-top:13px;position:relative;z-index:2}
+.lvlCard .bar i{display:block;height:100%;border-radius:99px;background:#fff;transition:width .4s}
+.lvlCard .wm{position:absolute;right:-10px;top:-14px;width:132px;height:132px;opacity:.14;
+  pointer-events:none}
+.lvlCard .wm svg{width:100%;height:100%;fill:#fff}
+
+.acRow{border-radius:15px;background:var(--panel);border:1px solid var(--edge);
+  padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.acRow .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
+  font-size:15px;color:var(--ink)}
+.acRow .l{flex:1;min-width:0}
+.acRow .t{font-size:14px;font-weight:700;line-height:1.2}
+.acRow .s{font-size:11px;color:var(--ink-3);margin-top:2px}
+.acRow .mini{width:62px;height:7px;border-radius:99px;background:#E4E9F1;overflow:hidden;flex:none}
+.acRow .mini i{display:block;height:100%;border-radius:99px;background:#2F6BFF;transition:width .3s}
+.acRow .chev{color:var(--ink-3);font-size:13px;flex:none;transition:transform .2s}
+.acRow.open .chev{transform:rotate(180deg)}
+.acTiers{display:flex;flex-direction:column;gap:7px;padding:2px 4px 4px}
+.acTier{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;
+  background:var(--surface);font-size:11.5px}
+.acTier .n{flex:1;min-width:0;color:var(--ink-2)}
+.acTier .rw{font-size:11px;color:#7C3AED;display:flex;align-items:center;gap:4px;flex:none}
+.acTier.got{background:#F0FDF4;color:#15803D}
+.acTier .tick{color:#16A34A;flex:none}
+/* ---- welcome back: its own dark screen, not a sheet row ---- */
+#wb{
+  position:absolute;inset:0;z-index:28;display:none;align-items:center;justify-content:center;
+  padding:26px 22px;background:rgba(8,12,22,.82);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+}
+#wb.on{display:flex}
+#wb .card{
+  width:100%;max-width:330px;border-radius:26px;padding:26px 22px 22px;text-align:center;
+  background:linear-gradient(180deg,#151C2B,#111726);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 22px 60px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff;
+}
+#wb .tile{
+  width:72px;height:72px;border-radius:21px;display:grid;place-items:center;margin-bottom:9px;
+  background:linear-gradient(180deg,#3B82F6,#2563EB);
+  box-shadow:0 10px 26px rgba(37,99,235,.5);
+}
+#wb .tile svg{width:38px;height:38px;display:block;stroke:#fff;fill:none;stroke-width:2}
+#wb h2{font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:26px;letter-spacing:.02em;text-transform:uppercase}
+#wb .sub{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+#wb .away{font-size:13px;color:rgba(255,255,255,.72);margin-top:10px}
+#wb .away b{color:#fff;font-weight:600}
+#wb .box{
+  width:100%;margin-top:14px;border-radius:16px;padding:15px 14px;
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);
+}
+#wb .box .k{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+#wb .box .v{
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;font-size:29px;color:#34D77C;
+}
+#wb .box .v svg{width:24px;height:24px;fill:#34D77C;display:block}
+#wb .go{
+  width:100%;margin-top:18px;padding:16px;border-radius:15px;border:0;
+  background:linear-gradient(180deg,#3B82F6,#2563EB);color:#fff;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:600;font-size:17px;
+  box-shadow:0 4px 0 #1D4ED8,0 10px 22px rgba(37,99,235,.42);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+#wb .go:active{transform:translateY(4px);box-shadow:0 0 0 #1D4ED8,0 3px 8px rgba(37,99,235,.42)}
+
+/* money: a soft bloom behind the digits while it is climbing */
+/* snap the bloom on, fade it off — a fade-in this short reads as lag */
+#bioWrap .n{transition:text-shadow .38s ease}
+#bioWrap.rising .n{transition:none}
+#bioWrap.rising .n{text-shadow:0 0 18px rgba(34,197,94,.55),0 0 34px rgba(34,197,94,.28)}
+#bioWrap.rising .pip.bio{box-shadow:0 0 16px rgba(34,197,94,.5)}
+/* ---- the wizard upgrade page ---- */
+.wzRow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:15px;
+  background:var(--panel);border:1.5px solid var(--edge)}
+.wzRow.have{border-color:rgba(232,178,27,.45);background:#FFFDF5}
+.wzRow.none{opacity:.5}
+.wzRow .portrait{width:46px!important;height:46px!important;flex:none;display:block;
+  position:static;border-radius:12px;background:var(--surface)}
+.wzRow .l{flex:1;min-width:0}
+.wzRow .t{font-size:14px;font-weight:700;line-height:1.15}
+.wzRow .s{font-size:10.5px;color:var(--ink-3);line-height:1.45;margin-top:2px}
+.wzRow .n{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+.wzBtn{flex:none;padding:10px 13px;border-radius:12px;border:0;text-align:center;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:600;font-size:11.5px;
+  line-height:1.2;color:#3D2B02;
+  background:linear-gradient(180deg,#FFDE7A,#F5B301 46%,#DC9A05);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 3px 0 #A9760A;
+  transition:transform .1s ease, box-shadow .1s ease}
+.wzBtn small{display:block;font-size:9.5px;font-weight:500;opacity:.8}
+.wzBtn:active{transform:translateY(3px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 0 0 #A9760A}
+.wzBtn.no{background:linear-gradient(180deg,#F4F7FA,#E6ECF3);color:var(--ink-3);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),0 3px 0 #CBD5E1}
+.wzOpen{width:100%;padding:11px;border-radius:13px;border:0;margin-bottom:2px;
+  background:linear-gradient(180deg,#FFFFFF,#EDF2F8);color:var(--ink-2);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.wzOpen:active{transform:translateY(3px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1090,6 +1213,14 @@ input{font:inherit;color:inherit}
   <div id="banner"></div>
   <div id="toast"></div>
   <div id="frenzy"></div>
+  <div id="wb"><div class="card">
+    <span class="tile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3.6"/><path d="M12 1.4v3.2M12 19.4v3.2M1.4 12h3.2M19.4 12h3.2"/></svg></span>
+    <h2>Welcome back</h2>
+    <div class="sub" id="wbRank">Commander</div>
+    <div class="away" id="wbAway"></div>
+    <div class="box"><div class="k">Offline earnings</div><div class="v" id="wbVal"></div></div>
+    <button class="go" id="wbGo">Collect</button>
+  </div></div>
   <div id="rwPill"></div>
   <canvas id="burst"></canvas>
   <div id="scrim"></div>
@@ -1414,7 +1545,7 @@ function freshState(){
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
     pet:"void", ownPet:["void"],
-    sid:"", obj:null, objDone:0, objT:0, achv:{}, ad:{}, stTab:"shop", cosTab:"trail", streakDay:1,
+    sid:"", acOpen:null, obj:null, objDone:0, objT:0, achv:{}, ad:{}, stTab:"shop", cosTab:"trail", streakDay:1,
     opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:false, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
@@ -2552,6 +2683,40 @@ function moveWiz(from,to){
         it faster, with the buy button always available underneath so you can
         keep stacking Apprentices to merge ---- */
 let panelSig="";
+/* every rank on one page: what it drops, how often, and what the next level
+   of speed costs. The panel below the board only ever showed the one you had
+   selected, which made the ladder impossible to plan against. */
+function sheetWizards(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#E8A200">'+ICONS.trophy+'</svg>',
+    "Wizards","Every rank on the board",b=>{
+    WRANK.forEach((r,rk)=>{
+      const many=G.wiz.filter(x=>x&&x.rank===rk).length;
+      const L=rlvl(rk), capped=rCapped(rk), c=rUpCost(rk), can=G.bio>=c;
+      const d=document.createElement("div");
+      d.className="wzRow "+(many?"have":"none");
+      const p=wizPortrait(rk,46); p.className="portrait";
+      d.appendChild(p);
+      const l=document.createElement("div"); l.className="l";
+      l.innerHTML='<div class="t">'+r.nm+(L?" \u00B7 Lv "+L:"")+'</div>'+
+        '<div class="s">Every '+rDelay(rk).toFixed(2)+'s \u00B7 $'+fmt(r.mass)+' a ball \u00B7 '+
+        r.taps+' tap'+(r.taps>1?"s":"")+'</div>'+
+        '<div class="n">'+(many?many+" on the board":"none yet")+'</div>';
+      d.appendChild(l);
+      const btn=document.createElement("button");
+      btn.className="wzBtn"+((can&&!capped&&many)?"":" no");
+      btn.innerHTML=capped ? "Maxed<small>fastest it goes</small>"
+        : !many ? "Locked<small>merge up to it</small>"
+        : "Faster<small>$"+fmt(c)+"</small>";
+      btn.onclick=()=>{
+        if(capped||!many) return;
+        const i=G.wiz.findIndex(x=>x&&x.rank===rk);
+        if(i>=0){ upgradeWiz(i); sheetSync&&sheetSync(); }
+      };
+      d.appendChild(btn);
+      b.appendChild(d);
+    });
+  });
+}
 function syncWizPanel(force){
   const p=document.getElementById("wizPanel"); if(!p) return;
   const i=wizSel, w=wiz(i);
@@ -2591,6 +2756,11 @@ function syncWizPanel(force){
       : "<span>Summon your first wizard to start producing.</span>";
     p.appendChild(h);
   }
+
+  const opn=document.createElement("button");
+  opn.className="wzOpen"; opn.textContent="All wizard upgrades";
+  opn.onclick=sheetWizards;
+  p.appendChild(opn);
 
   // always buyable: this is how you get a second of something to merge
   const cost=summonCost(), can=G.bio>=cost, full=wizCount()>=SLOTS;
@@ -3922,6 +4092,10 @@ const ICONS={
       '<circle cx="16.6" cy="7.4" r="1.9" fill="#fff" stroke="none"/>',
   dia:'<path fill="currentColor" stroke="none" d="M12 2.2 21.8 12 12 21.8 2.2 12z"/>',
 
+  medal:'<circle fill="currentColor" stroke="none" cx="12" cy="9.4" r="6.6"/>'+
+        '<circle fill="#fff" stroke="none" cx="12" cy="9.4" r="2.8" opacity=".55"/>'+
+        '<path fill="currentColor" stroke="none" d="M8.1 15.4 6.3 22.3l5.7-2.7 5.7 2.7-1.8-6.9a8.4 8.4 0 0 1-7.8 0z"/>',
+
   /* two balls mid-merge: the silhouette the game is named for */
   brush:'<circle fill="currentColor" stroke="none" cx="9.1" cy="14.4" r="5.9"/>'+
         '<circle fill="currentColor" stroke="none" cx="16.5" cy="8.9" r="4.4"/>'+
@@ -3977,6 +4151,7 @@ function buildRails(){
   pr.className="prof"; pr.id="profCard";
   pr.innerHTML='<div class="hi">Hey</div><div class="lv"></div>'+
     '<div class="rk"></div><div class="bar"><i></i></div>';
+  pr.onclick=()=>{ if(ready) sheetAchievements(); };
   R.appendChild(pr);
   const add=(p,isBoost)=>{
     const b=document.createElement("button");
@@ -4233,7 +4408,10 @@ function setCur(id,v){
 let bioSeen=0, twT=-1;
 /* the note kicks and clicks whenever the number climbs. Throttled to ten a
    second, or a fast dish would machine-gun it. */
+let riseT=0;
 function twitchMoney(){
+  const w=document.getElementById("bioWrap");
+  if(w){ w.classList.add("rising"); riseT=el+0.5; }
   const p=document.querySelector("#bioWrap .pip"); if(!p) return;
   p.animate([
     {transform:"scale(1) rotate(0deg)"},
@@ -4246,6 +4424,8 @@ function twitchMoney(){
 function syncTop(){
   if(G.bio>bioSeen+0.5 && el-twT>0.1){ twT=el; twitchMoney(); }
   bioSeen=G.bio;
+  if(riseT&&el>riseT){ riseT=0;
+    const w=document.getElementById("bioWrap"); if(w) w.classList.remove("rising"); }
   setCur("bioN",G.bio);
   setCur("sporeN",G.spore);
 }
@@ -4841,9 +5021,68 @@ function sheetBoard(){
   });
 }
 
+function achTotals(){
+  let done=0, all=0;
+  for(const a of ACHV){ done+=achDone(a); all+=a.tiers.length; }
+  return {done,all};
+}
 function sheetAchievements(){
-  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.trophy+'</svg>',
-    "Goals","Rotating and permanent",b=>{ achRows(b); });
+  const tot=achTotals();
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#F59E0B">'+ICONS.medal+'</svg>',
+    "Achievements",tot.done+"/"+tot.all+" unlocked",b=>{
+
+    const lv=playerLevel(), p=levelProgress();
+    const card=document.createElement("div");
+    card.className="lvlCard";
+    card.innerHTML='<span class="wm"><svg viewBox="0 0 24 24">'+ICONS.medal+'</svg></span>'+
+      '<div class="hey">Hey</div>'+
+      '<div class="row"><span class="big">Level '+lv+'</span>'+
+      '<span><div class="rk">'+RANKS[Math.min(RANKS.length-1,Math.floor((lv-1)/3))]+'</div>'+
+      '<div class="xp">'+fmt(Math.round(p*100))+'% to Lv.'+(lv+1)+'</div></span></div>'+
+      '<div class="bar"><i style="width:'+(p*100).toFixed(0)+'%"></i></div>';
+    b.appendChild(card);
+
+    for(const a of ACHV){
+      const done=achDone(a), all=done>=a.tiers.length;
+      const row=document.createElement("div");
+      row.className="acRow"+(G.acOpen===a.k?" open":"");
+      row.innerHTML='<span class="ic">'+a.ic+'</span>'+
+        '<span class="l"><span class="t">'+a.nm+'</span>'+
+        '<span class="s">'+done+'/'+a.tiers.length+' completed</span></span>'+
+        '<span class="mini"><i style="width:'+(done/a.tiers.length*100).toFixed(0)+'%"></i></span>'+
+        '<span class="chev">\u2304</span>';
+      row.onclick=()=>{ G.acOpen=(G.acOpen===a.k?null:a.k); sheetSync&&sheetSync(); };
+      b.appendChild(row);
+
+      if(G.acOpen!==a.k) continue;
+      const wrap=document.createElement("div");
+      wrap.className="acTiers";
+      a.tiers.forEach((goal,i)=>{
+        const got=i<done, ready=!got && i===done && a.src()>=goal;
+        const t=document.createElement("div");
+        t.className="acTier"+(got?" got":"");
+        t.innerHTML='<span class="tick">'+(got?"\u2713":"\u25CB")+'</span>'+
+          '<span class="n">'+a.t(goal)+'</span>'+
+          '<span class="rw">'+rwText(a.rw[i])+'</span>';
+        if(ready){
+          const cl=document.createElement("button");
+          cl.className="msBtn claim"; cl.textContent="Claim";
+          cl.onclick=e=>{
+            e.stopPropagation();
+            G.achv[a.k]=done+1;
+            const got2=achGive(a.rw[i]);
+            celebrate(cl,44,"#F5B301",document.querySelector("#sporeWrap .pip"));
+            rewardPill(cl,"+");
+            toast(a.nm+" \u2014 "+got2);
+            save(); syncTop(); sheetSync&&sheetSync();
+          };
+          t.appendChild(cl);
+        }
+        wrap.appendChild(t);
+      });
+      b.appendChild(wrap);
+    }
+  });
 }
 function achRows(b){
     for(const a of ACHV){
@@ -4928,15 +5167,32 @@ function sheetCustomise(){
     }
   });
 }
+/* the offline payout is the first thing you see coming back, so it gets a
+   screen rather than a row in a list. The cash is held back until Collect,
+   which is what makes pressing it worth anything. */
+let wbPending=0;
 function sheetWelcome(secs,gain){
-  openSheet("☾","While you were away",fmtTime(secs)+" dormant",b=>{
-    b.appendChild(row({ic:"◍",t:"Idle hits kept going",s:"At "+Math.round(OFFLINE_RATE*100)+"% offline rate",v:fmt(gain)}));
-    b.appendChild(row({ic:ICO_MASS,t:"Cash now",s:"Ready to spend",v:fmt(G.bio)}));
-    const d=document.createElement("button");
-    d.className="dangerBtn"; d.style.borderColor="rgba(255,210,63,.4)"; d.style.color="var(--yellow)";
-    d.textContent="Back to the dish"; d.onclick=closeSheet;
-    b.appendChild(d);
-  });
+  wbPending=gain;
+  G.bio-=gain; G.earned-=gain; G.totalEarned-=gain;   // handed over on Collect
+  $("wbRank").textContent=RANKS[Math.min(RANKS.length-1,Math.floor((playerLevel()-1)/3))];
+  $("wbAway").innerHTML="Chompy and your wizards worked for <b>"+fmtTime(secs)+"</b>";
+  $("wbVal").innerHTML=ICO_MASS+"+$"+fmt(gain);
+  $("wb").classList.add("on");
+}
+function wbCollect(btn){
+  const g=wbPending; wbPending=0;
+  G.bio+=g; G.earned+=g; G.totalEarned+=g;
+  $("wb").classList.remove("on");
+  // the payout flies to the counter it just joined
+  celebrate(btn, 70, "#34D77C", document.querySelector("#bioWrap .pip"));
+  rewardPill(btn,"+$"+fmt(g));
+  banner("+$"+fmt(g));
+  chime(523,{vol:.18,len:.9,wet:.5});
+  chime(784,{vol:.13,len:.85,delay:.08,wet:.5});
+  noiseHit(.42,{vol:.1,cut:6000,type:"highpass",to:.4,wet:.4});
+  thud(70,{vol:.24,len:.34});
+  haptic([16,30,16,44]);
+  save(); syncTop();
 }
 function passiveRate(){ return throughput()*0.55; }
 function passiveRateOld(){
@@ -5204,6 +5460,7 @@ $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
+$("wbGo").onclick=function(){ wbCollect(this); };
 $("begin").onclick=begin;
 document.addEventListener("visibilitychange",()=>{ if(document.hidden){ save(); last=0; } });
 addEventListener("pagehide",save);
