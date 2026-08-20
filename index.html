@@ -589,6 +589,20 @@ input{font:inherit;color:inherit}
 @keyframes fzBreathe{
   50%{box-shadow:inset 0 0 0 3.5px rgba(255,176,32,.88), inset 0 0 62px 12px rgba(255,140,26,.38)}
 }
+/* the new rank, named where it happened rather than across the middle of the
+   board — the screen banner was competing with its own merge bolts */
+#wizPop{
+  position:absolute;z-index:5;pointer-events:none;opacity:0;left:0;top:0;
+  font-family:"Syne",var(--sym),sans-serif;font-weight:800;
+  font-size:16px;letter-spacing:.01em;white-space:nowrap;
+  padding:6px 14px;border-radius:999px;
+  background:linear-gradient(180deg,#FFE79A 0%,#F5C53A 45%,#D99B0E 100%);
+  color:#3B2A02;border:1px solid #A9760A;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.72),
+             inset 0 -1px 0 rgba(120,84,6,.35),
+             0 3px 12px rgba(16,22,37,.28);
+}
+@media (max-height:540px){ #wizPop{font-size:14px;padding:5px 11px} }
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -606,6 +620,7 @@ input{font:inherit;color:inherit}
       <div id="wizStage">
         <div id="wgrid"></div>
         <canvas id="wfx"></canvas>
+        <div id="wizPop"></div>
       </div>
       <div id="wizChrome">
         <div id="arenaStrip">
@@ -2001,6 +2016,7 @@ function summonAt(i){
   WZ[i].ph=Math.random();
   WZ[i].t=wDelay(i)*(0.1+WZ[i].ph*0.85); WZ[i].cast=0; WZ[i].held=false;
   wizSel=i;
+  wizPop(i,WRANK[0].nm);
   chime(392,{vol:.14,len:.6,wet:.4}); pop(520,{vol:.12});
   haptic(16); save(); syncWizGrid(); syncWizPanel(true);
 }
@@ -2014,6 +2030,19 @@ function upgradeWiz(i){
   toast("Every "+WRANK[r].nm+" now casts every "+rDelay(r).toFixed(2)+"s");
   tick(560+rlvl(r)*8,.1); haptic(9);
   save(); syncWizGrid(); syncWizPanel(true);
+}
+function wizPop(i,txt){
+  const p=document.getElementById("wizPop"), c=CELLS[i];
+  if(!p||!c) return;
+  p.textContent=txt;
+  p.style.left=c.cx+"px";
+  p.style.top=c.y+"px";
+  p.animate([
+    {opacity:0,transform:"translate(-50%,-30%) scale(.62)"},
+    {opacity:1,transform:"translate(-50%,-88%) scale(1.06)",offset:.28},
+    {opacity:1,transform:"translate(-50%,-104%) scale(1)",offset:.7},
+    {opacity:0,transform:"translate(-50%,-150%) scale(.98)"}
+  ],{duration:1500,easing:"cubic-bezier(.2,.9,.3,1)"});
 }
 function mergeWiz(from,to){
   const a=wiz(from), b=wiz(to);
@@ -2031,7 +2060,8 @@ function mergeWiz(from,to){
     const ang=rnd(0,TAU), sp=rnd(70,300);
     bolts.push({x:c.cx,y:c.cy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,t:0,col,r:rnd(2,5),spark:true});
   }
-  banner(WRANK[nr].nm.toUpperCase());
+  wizPop(to,WRANK[nr].nm);
+  if(nr===TOPRANK) banner(WRANK[nr].nm.toUpperCase());
   const n=NOTE[Math.max(0,Math.min(NOTE.length-1,WRANK[nr].tier))];
   chime(n*3,{vol:.2,len:.9,wet:.5});
   chime(n*4.5,{vol:.1,len:.7,delay:.06,wet:.5});
