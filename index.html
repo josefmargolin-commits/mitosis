@@ -350,7 +350,18 @@ input{font:inherit;color:inherit}
 .card.afford{border-color:rgba(232,162,0,.6);background:#FFFBF0}
 .card.maxed{border-color:rgba(15,185,129,.5);background:#F0FCF8}
 .card .lv{position:absolute;top:5px;right:6px;font-size:8px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.card .g{font-size:17px;line-height:1.1;margin-top:2px;color:var(--ink)}
+.card .g{font-size:15px;line-height:1;color:var(--ink)}
+/* the level ring: progressive, so a card shows how far along it is at a glance */
+.card .gw{position:relative;width:30px;height:30px;display:grid;place-items:center;
+  margin-top:1px;flex:none}
+.card .ring{position:absolute;inset:0;width:100%;height:100%;
+  transform:rotate(-90deg);overflow:visible}
+.card .ring circle{fill:none;stroke-width:3}
+.card .rbg{stroke:var(--edge)}
+.card .rfg{stroke:var(--yellow);stroke-linecap:round;
+  stroke-dasharray:106.81;stroke-dashoffset:106.81;
+  transition:stroke-dashoffset .5s cubic-bezier(.2,.9,.25,1),stroke .3s}
+.card.maxed .rfg{stroke:var(--mint)}
 .card .nm{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);line-height:1.2}
 .card .ef{font-size:9px;color:var(--ink);line-height:1.2;font-variant-numeric:tabular-nums}
 .card .ct{margin-top:auto;font-size:10px;font-weight:500;color:var(--ink-3);
@@ -2786,20 +2797,52 @@ function scalePaint(x,r,col,rot,b){
       break; }
   }
   x.restore();
-}function drawTrail(x,widthMul,alpha){
-  if(trail.length<2) return;
-  const col=trailCol(), wid=(val("reach")*S+4)*widthMul;
-  x.save();
-  x.lineCap="round"; x.lineJoin="round";
-  for(let pass=0;pass<2;pass++){
-    for(let i=1;i<trail.length;i++){
-      const a=trail[i-1], b=trail[i], k=1-b.t/.34;
-      x.globalAlpha=k*k*alpha*(pass?.75:1);
-      x.lineWidth=wid*k*(pass?.42:1);
-      x.strokeStyle=pass?"#fff":col;
-      x.beginPath(); x.moveTo(a.x,a.y); x.lineTo(b.x,b.y); x.stroke();
-    }
+}/* A tapered ribbon, not a stack of round-capped segments. A blade is widest
+   just behind the finger and comes to a point at the tail — that taper is what
+   makes a swipe read as a slash rather than a drawn line. Built as a filled
+   polygon offset along the path normal, with a soft outer pass and a thin
+   white core for the edge highlight. */
+function drawTrail(x,widthMul,alpha){
+  const n=trail.length; if(n<3) return;
+  const col=trailCol(), wid=(val("reach")*S+4)*widthMul*1.5;
+
+  // raw pointer samples are jagged at speed; one smoothing pass settles them
+  const p=new Array(n);
+  for(let i=0;i<n;i++){
+    if(i===0||i===n-1){ p[i]={x:trail[i].x,y:trail[i].y,t:trail[i].t}; continue; }
+    p[i]={x:(trail[i-1].x+trail[i].x*2+trail[i+1].x)*.25,
+          y:(trail[i-1].y+trail[i].y*2+trail[i+1].y)*.25,
+          t:trail[i].t};
   }
+  const m=n, last=m-1;
+  const half=(i,mul)=>{
+    const u=i/last;                              // 0 at the tail, 1 at the finger
+    const age=1-clamp(p[i].t/.34,0,1);
+    return wid*.5*mul*Math.pow(u,.72)*(.3+.7*age);
+  };
+  const ribbon=(mul)=>{
+    const L=[],R=[];
+    for(let i=0;i<m;i++){
+      const a=p[i>0?i-1:0], b=p[i<last?i+1:last];
+      const tx=b.x-a.x, ty=b.y-a.y, len=Math.hypot(tx,ty)||1, h=half(i,mul);
+      const nx=-ty/len*h, ny=tx/len*h;
+      L.push(p[i].x+nx, p[i].y+ny); R.push(p[i].x-nx, p[i].y-ny);
+    }
+    x.beginPath(); x.moveTo(L[0],L[1]);
+    for(let i=2;i<L.length;i+=2) x.lineTo(L[i],L[i+1]);
+    for(let i=R.length-2;i>=0;i-=2) x.lineTo(R[i],R[i+1]);
+    x.closePath();
+  };
+
+  x.save();
+  x.lineJoin="round";
+  // source-over throughout: the goo layer thresholds alpha, and an additive
+  // pass there would blow straight through it
+  x.fillStyle=col;
+  x.globalAlpha=alpha*.22; ribbon(1.9); x.fill();
+  x.globalAlpha=alpha*.95; ribbon(1);   x.fill();
+  x.fillStyle="#fff";
+  x.globalAlpha=alpha*.85; ribbon(.32); x.fill();
   x.restore();
 }
 
@@ -2919,7 +2962,7 @@ function draw(){
     }
   }
 
-  drawTrail(xFx,1,.55);
+  drawTrail(xFx,1,.72);
 
   xFx.save();
   for(const p of parts){
@@ -3123,7 +3166,10 @@ function buildCards(){
     b.className="card"; b.dataset.k=k;
     b.innerHTML=
       '<span class="lv">'+(maxed(k)?"MAX":lv(k))+'</span>'+
-      '<span class="g">'+u.g+'</span>'+
+      '<span class="gw"><svg class="ring" viewBox="0 0 40 40" aria-hidden="true">'+
+        '<circle class="rbg" cx="20" cy="20" r="17"/>'+
+        '<circle class="rfg" cx="20" cy="20" r="17"/></svg>'+
+        '<span class="g">'+u.g+'</span></span>'+
       '<span class="nm">'+u.nm+'</span>'+
       '<span class="ef">'+u.fmt(lv(k))+'</span>'+
       '<span class="ct"></span>';
@@ -3133,6 +3179,7 @@ function buildCards(){
   }
   syncCards();
 }
+const RINGC=2*Math.PI*17;   // the ring path length, for dash maths
 function syncCards(){
   const c=$("cards");
   for(const b of c.children){
@@ -3143,6 +3190,9 @@ function syncCards(){
       b.querySelector(".lv").textContent=m?"MAX":lv(k);
       b.querySelector(".ef").textContent=u.fmt(lv(k));
       b.querySelector(".ct").innerHTML=m?"MAXED":ICO_MASS+" "+fmt(cost(k));
+      // every purchase closes the ring a little further; it completes at max
+      const ring=b.querySelector(".rfg");
+      if(ring) ring.style.strokeDashoffset=(RINGC*(1-(u.max?clamp(lv(k)/u.max,0,1):0))).toFixed(2);
     }
   }
 }
