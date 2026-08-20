@@ -906,7 +906,8 @@ input{font:inherit;color:inherit}
 .cos{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);
   padding:13px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left}
 .cos.sel{border-color:#7C3AED;background:#FBF9FF}
-.cos .sw{width:42px;height:42px;border-radius:12px;display:block;margin-bottom:5px}
+.cos .sw{width:44px;height:44px;border-radius:13px;display:block;margin-bottom:6px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 5px rgba(16,22,37,.14)}
 .cos .nm{font-size:13.5px;font-weight:700}
 .cos .d{font-size:10.5px;color:var(--ink-3);line-height:1.4;flex:1}
 .cos .c{font-size:12px;color:#7C3AED;font-weight:600;display:flex;align-items:center;gap:5px;margin-top:5px}
@@ -1192,16 +1193,16 @@ const PALETTES=[
   {id:"mono",   nm:"Mono",   cost:30,c:["#FFFFFF","#DDE4EE","#B9C4D4","#94A1B4","#717E92","#525E71","#3A4454","#2A323E"]},
 ];
 const SKINS=[
-  {id:"solid",  nm:"Sphere",  cost:0},
-  {id:"yolk",   nm:"Yolk",    cost:6},
-  {id:"eclipse",nm:"Eclipse", cost:10},
-  {id:"bloom",  nm:"Bloom",   cost:14},
-  {id:"orbit",  nm:"Orbit",   cost:19},
-  {id:"prism",  nm:"Prism",   cost:24},
-  {id:"circuit",nm:"Circuit", cost:30},
-  {id:"vortex", nm:"Vortex",  cost:38},
+  {id:"solid",  nm:"Sphere",  cost:0,  g:"linear-gradient(150deg,#B7F04A,#63D62F)"},
+  {id:"yolk",   nm:"Yolk",    cost:6,  g:"linear-gradient(150deg,#FFE066,#F5B301)"},
+  {id:"eclipse",nm:"Eclipse", cost:10, g:"linear-gradient(150deg,#8E9BB3,#2E3A4E)"},
+  {id:"bloom",  nm:"Bloom",   cost:14, g:"linear-gradient(150deg,#FF9ED0,#EC4899)"},
+  {id:"orbit",  nm:"Orbit",   cost:19, g:"linear-gradient(150deg,#7FC2FF,#2F6BFF)"},
+  {id:"prism",  nm:"Prism",   cost:24, g:"linear-gradient(150deg,#8AF0E4,#B06BFF)"},
+  {id:"circuit",nm:"Circuit", cost:30, g:"linear-gradient(150deg,#5EEAD4,#0E9488)"},
+  {id:"vortex", nm:"Vortex",  cost:38, g:"linear-gradient(150deg,#C4A5FF,#6D28D9)"},
 ];
-/* your pet's coat: core, the two accretion arcs, and the halo it drags */
+/* Chompy's coat: core, the two accretion arcs, and the halo it drags */
 const PETS=[
   {id:"void",  nm:"Void",   cost:0,  core:"#0B0616", arc:"#C6A0FF", glow:"158,96,255",  d:"The one you started with."},
   {id:"ember", nm:"Ember",  cost:8,  core:"#1A0703", arc:"#FFB27A", glow:"255,122,45",  d:"Burns as it feeds."},
@@ -1211,19 +1212,20 @@ const PETS=[
 ];
 const pet=()=>PETS.find(p=>p.id===G.pet)||PETS[0];
 const TRAILS=[
-  {id:"gold",  nm:"Golden Path",   c:"#FFD23F", cost:0,   d:"The cleave you start with."},
-  {id:"neon",  nm:"Neon Glow",     c:"#22E3A0", cost:50,  d:"Bright neon trail behind projectiles",
-   g:"linear-gradient(140deg,#3BF5B0,#0FBF86)"},
-  {id:"ember", nm:"Fire Trail",    c:"#FF7A3D", cost:100, d:"Blazing fire streams behind each shot",
-   g:"linear-gradient(140deg,#FF9A3D,#EA580C)"},
-  {id:"cryo",  nm:"Ice Crystals",  c:"#7FE8FF", cost:100, d:"Frozen crystal particles in the wake",
-   g:"linear-gradient(140deg,#BEEBFF,#5FC8F5)"},
-  {id:"rain",  nm:"Rainbow Streak",c:"#FF8FD0", cost:200, d:"A shifting rainbow trail",
-   g:"linear-gradient(140deg,#FF4B6E,#FFD23F)"},
-  {id:"arc",   nm:"Lightning Arc", c:"#B69BFF", cost:200, d:"Electric sparks crackle behind projectiles",
-   g:"linear-gradient(140deg,#D8CCFF,#7C6BE8)"},
-  {id:"plasma",nm:"Plasma Wave",   c:"#FF3DCB", cost:300, d:"Swirling plasma energy trail",
-   g:"linear-gradient(140deg,#FF6ADA,#C026D3)"},
+  {id:"gold",  nm:"Golden Path",   c:"#FFC93C", cost:0,   d:"The cleave you start with.",
+   g:"linear-gradient(150deg,#FFD866,#F5A300)"},
+  {id:"neon",  nm:"Neon Glow",     c:"#12E39A", cost:50,  d:"Bright neon trail behind projectiles",
+   g:"linear-gradient(150deg,#3CF0AE,#06CE87)"},
+  {id:"ember", nm:"Fire Trail",    c:"#FA7A16", cost:100, d:"Blazing fire streams behind each shot",
+   g:"linear-gradient(150deg,#FFA23A,#F1660B)"},
+  {id:"cryo",  nm:"Ice Crystals",  c:"#8FD8F5", cost:100, d:"Frozen crystal particles in the wake",
+   g:"linear-gradient(150deg,#D3EFFF,#7FCDEE)"},
+  {id:"rain",  nm:"Rainbow Streak",c:"#FFA62B", cost:200, d:"A shifting rainbow trail",
+   g:"linear-gradient(150deg,#FF6A3D,#FFC93C)"},
+  {id:"arc",   nm:"Lightning Arc", c:"#A99BF0", cost:200, d:"Electric sparks crackle behind projectiles",
+   g:"linear-gradient(150deg,#E7E1FF,#A294EE)"},
+  {id:"plasma",nm:"Plasma Wave",   c:"#F02FBE", cost:300, d:"Swirling plasma energy trail",
+   g:"linear-gradient(150deg,#FF63DC,#DD1C9B)"},
 ];
 
 /* Prestige is a zoom-out. Every ascent pulls the camera back an order of
@@ -1292,13 +1294,13 @@ const UP={
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
-           d:"How fast it moves and how quickly it can swallow the next one. Buy the first level and it appears.",
+           d:"How fast Chompy moves and how quickly he can swallow the next one. Buy the first level and he appears.",
            v:l=>l*0.16, fmt:l=>(l*0.16).toFixed(2)+"/s"},
   size:   {tab:"lysis",g:"◎",nm:"Size",  base:6000,gr:6.2,  max:7,
-           d:"How big it is. It can only swallow balls its own size or smaller, so every level opens up the next size up.",
+           d:"How big Chompy is. He can only swallow balls his own size or smaller, so every level opens up the next size up.",
            v:l=>l, fmt:l=>"eats "+(l+1)+" size"+(l?"s":"")},
   pull:   {tab:"lysis",g:"◌",nm:"Pull",  base:220,gr:1.28, max:44,
-           d:"How far it drags balls in from. Anything inside is in range to be hit.",
+           d:"How far Chompy drags balls in from. Anything inside is in range to be eaten.",
            v:l=>150+l*20, fmt:l=>Math.round(150+l*20)+"px"},
 
   fusion: {tab:"field",g:"⊕",nm:"Merge", base:60, gr:1.20, max:40,
@@ -2965,7 +2967,7 @@ function bhOn(){ return val("pulse")>0; }
 function bhTier(){ return Math.max(0, LAST - val("size")); }
 function bhR(){ return tierRadius(bhTier(), WRANK[0])*0.92; }
 function bhPull(){ return val("pull")*S; }
-/* everything you built collapsed to a point; that point is your pet now */
+/* everything you built collapsed to a point; that point is Chompy now */
 function bhBirth(x,y){
   // if you had not bought one yet, this is how you get it
   if(val("pulse")<=0) G.up.pulse=1;
@@ -4416,7 +4418,7 @@ function sheetStats(){
       '<div class="dd"><div class="r"><span class="n">Finger</span>'+
         '<span class="p">'+(finger/tot*100).toFixed(1)+'%</span></div>'+
         '<div class="b"><i style="width:'+(finger/tot*100).toFixed(1)+'%;background:#F59E0B"></i></div></div>'+
-      '<div class="dd"><div class="r"><span class="n">Wizards & pet</span>'+
+      '<div class="dd"><div class="r"><span class="n">Wizards & Chompy</span>'+
         '<span class="p">'+(auto/tot*100).toFixed(1)+'%</span></div>'+
         '<div class="b"><i style="width:'+(auto/tot*100).toFixed(1)+'%;background:#1F2937"></i></div></div>';
     b.appendChild(dd);
@@ -4642,7 +4644,7 @@ function stCosmetics(b){
   b.appendChild(head);
 
   const subs=document.createElement("div"); subs.className="cosSubs";
-  for(const t of [["trail","Trails","\u2606"],["skin","Skins","\u25CE"],["pet","Pets","\u25CC"]]){
+  for(const t of [["trail","Trails","\u2606"],["skin","Skins","\u25CE"],["pet","Chompy","\u25CC"]]){
     const x=document.createElement("button");
     x.className="cosSub"+(G.cosTab===t[0]?" on":"");
     x.innerHTML='<span>'+t[2]+'</span>'+t[1];
@@ -4654,12 +4656,12 @@ function stCosmetics(b){
   const grid=document.createElement("div"); grid.className="cosGrid";
   const items = G.cosTab==="skin"
     ? SKINS.map(k=>({nm:k.nm,d:"A different face on every ball.",cost:k.cost,
-        sw:"linear-gradient(140deg,#B6F03C,#4BE36E)",
+        sw:k.g,
         own:G.ownSkin.includes(k.id),sel:G.skin===k.id,
         take:()=>G.ownSkin.push(k.id),wear:()=>{G.skin=k.id;}}))
     : G.cosTab==="pet"
     ? PETS.map(p=>({nm:p.nm,d:p.d,cost:p.cost,
-        sw:"radial-gradient(circle,"+p.arc+" 0%,"+p.core+" 78%)",
+        sw:"linear-gradient(150deg,"+p.arc+","+p.core+")",
         own:G.ownPet.includes(p.id),sel:G.pet===p.id,
         take:()=>G.ownPet.push(p.id),wear:()=>{G.pet=p.id;}}))
     : TRAILS.map(t=>({nm:t.nm,d:t.d,cost:t.cost,sw:t.g||t.c,
@@ -4870,7 +4872,7 @@ function achRows(b){
 }
 function sheetCustomise(){
   openSheet("◑","Your Balls","Cleave colour and powers",b=>{
-    b.appendChild(lbl("Your pet"));
+    b.appendChild(lbl("Chompy"));
     for(const p of PETS){
       const own=G.ownPet.includes(p.id), sel=G.pet===p.id;
       b.appendChild(row({
@@ -5170,8 +5172,8 @@ const TUT=[
   {room:"wiz",   t:"Wizards do the dropping",
    s:"Each one casts a ball on its own timer, so the dish fills while you are away. A wizard’s column decides which lane its balls fall down — line them up and their balls meet and fuse, spread them out and they will not.",
    go(){}},
-  {room:"arena", t:"This is your black hole",
-   s:"Your pet. It drifts around the dish on its own, pulling balls together so they merge, and swallowing the small ones whole. Feed it Size and it can take on bigger ones. You can change how it looks in the Store, under Cosmetics.",
+  {room:"arena", t:"Meet Chompy",
+   s:"This is Chompy. He drifts around the dish on his own, pulling balls together so they merge, and swallowing the small ones whole. Feed him Size and he can take on bigger ones. You can change how he looks in the Store, under Cosmetics.",
    go(){
      // make sure there is one to look at, even on a fresh run
      if(!bhOn()) G.up.pulse=Math.max(1,G.up.pulse|0);
