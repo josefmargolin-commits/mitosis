@@ -100,13 +100,14 @@ input{font:inherit;color:inherit}
 #goUp{top:calc(var(--top-h) + 6px)}
 /* back to the dish is the way out of the tower, so it earns its size */
 #goDown{
-  position:relative;left:auto;transform:none;margin:0 auto;width:100%;
-  padding:14px 18px;border-radius:15px;border:0;justify-content:center;
+  position:relative;left:auto;transform:none;margin:0 auto;
+  width:100%;max-width:262px;
+  padding:11px 16px;border-radius:13px;border:0;justify-content:center;
   background:linear-gradient(180deg,#FFFFFF,#EDF2F8);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 6px 14px rgba(16,22,37,.16);
-  font-size:12px;letter-spacing:.14em;
+  font-size:11px;letter-spacing:.12em;font-weight:600;
 }
-#goDown svg{width:17px!important;height:17px!important}
+#goDown svg{width:15px!important;height:15px!important}
 #goDown:active{transform:translateY(3px);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 6px rgba(16,22,37,.16)}
 #goUp svg,#goDown svg{width:14px;height:14px;flex:none;stroke:var(--ink);fill:none;
@@ -247,7 +248,11 @@ input{font:inherit;color:inherit}
    green and set much larger than anything else on the bar */
 .pip.bio{background:#DCFCE7;border-radius:9px;width:32px;height:25px}
 .pip.bio svg{fill:#16A34A;width:20px;height:20px}
-#bioWrap .n{color:#16A34A;font-size:32px;letter-spacing:-.04em}
+#bioWrap .n{color:#16A34A;font-size:36px;font-weight:800;letter-spacing:-.035em;
+  transition:font-size .18s ease}
+#bioWrap.l4 .n{font-size:33px}
+#bioWrap.l5 .n{font-size:30px}
+#bioWrap.l6 .n{font-size:26px}
 #bioWrap .n .u{opacity:.62;font-size:.5em}
 .pip.spore{background:linear-gradient(140deg,var(--blue),var(--purple))}
 .cur .n{font-family:var(--font);font-weight:800;font-size:23px;line-height:1;
@@ -425,7 +430,7 @@ input{font:inherit;color:inherit}
 .tab{
   flex:1 0 auto;min-width:0;padding:0 8px;font-weight:500;
   display:flex;align-items:center;justify-content:center;gap:4px;
-  font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
+  font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);
   border-bottom:2px solid transparent;white-space:nowrap;
 }
 .tab .g{font-size:11px;opacity:.7}
@@ -446,8 +451,8 @@ input{font:inherit;color:inherit}
    Green is reserved for the one offering an ad, so it stands out. */
 .card.afford{border-color:var(--edge-2);background:var(--panel)}
 .card.maxed{border-color:rgba(15,185,129,.5);background:#F0FCF8}
-.card .lv{position:absolute;top:5px;right:7px;font-size:8.5px;color:var(--ink-3);
-  font-variant-numeric:tabular-nums;font-weight:600}
+.card .lv{position:absolute;top:5px;right:7px;font-size:9.5px;color:var(--ink-3);
+  font-variant-numeric:tabular-nums;font-weight:500}
 .card .g{font-size:15px;line-height:1;color:var(--ink)}
 /* the level ring: progressive, so a card shows how far along it is at a glance */
 .card .gw{position:relative;width:30px;height:30px;display:grid;place-items:center;
@@ -461,10 +466,12 @@ input{font:inherit;color:inherit}
   transition:stroke-dashoffset .5s cubic-bezier(.2,.9,.25,1),stroke .3s}
 .card.maxed .rfg{stroke:var(--mint)}
 .card.afford .rfg{stroke:var(--ink-2)}
-.card .nm{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);
+/* name reads first, price second, level last — the reference's order */
+.card .nm{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);
   line-height:1.2;font-weight:600}
-.card .ef{font-size:9px;color:var(--ink);line-height:1.2;font-variant-numeric:tabular-nums}
-.card .ct{margin-top:auto;font-size:12px;font-weight:700;color:var(--ink);
+.card .ef{font-size:9.5px;font-weight:500;color:var(--ink-2);line-height:1.2;
+  font-variant-numeric:tabular-nums}
+.card .ct{margin-top:auto;font-size:13px;font-weight:700;color:var(--ink);
   font-family:var(--font);
   font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:3px}
 .card.afford .ct{color:var(--ink)}
@@ -538,9 +545,10 @@ input{font:inherit;color:inherit}
 #sheetHead .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
   background:var(--surface);font-size:15px;flex:none}
 #sheetHead .tx{flex:1;min-width:0}
-#sheetTitle{font-family:var(--font);font-weight:800;font-size:19px;line-height:1.15;
-  letter-spacing:-.01em}
-#sheetSub{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+#sheetTitle{font-family:var(--font);font-weight:800;font-size:22px;line-height:1.15;
+  letter-spacing:-.015em}
+#sheetSub{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:3px}
 #sheetClose{width:30px;height:30px;border-radius:50%;background:var(--surface);
   display:grid;place-items:center;flex:none;font-size:14px;color:var(--ink-2)}
 #sheetBody::-webkit-scrollbar{width:4px}
@@ -670,7 +678,7 @@ input{font:inherit;color:inherit}
 @media (max-height:540px){
   :root{--dock-h:116px}
   :root{--tab-h:32px}
-  .tab{font-size:8px;padding:0 6px}
+  .tab{font-size:10.5px;padding:0 5px}
   .card{flex-basis:70px;padding:6px 4px 5px;gap:1px}
   .card .g{font-size:14px}
   .card .nm{font-size:8px}
@@ -1025,13 +1033,13 @@ input{font:inherit;color:inherit}
   font-size:8px;color:#16A34A;line-height:1}
 /* the card the reference draws: level in the corner, the name in caps, the
    price carrying the card, and an ad offered when you cannot afford it */
-.card .ad{display:none;font-size:9.5px;font-weight:700;color:#16A34A;
+.card .ad{display:none;font-size:10px;font-weight:600;color:#16A34A;
   align-items:center;gap:3px;margin-top:1px}
 .card.canAd .ad{display:flex}
 .card.canAd{border-color:rgba(34,197,94,.5);background:#F6FDF8}
-.card .alt{display:none;font-size:8.5px;color:var(--yellow);margin-top:1px}
+.card .alt{display:none;font-size:9px;font-weight:500;color:var(--yellow);margin-top:1px}
 .card.canAd .alt{display:block}
-.card.locked{border-style:dashed;background:transparent;opacity:.55}
+.card.locked{border-style:dashed;background:transparent;opacity:.5}
 .card.locked .ct{color:var(--ink-3);font-size:9px;font-weight:500}
 
 /* the profile card at the head of the power rail */
@@ -1056,13 +1064,14 @@ input{font:inherit;color:inherit}
   border-radius:20px;padding:18px 18px 16px;position:relative;overflow:hidden;color:#fff;
   background:linear-gradient(120deg,#7C3AED 0%,#6D3BEF 46%,#4F46E5 100%);
 }
-.lvlCard .hey{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+.lvlCard .hey{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  opacity:.85}
 .lvlCard .row{display:flex;align-items:flex-end;gap:12px;margin-top:4px}
-.lvlCard .big{font-family:var(--font);font-weight:700;
-  font-size:34px;line-height:1;flex:1}
-.lvlCard .rk{font-size:13px;font-weight:600;text-align:right;line-height:1.2}
-.lvlCard .xp{font-size:11px;opacity:.72;text-align:right;font-variant-numeric:tabular-nums;
-  margin-top:2px}
+.lvlCard .big{font-family:var(--font);font-weight:800;
+  font-size:32px;line-height:1;flex:1;letter-spacing:-.02em}
+.lvlCard .rk{font-size:14px;font-weight:600;text-align:right;line-height:1.2}
+.lvlCard .xp{font-size:11.5px;font-weight:500;opacity:.7;text-align:right;
+  font-variant-numeric:tabular-nums;margin-top:2px}
 .lvlCard .bar{height:9px;border-radius:99px;background:rgba(255,255,255,.26);overflow:hidden;
   margin-top:13px;position:relative;z-index:2}
 .lvlCard .bar i{display:block;height:100%;border-radius:99px;background:#fff;transition:width .4s}
@@ -1075,8 +1084,8 @@ input{font:inherit;color:inherit}
 .acRow .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
   font-size:15px;color:var(--ink)}
 .acRow .l{flex:1;min-width:0}
-.acRow .t{font-size:14px;font-weight:700;line-height:1.2}
-.acRow .s{font-size:11px;color:var(--ink-3);margin-top:2px}
+.acRow .t{font-size:15px;font-weight:600;line-height:1.2;color:var(--ink)}
+.acRow .s{font-size:12px;font-weight:400;color:var(--ink-3);margin-top:3px}
 .acRow .mini{width:62px;height:7px;border-radius:99px;background:#E4E9F1;overflow:hidden;flex:none}
 .acRow .mini i{display:block;height:100%;border-radius:99px;background:#2F6BFF;transition:width .3s}
 .acRow .chev{color:var(--ink-3);font-size:13px;flex:none;transition:transform .2s}
@@ -1185,16 +1194,28 @@ input{font:inherit;color:inherit}
 #summonTop.no{background:linear-gradient(180deg,#F4F7FA,#E6ECF3);color:var(--ink-3);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),0 2.5px 0 #CBD5E1}
 
+/* the way into the upgrades sits in the middle of the board, where the eye
+   already is, and looks like something the wizards would cast */
 #wizUpBtn{
-  position:absolute;right:calc(8px + env(safe-area-inset-right));top:50%;
-  transform:translateY(-50%);z-index:4;
-  width:38px;height:38px;border-radius:50%;border:0;padding:0;
-  background:var(--panel);color:var(--ink-2);font-size:17px;line-height:1;
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 5px 11px rgba(16,22,37,.18);
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;
+  width:58px;height:58px;border-radius:50%;border:0;padding:0;
+  display:grid;place-items:center;
+  background:radial-gradient(circle at 38% 30%,#FFE066 0%,#FF9A2B 42%,#F0490E 78%,#C81E00 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(150,30,0,.45),
+             0 0 0 4px rgba(255,138,43,.18),0 0 26px rgba(255,110,20,.55),
+             0 5px 14px rgba(120,40,0,.4);
+  animation:emberPulse 2.4s ease-in-out infinite;
   transition:transform .1s ease, box-shadow .1s ease;
+  pointer-events:none;
 }
-#wizUpBtn:active{transform:translateY(calc(-50% + 3px));
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 5px rgba(16,22,37,.18)}
+#wizUpBtn svg{width:30px;height:30px;display:block;fill:#FFF3C4;
+  filter:drop-shadow(0 1px 2px rgba(140,40,0,.5))}
+@keyframes emberPulse{
+  50%{box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -3px 6px rgba(150,30,0,.45),
+                 0 0 0 6px rgba(255,138,43,.14),0 0 36px rgba(255,110,20,.7),
+                 0 5px 14px rgba(120,40,0,.4)}
+}
+#wizUpBtn.press{transform:translate(-50%,-50%) scale(.92)}
 
 /* the tower's footer is one button tall now */
 #wizChrome{height:calc(96px + env(safe-area-inset-bottom))}
@@ -1202,6 +1223,21 @@ input{font:inherit;color:inherit}
 @media (max-height:540px){
   #wizChrome{height:calc(84px + env(safe-area-inset-bottom))}
   #wizStage{bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+/* On a 320 phone the tower's top bar carries money, summon and gems, and at
+   full size the gems fall off the right edge. Everything gives a little. */
+@media (max-width:360px){
+  #top{gap:6px;padding:0 8px}
+  #bioWrap{gap:5px}
+  #bioWrap .n{font-size:27px}
+  #bioWrap.l4 .n{font-size:25px}
+  #bioWrap.l5 .n{font-size:23px}
+  #bioWrap.l6 .n{font-size:20px}
+  .pip.bio{width:27px;height:22px}
+  .pip.bio svg{width:17px;height:17px}
+  #summonTop{padding:7px 10px;font-size:11px;gap:5px;min-width:0}
+  #summonTop .c{overflow:hidden;white-space:nowrap}
+  .tab{font-size:11px}
 }
 </style>
 
@@ -1220,7 +1256,7 @@ input{font:inherit;color:inherit}
       <div id="wizStage">
         <div id="wgrid"></div>
         <canvas id="wfx"></canvas>
-        <button id="wizUpBtn" aria-label="All wizard upgrades">⚙</button>
+        <button id="wizUpBtn" aria-label="All wizard upgrades"><svg viewBox="0 0 24 24"><path d="M13.6 1.2c.5 3.2-.9 4.9-2.6 6.6C9.1 9.7 7.2 11.6 7.2 15a6.8 6.8 0 0 0 13.6 0c0-2.4-1-4-2.1-5.5-.4 1.3-1.2 2.1-2.1 2.4.6-2.6.1-6.6-3-10.7z"/><path d="M9.4 13.4C8.2 14.6 7.6 16 7.6 17.4a4.4 4.4 0 0 0 8.8 0c0-1.4-.7-2.5-1.6-3.5-.2 1-.8 1.6-1.5 1.9.4-1.7-.4-3.6-2-4.9-.1 1-.9 1.9-1.9 2.5z" opacity=".45"/></svg>
       </div>
       <div id="wizChrome">
         <div id="arenaStrip">
@@ -4466,7 +4502,14 @@ function setCur(id,v){
   CURC[id]=str;
   const m=CURSPLIT.exec(str);
   const pre = id==="bioN" ? "$" : "";
-  $(id).innerHTML = m ? pre+m[1]+'<span class="u">'+m[2]+'</span>' : pre+str;
+  const e=$(id);
+  e.innerHTML = m ? pre+m[1]+'<span class="u">'+m[2]+'</span>' : pre+str;
+  if(id==="bioN"){
+    const w=e.parentElement, n=str.length;
+    w.classList.toggle("l4",n===4);
+    w.classList.toggle("l5",n===5);
+    w.classList.toggle("l6",n>=6);
+  }
 }
 let bioSeen=0, twT=-1;
 /* the note kicks and clicks whenever the number climbs. Throttled to ten a
@@ -5368,6 +5411,28 @@ function actOn(from,to){
 }
 (function wizInput(){
   let down=-1, sx=0, sy=0, moved=false, id=null;
+  const fireEl=document.getElementById("wizUpBtn");
+  const stageEl=document.getElementById("wizStage");
+  const fireHit=(x,y)=>{
+    const b=fireEl.getBoundingClientRect();
+    return Math.hypot(x-(b.left+b.width/2), y-(b.top+b.height/2))<=b.width/2;
+  };
+  let fdown=false;
+  const unpress=()=>{ fdown=false; fireEl.classList.remove("press"); };
+  stageEl.addEventListener("pointerdown",e=>{
+    if(camBusy>0) return;
+    fdown=fireHit(e.clientX,e.clientY);
+    fireEl.classList.toggle("press",fdown);
+  },{capture:true,passive:true});
+  stageEl.addEventListener("pointerup",e=>{
+    const go=fdown && !moved && fireHit(e.clientX,e.clientY);
+    unpress();
+    if(go){ tick(760,.05); haptic(6); sheetWizards(); }
+  },{capture:true,passive:true});
+  stageEl.addEventListener("pointercancel",unpress,{capture:true,passive:true});
+  stageEl.addEventListener("pointermove",e=>{
+    if(fdown&&!fireHit(e.clientX,e.clientY)) unpress();
+  },{capture:true,passive:true});
   wgridEl.addEventListener("pointerdown",e=>{
     if(camBusy>0) return;
     const c=e.target.closest(".wcell"); if(!c) return;
@@ -5523,7 +5588,6 @@ $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
-$("wizUpBtn").onclick=sheetWizards;
 $("summonTop").onclick=function(){
   const cost=summonCost();
   if(wizCount()>=SLOTS){ toast("Merge two of a kind to free a slot"); return; }
