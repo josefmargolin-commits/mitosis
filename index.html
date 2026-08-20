@@ -308,7 +308,7 @@ input{font:inherit;color:inherit}
 .orb .dot{position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:50%;
   background:#FF3B47;box-shadow:0 1px 2px rgba(16,22,37,.3);display:none}
 /* the shop shouts about whatever is on the shelf, the way the reference does */
-.orb .pill{position:absolute;top:-8px;left:-7px;display:none;
+.orb .pill{position:absolute;top:-8px;right:-7px;display:none;
   font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
   font-size:7px;letter-spacing:.1em;padding:2.5px 6px;border-radius:99px;color:#fff;
   box-shadow:0 1.5px 4px rgba(16,22,37,.35)}
@@ -317,7 +317,7 @@ input{font:inherit;color:inherit}
 .orb.alert .dot{display:block}
 .pw{
   --c:#FFFFFF;
-  width:46px;height:46px;border-radius:15px;position:relative;overflow:hidden;
+  width:46px;height:46px;border-radius:15px;position:relative;
   border:0;padding:0;
   background:linear-gradient(180deg,#FFFFFF 0%,#F7FAFD 48%,#E9EFF6 100%);
   box-shadow:
@@ -331,8 +331,12 @@ input{font:inherit;color:inherit}
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 5px rgba(16,22,37,.18)}
 .pw .g{font-size:15px;line-height:1;color:var(--ink)}
 .pw .l{font-size:7px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
-.pw .cd{position:absolute;inset:0;background:rgba(244,247,250,.88);display:grid;place-items:center;
-  font-size:10px;color:var(--ink-2)}
+/* the cooldown covers the face rather than printing over the label, and it
+   has to carry the button's own radius now that the button no longer clips */
+.pw .cd{position:absolute;inset:0;border-radius:15px;display:grid;place-items:center;
+  background:rgba(238,243,249,.94);
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:600;
+  font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .pw.ready{background:linear-gradient(180deg,#FFF6DE 0%,#FFEFC4 48%,#FFE39A 100%);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #D9A518,0 5px 11px rgba(180,120,0,.24)}
 .pw.ready .l{color:var(--yellow)}
@@ -434,7 +438,9 @@ input{font:inherit;color:inherit}
   transition:transform .1s,border-color .15s,background .15s;text-align:center;
 }
 .card:active{transform:scale(.95)}
-.card.afford{border-color:rgba(34,197,94,.55);background:#F2FDF6}
+/* the reference keeps a card you can afford plain — white face, black price.
+   Green is reserved for the one offering an ad, so it stands out. */
+.card.afford{border-color:var(--edge-2);background:var(--panel)}
 .card.maxed{border-color:rgba(15,185,129,.5);background:#F0FCF8}
 .card .lv{position:absolute;top:5px;right:7px;font-size:8.5px;color:var(--ink-3);
   font-variant-numeric:tabular-nums;font-weight:600}
@@ -450,14 +456,14 @@ input{font:inherit;color:inherit}
   stroke-dasharray:106.81;stroke-dashoffset:106.81;
   transition:stroke-dashoffset .5s cubic-bezier(.2,.9,.25,1),stroke .3s}
 .card.maxed .rfg{stroke:var(--mint)}
-.card.afford .rfg{stroke:#22C55E}
+.card.afford .rfg{stroke:var(--ink-2)}
 .card .nm{font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-2);
   line-height:1.2;font-weight:600}
 .card .ef{font-size:9px;color:var(--ink);line-height:1.2;font-variant-numeric:tabular-nums}
 .card .ct{margin-top:auto;font-size:12px;font-weight:700;color:var(--ink);
   font-family:"Fredoka","Archivo",system-ui,sans-serif;
   font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:3px}
-.card.afford .ct{color:#15803D}
+.card.afford .ct{color:var(--ink)}
 .card.maxed .ct{color:var(--mint)}
 .card .ct i{width:7px;height:7px;border-radius:50%;background:#D99B0E;display:block;font-style:normal}
 /* the two currency marks, same shapes as the HUD pips, at text size */
