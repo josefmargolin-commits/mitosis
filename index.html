@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mitosis">
-<meta name="description" content="Split balls for mass, let matching colours fuse, and send your wizards to work.">
+<meta name="description" content="Split balls for gold, let matching colours fuse, and send your wizards to work.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
@@ -225,7 +225,8 @@ input{font:inherit;color:inherit}
 }
 .cur{display:flex;align-items:center;gap:7px;pointer-events:auto}
 .pip{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}
-.pip.bio{background:linear-gradient(140deg,#16C98D,#0A9E6C)}
+.pip.bio{background:linear-gradient(140deg,#F7D45B,#D99B0E)}
+.pip.bio svg{fill:#8A5B00}
 .pip.spore{background:linear-gradient(140deg,var(--blue),var(--purple))}
 .cur .n{font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:23px;line-height:1;
   letter-spacing:-.032em;font-variant-numeric:tabular-nums lining-nums;
@@ -368,7 +369,7 @@ input{font:inherit;color:inherit}
   font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:3px}
 .card.afford .ct{color:var(--yellow)}
 .card.maxed .ct{color:var(--mint)}
-.card .ct i{width:7px;height:7px;border-radius:50%;background:#16C98D;display:block;font-style:normal}
+.card .ct i{width:7px;height:7px;border-radius:50%;background:#D99B0E;display:block;font-style:normal}
 /* the two currency marks, same shapes as the HUD pips, at text size */
 .cico{width:1em;height:1em;display:inline-block;vertical-align:-.13em;fill:currentColor;flex:none}
 
@@ -643,7 +644,7 @@ input{font:inherit;color:inherit}
   </div>
 
   <div id="top">
-    <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.2" cy="14" r="7"/><circle cx="17.6" cy="7.4" r="4.1"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
+    <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.6" fill="none" stroke="#8A5B00" stroke-width="1.8" opacity=".55"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
     <div class="cur" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg></span><span class="n mono-n" id="sporeN">0</span></div>
   </div>
 
@@ -773,7 +774,10 @@ const TRAILS=[
 /* Six scales, and the ascent has to read as one continuous pull-back: every
    ball in the dish collapses into a single one, and that single ball is what
    you are looking at when the camera settles at the next scale up. */
-const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.2" cy="14" r="7"/><circle cx="17.6" cy="7.4" r="4.1"/></svg>';
+const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">'+
+  '<circle cx="12" cy="12" r="9"/>'+
+  '<circle cx="12" cy="12" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".45"/>'+
+  '</svg>';
 const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg>';
 
 const SCALES=[
@@ -825,8 +829,8 @@ const UP={
   cap:    {tab:"arena",g:"⬢",nm:"Space",base:46,gr:1.20,max:46,
            d:"How many balls the dish will hold.",
            v:l=>16+l*3, fmt:l=>(16+l*3)+" max"},
-  purity: {tab:"arena",g:"✦",nm:"Gold",base:130,gr:1.24, max:40,
-           d:"Chance a new ball is golden — worth twenty-five times as much.",
+  purity: {tab:"arena",g:"✦",nm:"Lucky",base:130,gr:1.24, max:40,
+           d:"Chance a new ball is a lucky one, worth twenty-five times as much.",
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
@@ -848,9 +852,12 @@ const UP={
   attract:{tab:"field",g:"◑",nm:"Seek",base:75,gr:1.19, max:44,
            d:"How far balls of the same colour drift toward each other on their own.",
            v:l=>72+l*10, fmt:l=>Math.round(72+l*10)+"px"},
-  yield:  {tab:"arena",g:"◉",nm:"Payout", base:22, gr:1.15, max:200,
-           d:"Mass you get from every split and pop.",
-           v:l=>1+l*0.13, fmt:l=>"×"+(1+l*0.13).toFixed(2)},
+  // a global multiplier on every source of income cannot also be the cheapest
+  // and longest track in the game. Diminishing returns, steeper cost, half the
+  // levels: it still ends up the biggest single buy, without eclipsing the rest.
+  yield:  {tab:"arena",g:"◉",nm:"Payout", base:70, gr:1.28, max:70,
+           d:"Gold you get from every split and pop.",
+           v:l=>1+0.5*Math.pow(l,0.72), fmt:l=>"×"+(1+0.5*Math.pow(l,0.72)).toFixed(2)},
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
            d:"Balls drift toward your finger while you hold it down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
@@ -877,7 +884,7 @@ const BOOSTS=[
 const OBJPOOL=[
   {k:"split", t:n=>"Split "+fmt(n)+" balls",         goals:[60,220,700,2200,7000],  sp:2},
   {k:"pop",   t:n=>"Break down "+fmt(n)+" balls",    goals:[40,150,500,1600,5000],  sp:2},
-  {k:"earn",  t:n=>"Bank "+fmt(n)+" mass",           goals:[900,9e3,1e5,1.4e6,2e7], sp:3},
+  {k:"earn",  t:n=>"Bank "+fmt(n)+" gold",           goals:[900,9e3,1e5,1.4e6,2e7], sp:3},
   {k:"combo", t:n=>"Reach a ×"+(1+n*0.05).toFixed(1)+" combo", goals:[10,20,32,46,60], sp:3},
   {k:"gold",  t:n=>"Break "+n+" golden balls",       goals:[2,6,14,30,60],          sp:4},
   {k:"burst", t:n=>"Detonate "+n+" unstable balls",  goals:[3,10,26,60,140],        sp:4},
@@ -1363,7 +1370,7 @@ function fuse(a,b){
   for(let i=0;i<8;i++) spark(x,y,"#fff");
   rings.push({x,y,r:n.r*1.5,R:n.r*.6,t:0,life:.34,col:"#fff",w:2.6});
   rings.push({x,y,r:n.r*.5,R:n.r*1.9,t:0,life:.42,col,w:2});
-  pops.push({x,y:y-n.r*.7,t:0,life:.7,txt:"◉"+fmt(n.mass),col,vy:-40});
+  pops.push({x,y:y-n.r*.7,t:0,life:.7,txt:"●"+fmt(n.mass),col,vy:-40});
   shake=Math.max(shake,2.2+(DROPT-nt)*1.6);
   flash=Math.max(flash,.10+(DROPT-nt)*.06);
   if(nt<=1) freeze=Math.max(freeze,.045);
@@ -1929,7 +1936,7 @@ const actGate=()=>{
 function summonAt(i){
   if(wiz(i)||!actGate()) return;
   const c=summonCost();
-  if(G.bio<c){ toast("Needs "+fmt(c)+" mass"); return; }
+  if(G.bio<c){ toast("Needs "+fmt(c)+" gold"); return; }
   G.bio-=c; G.summons=(G.summons|0)+1;
   G.wiz[i]={id:++G.wizSeq, rank:0};
   WZ[i].ph=Math.random();
@@ -1943,7 +1950,7 @@ function upgradeWiz(i){
   const r=w.rank;
   if(rCapped(r)){ toast(WRANK[r].nm+" is already at full speed"); return; }
   const c=rUpCost(r);
-  if(G.bio<c){ toast("Needs "+fmt(c)+" mass"); return; }
+  if(G.bio<c){ toast("Needs "+fmt(c)+" gold"); return; }
   G.bio-=c; G.wlvl[r]=rlvl(r)+1;
   toast("Every "+WRANK[r].nm+" now casts every "+rDelay(r).toFixed(2)+"s");
   tick(560+rlvl(r)*8,.1); haptic(9);
@@ -2008,7 +2015,7 @@ function syncWizPanel(force){
     row.appendChild(sw);
     const l=document.createElement("div"); l.className="l";
     l.innerHTML='<div class="t">'+r.nm+(L?" · Lv "+L:"")+'</div>'+
-      '<div class="s">Every '+rDelay(rk).toFixed(2)+'s · '+fmt(r.mass)+' mass · '+
+      '<div class="s">Every '+rDelay(rk).toFixed(2)+'s · '+fmt(r.mass)+' gold · '+
       r.taps+' tap'+(r.taps>1?"s":"")+(many>1?" · "+many+" on the board":"")+'</div>';
     row.appendChild(l);
     const b=document.createElement("button");
@@ -3218,7 +3225,7 @@ function syncCards(){
 function buy(k){
   if(maxed(k)){ toast(UP[k].nm+" is fully developed"); return; }
   const c=cost(k);
-  if(G.bio<c){ toast("Needs "+fmt(c)+" mass"); return; }
+  if(G.bio<c){ toast("Needs "+fmt(c)+" gold"); return; }
   G.bio-=c; G.up[k]++;
   tick(520+lv(k)*9,.1);
   haptic(9); save(); syncCards();
@@ -3472,7 +3479,7 @@ function sheetCustomise(){
 function sheetWelcome(secs,gain){
   openSheet("☾","While you were away",fmtTime(secs)+" dormant",b=>{
     b.appendChild(row({ic:"◍",t:"Idle hits kept going",s:"At "+Math.round(val("dorm")*100)+"% offline rate",v:fmt(gain)}));
-    b.appendChild(row({ic:ICO_MASS,t:"Mass now",s:"Ready to spend",v:fmt(G.bio)}));
+    b.appendChild(row({ic:ICO_MASS,t:"Gold now",s:"Ready to spend",v:fmt(G.bio)}));
     const d=document.createElement("button");
     d.className="dangerBtn"; d.style.borderColor="rgba(255,210,63,.4)"; d.style.color="var(--yellow)";
     d.textContent="Back to the dish"; d.onclick=closeSheet;
@@ -3709,7 +3716,7 @@ function tutBall(kind,tier){
 }
 const TUT=[
   {room:"arena", t:"Tap a ball, it splits",
-   s:"Here is one. Every tap breaks it into two smaller ones — and the smallest rung is the one that actually pays out mass. Swipe across several to cleave a whole line at once.",
+   s:"Here is one. Every tap breaks it into two smaller ones — and the smallest rung is the one that actually pays out gold. Swipe across several to cleave a whole line at once.",
    go(){ tutBall("plain",0); }},
   {room:"wiz",   t:"Wizards do the dropping",
    s:"Each one casts a ball on its own timer, so the dish fills while you are away. A wizard’s column decides which lane its balls fall down — line them up and their balls meet and fuse, spread them out and they will not.",
