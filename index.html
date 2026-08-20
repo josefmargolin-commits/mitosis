@@ -276,13 +276,25 @@ input{font:inherit;color:inherit}
 #combo{
   position:absolute;z-index:5;left:50%;top:calc(var(--top-h) + 62px);
   transform:translateX(-50%) scale(.8);
-  font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:27px;letter-spacing:-.03em;
-  color:var(--yellow);opacity:0;pointer-events:none;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:34px;letter-spacing:-.01em;
+  color:var(--cg,#E8A200);opacity:0;pointer-events:none;
   font-variant-numeric:tabular-nums;
-  text-shadow:0 2px 10px rgba(255,255,255,.9);
+  -webkit-text-stroke:2.5px rgba(255,255,255,.92);paint-order:stroke fill;
+  text-shadow:0 3px 0 rgba(255,255,255,.75), 0 0 22px var(--cg,#E8A200);
 }
-#combo.on{opacity:1;transform:translateX(-50%) scale(1);
-  transition:transform .1s cubic-bezier(.2,1.7,.4,1),opacity .1s}
+/* overshoot, drift up, settle — a flat scale-in read as a number changing
+   rather than something being won */
+#combo.on{opacity:1;animation:comboPop .54s cubic-bezier(.22,1.5,.34,1) forwards}
+@keyframes comboPop{
+  0%  {opacity:0;transform:translateX(-50%) translateY(14px) scale(.58)}
+  34% {opacity:1;transform:translateX(-50%) translateY(-7px) scale(1.26)}
+  62% {opacity:1;transform:translateX(-50%) translateY(-1px) scale(.96)}
+  100%{opacity:1;transform:translateX(-50%) translateY(-3px) scale(1)}
+}
+#combo.max{animation:comboPop .54s cubic-bezier(.22,1.5,.34,1) forwards,
+                     comboMaxed 1.1s ease-in-out .54s infinite}
+@keyframes comboMaxed{50%{text-shadow:0 3px 0 rgba(255,255,255,.75), 0 0 34px var(--cg,#E8A200)}}
 #banner{
   position:absolute;z-index:6;left:50%;top:38%;transform:translate(-50%,-50%);
   font-family:"Syne",var(--sym),sans-serif;font-weight:800;font-size:clamp(26px,8vw,44px);
@@ -582,12 +594,25 @@ input{font:inherit;color:inherit}
    the combo count, the breathing is the animation */
 #frenzy{
   position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;
-  transition:opacity .22s ease;
-  box-shadow:inset 0 0 0 2px rgba(255,176,32,.70), inset 0 0 34px 4px rgba(255,140,26,.22);
+  transition:opacity .28s ease;
+  /* no ring: the hard 2px line read as a border round a web page. This is a
+     vignette that starts at nothing well inside the frame and only reaches
+     strength in the corners, so there is no edge to find. */
+  background:
+    radial-gradient(125% 88% at 50% 50%,
+      rgba(255,150,30,0) 52%,
+      rgba(255,143,26,.10) 74%,
+      rgba(255,120,20,.26) 92%,
+      rgba(255,104,14,.40) 100%);
 }
-#frenzy.on{animation:fzBreathe 1.15s ease-in-out infinite}
+#frenzy.on{animation:fzBreathe 1.5s ease-in-out infinite}
 @keyframes fzBreathe{
-  50%{box-shadow:inset 0 0 0 3.5px rgba(255,176,32,.88), inset 0 0 62px 12px rgba(255,140,26,.38)}
+  50%{background:
+    radial-gradient(118% 82% at 50% 50%,
+      rgba(255,150,30,0) 46%,
+      rgba(255,143,26,.15) 70%,
+      rgba(255,120,20,.34) 90%,
+      rgba(255,98,10,.52) 100%)}
 }
 /* the new rank, named where it happened rather than across the middle of the
    board — the screen banner was competing with its own merge bolts */
@@ -872,8 +897,8 @@ const UP={
            d:"Balls drift toward your finger while you hold it down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
   reson:  {tab:"field",g:"≋",nm:"Streak",base:150,gr:1.22,max:50,
-           d:"Your combo lasts longer and each link pays more.",
-           v:l=>l, fmt:l=>"+"+(l*4)+"%"},
+           d:"How long your streak survives between breaks.",
+           v:l=>l, fmt:l=>(1.05+l*0.02).toFixed(2)+"s"},
 };
 const UPK=Object.keys(UP);
 
@@ -892,7 +917,7 @@ const OBJPOOL=[
   {k:"split", t:n=>"Split "+fmt(n)+" balls",         goals:[60,220,700,2200,7000],  sp:2},
   {k:"pop",   t:n=>"Break down "+fmt(n)+" balls",    goals:[40,150,500,1600,5000],  sp:2},
   {k:"earn",  t:n=>"Bank "+fmt(n)+" gold",           goals:[900,9e3,1e5,1.4e6,2e7], sp:3},
-  {k:"combo", t:n=>"Reach a ×"+(1+n*0.05).toFixed(1)+" combo", goals:[10,20,32,46,60], sp:3},
+  {k:"combo", t:n=>"Reach a ×"+(1+n*COMBO_STEP).toFixed(2)+" streak", goals:[25,50,80,110,140], sp:3},
   {k:"gold",  t:n=>"Break "+n+" golden balls",       goals:[2,6,14,30,60],          sp:4},
   {k:"burst", t:n=>"Detonate "+n+" unstable balls",  goals:[3,10,26,60,140],        sp:4},
   {k:"merge", t:n=>"Fuse "+fmt(n)+" pairs",          goals:[25,90,280,850,2600],    sp:3},
@@ -912,8 +937,8 @@ const ACHV=[
   {k:"merges", ic:"\u2295", nm:"Matchmaker", t:n=>"Merge "+fmt(n)+" pairs",
    src:()=>G.stat.merges, tiers:[50,1e3,20e3,400e3],
    rw:[{g:500},{sp:4,skin:"eclipse"},{g:1.4e6},{sp:12,trail:"chloro"}]},
-  {k:"combo", ic:"\u224B", nm:"On a streak", t:n=>"Reach a \u00D7"+(1+n*0.05).toFixed(2)+" streak",
-   src:()=>G.stat.bestCombo, tiers:[10,25,50,100],
+  {k:"combo", ic:"\u224B", nm:"On a streak", t:n=>"Reach a \u00D7"+(1+n*COMBO_STEP).toFixed(2)+" streak",
+   src:()=>G.stat.bestCombo, tiers:[25,60,100,200],
    rw:[{g:800},{sp:4,trail:"arc"},{g:3e6},{sp:14,skin:"circuit"}]},
   {k:"earn", ic:"\u25C9", nm:"Rich", t:n=>"Bank "+fmt(n)+" gold in total",
    src:()=>G.totalEarned, tiers:[10e3,1e6,1e9,1e12],
@@ -1008,7 +1033,14 @@ function adReady(k){ return !G.ad || !G.ad[k] || G.ad[k]<=el; }
 function adWait(k){ return Math.ceil((G.ad[k]-el)/60)+"m"; }
 const x2On=()=>x2Until>el;
 const yieldMul=()=>val("yield")*curScale().mult*(x2On()?2:1);
-const comboMul=()=>1+combo*0.05*(1+val("reson")*0.04);
+const COMBO_STEP=0.01;
+/* a hundred breaks to double your money, and the ad window lifts the ceiling
+   rather than stacking beside it, so the number on screen is the whole story */
+const comboCap=()=>2;
+const comboMul=()=>Math.min(comboCap(), 1+combo*COMBO_STEP);
+/* what the player actually earns, and what the popup shows: the streak caps at
+   2x, the ad doubles on top of it, so the ceiling is 4x */
+const totalMul=()=>comboMul()*(x2On()?2:1);
 const nextScaleCost=()=>100000*Math.pow(40,G.strain);
 const PAL=()=>(PALETTES.find(p=>p.id===G.pal)||PALETTES[0]).c;
 
@@ -1383,8 +1415,12 @@ function bumpCombo(){
   combo++; comboT=1.05+val("reson")*0.02;
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
   objProg("combo",0,combo);
-  const c=document.getElementById("combo");
-  c.textContent="×"+comboMul().toFixed(2);
+  const c=document.getElementById("combo"), m=totalMul(), cap=2*(x2On()?2:1);
+  const k=(m-1)/(cap-1);
+  c.textContent="×"+m.toFixed(2);
+  c.classList.toggle("max", m>=cap-1e-9);
+  // it warms as it climbs, so the number is not the only thing telling you
+  c.style.setProperty("--cg", k<.34?"#E8A200":k<.68?"#FF6B2C":"#FF3B57");
   c.classList.remove("on"); void c.offsetWidth; c.classList.add("on");
   setFrenzy(combo);
 }
@@ -1466,7 +1502,7 @@ function fuse(a,b){
   for(let i=0;i<8;i++) spark(x,y,"#fff");
   rings.push({x,y,r:n.r*1.5,R:n.r*.6,t:0,life:.34,col:"#fff",w:2.6});
   rings.push({x,y,r:n.r*.5,R:n.r*1.9,t:0,life:.42,col,w:2});
-  pushPop(x,y-n.r*.7,fmt(n.mass));
+  pushPop(x,y-n.r*.7,"+"+fmt(n.mass));
   shake=Math.max(shake,2.2+(DROPT-nt)*1.6);
   flash=Math.max(flash,.10+(DROPT-nt)*.06);
   if(nt<=1) freeze=Math.max(freeze,.045);
@@ -3201,7 +3237,7 @@ function draw(){
              : 1;
     const rise = 35*S*(1-Math.pow(1-k,2.2));      // ~35px, easing out
     const a = k<.06 ? k/.06 : (k<.58 ? 1 : 1-(k-.58)/.42);
-    const size=clamp(Math.round(18*S+16),20,28);
+    const size=clamp(Math.round(15*S+13),17,24);
     xFx.save();
     xFx.globalAlpha=Math.max(0,a);
     xFx.translate(p.x, p.y-rise);
@@ -3265,10 +3301,16 @@ function draw(){
   }
   const fill=Math.max(balls.length/val("cap"), areaSum()/(arenaArea()*0.44));
   if(fill>.88){
-    const g=xFx.createLinearGradient(0,AR.y1,0,AR.y1-90);
-    g.addColorStop(0,"rgba(255,75,92,"+((fill-.88)/.12*.13)+")");
-    g.addColorStop(1,"rgba(255,75,92,0)");
-    xFx.fillStyle=g; xFx.fillRect(0,AR.y1-90,W,90);
+    // a two-stop ramp over 90px banded badly and left a seam where the rect
+    // began. Taller, and eased across eight stops so it dies out long before
+    // its own edge.
+    const H2=Math.min(210,(AR.y1-AR.y0)*.42), peak=(fill-.88)/.12*.16;
+    const g=xFx.createLinearGradient(0,AR.y1,0,AR.y1-H2);
+    for(let i=0;i<=8;i++){
+      const u=i/8;
+      g.addColorStop(u,"rgba(255,72,90,"+(peak*Math.pow(1-u,2.4)).toFixed(4)+")");
+    }
+    xFx.fillStyle=g; xFx.fillRect(0,AR.y1-H2,W,H2);
   }
 }
 
@@ -3585,7 +3627,7 @@ function sheetShop(){
     b.appendChild(lbl("Double gold"));
     const left=Math.max(0,Math.ceil(x2Until-el));
     b.appendChild(row({ic:"◑",t:x2On()?"Double gold is running":"Watch an ad for double gold",
-      s:x2On()?left+"s left":"Everything pays twice as much for sixty seconds.",
+      s:x2On()?left+"s left":"Doubles everything for sixty seconds, so your streak tops out at ×4.",
       btn:x2On()?left+"s":(adReady("x2")?"Watch":adWait("x2")), btnOn:!x2On()&&adReady("x2"),
       fn:(x2On()||!adReady("x2"))?null:function(){
         // the reward loop is real; swap this line for the SDK callback in a
@@ -3702,7 +3744,7 @@ function sheetStats(){
       ["✦","Golden balls",fmt(s.gold)],
       ["⊕","Fusions",fmt(s.merges)],
       ["✸","Detonations",fmt(s.bursts)],
-      ["≋","Best combo","×"+(1+s.bestCombo*0.05).toFixed(2)],
+      ["≋","Best streak","×"+Math.min(4,1+s.bestCombo*COMBO_STEP).toFixed(2)],
       ["◍","Idle rate",fmt(passiveRate())+"/s"],
       ["⬤","Producing",fmt(throughput())+"/s"],
       ["◎","Total banked",fmt(G.totalEarned)],
