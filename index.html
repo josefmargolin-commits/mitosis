@@ -2804,7 +2804,7 @@ function scalePaint(x,r,col,rot,b){
    white core for the edge highlight. */
 function drawTrail(x,widthMul,alpha){
   const n=trail.length; if(n<3) return;
-  const col=trailCol(), wid=(val("reach")*S+4)*widthMul*1.5;
+  const col=trailCol(), wid=(val("reach")*S+4)*widthMul*1.9;
 
   // raw pointer samples are jagged at speed; one smoothing pass settles them
   const p=new Array(n);
@@ -2815,18 +2815,39 @@ function drawTrail(x,widthMul,alpha){
           t:trail[i].t};
   }
   const m=n, last=m-1;
+
+  // A blade is a crescent, not a wedge: a point at the tail, the belly about
+  // 40% back from the tip, and a point at the tip. The old profile peaked at
+  // the head and stopped flat, which is exactly what read as a ray.
+  const PK=0.5146;                     // peak of u^.55*(1-u)^.42, to normalise
+  const prof=u=>Math.pow(u,.55)*Math.pow(1-u,.42)/PK;
+
+  // which way the arc turns, so the belly can sit on the outside of the curve
+  const turn=new Array(m).fill(0);
+  for(let i=1;i<last;i++){
+    const ax=p[i].x-p[i-1].x, ay=p[i].y-p[i-1].y;
+    const bx=p[i+1].x-p[i].x, by=p[i+1].y-p[i].y;
+    const mag=Math.hypot(ax,ay)*Math.hypot(bx,by)||1;
+    turn[i]=clamp((ax*by-ay*bx)/mag,-1,1);
+  }
+  turn[0]=turn[1]||0; turn[last]=turn[last-1]||0;
+
   const half=(i,mul)=>{
-    const u=i/last;                              // 0 at the tail, 1 at the finger
+    const u=i/last;                              // 0 at the tail, 1 at the tip
     const age=1-clamp(p[i].t/.34,0,1);
-    return wid*.5*mul*Math.pow(u,.72)*(.3+.7*age);
+    return wid*.5*mul*prof(u)*(.34+.66*age);
   };
-  const ribbon=(mul)=>{
+  // bias slides the whole ribbon along the normal, which is how the white edge
+  // rides one side of the blade instead of sitting down its middle
+  const ribbon=(mul,bias)=>{
     const L=[],R=[];
     for(let i=0;i<m;i++){
       const a=p[i>0?i-1:0], b=p[i<last?i+1:last];
-      const tx=b.x-a.x, ty=b.y-a.y, len=Math.hypot(tx,ty)||1, h=half(i,mul);
-      const nx=-ty/len*h, ny=tx/len*h;
-      L.push(p[i].x+nx, p[i].y+ny); R.push(p[i].x-nx, p[i].y-ny);
+      const tx=b.x-a.x, ty=b.y-a.y, len=Math.hypot(tx,ty)||1;
+      const ux=-ty/len, uy=tx/len;
+      const h=half(i,mul), sk=1+.38*turn[i], c=(bias||0)*h;
+      L.push(p[i].x+ux*(c+h*sk), p[i].y+uy*(c+h*sk));
+      R.push(p[i].x+ux*(c-h/sk), p[i].y+uy*(c-h/sk));
     }
     x.beginPath(); x.moveTo(L[0],L[1]);
     for(let i=2;i<L.length;i+=2) x.lineTo(L[i],L[i+1]);
@@ -2839,10 +2860,10 @@ function drawTrail(x,widthMul,alpha){
   // source-over throughout: the goo layer thresholds alpha, and an additive
   // pass there would blow straight through it
   x.fillStyle=col;
-  x.globalAlpha=alpha*.22; ribbon(1.9); x.fill();
-  x.globalAlpha=alpha*.95; ribbon(1);   x.fill();
+  x.globalAlpha=alpha*.20; ribbon(1.75,0);  x.fill();
+  x.globalAlpha=alpha*.95; ribbon(1,0);     x.fill();
   x.fillStyle="#fff";
-  x.globalAlpha=alpha*.85; ribbon(.32); x.fill();
+  x.globalAlpha=alpha*.9;  ribbon(.30,.50); x.fill();
   x.restore();
 }
 
