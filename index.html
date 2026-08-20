@@ -243,30 +243,60 @@ input{font:inherit;color:inherit}
 .rail{position:absolute;z-index:5;display:flex;flex-direction:column;gap:9px}
 #railL{left:calc(10px + env(safe-area-inset-left));top:calc(var(--top-h) + 8px)}
 #railR{right:calc(10px + env(safe-area-inset-right));top:calc(var(--top-h) + 8px);align-items:flex-end}
+/* each button carries its own colour in --c and its glyph colour in --ic; the
+   lip and sheen are derived so one variable sets the whole button */
 .orb{
-  width:40px;height:40px;border-radius:50%;display:grid;place-items:center;position:relative;
-  background:var(--panel);border:1px solid var(--edge);box-shadow:var(--shadow);
-  transition:transform .12s cubic-bezier(.2,1.7,.4,1);
+  --c:#232B39; --ic:#fff;
+  width:44px;height:44px;border-radius:50%;display:grid;place-items:center;position:relative;
+  border:0;padding:0;color:var(--ic);
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--c) 84%, white) 0%,
+    var(--c) 46%,
+    color-mix(in srgb, var(--c) 88%, black) 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.34),
+    inset 0 -2px 0 rgba(0,0,0,.13),
+    0 3px 0 color-mix(in srgb, var(--c) 66%, black),
+    0 5px 11px rgba(16,22,37,.22);
+  transition:transform .1s ease, box-shadow .1s ease;
 }
-.orb:active{transform:scale(.9)}
-.orb svg{width:19px;height:19px;stroke:var(--ink-2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.orb .dot{position:absolute;top:-2px;right:-2px;width:9px;height:9px;border-radius:50%;
-  background:var(--red);border:2px solid #fff;display:none}
+/* it travels down onto its own lip rather than shrinking */
+.orb:active{
+  transform:translateY(3px);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.30),
+    inset 0 -2px 0 rgba(0,0,0,.13),
+    0 0 0 color-mix(in srgb, var(--c) 66%, black),
+    0 2px 5px rgba(16,22,37,.22);
+}
+.orb svg{width:21px;height:21px;stroke:currentColor;fill:none;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.orb .dot{position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:50%;
+  background:#FF3B47;box-shadow:0 1px 2px rgba(16,22,37,.3);display:none}
 .orb.alert .dot{display:block}
 .pw{
-  width:44px;height:44px;border-radius:14px;position:relative;overflow:hidden;
-  background:var(--panel);border:1px solid var(--edge);box-shadow:var(--shadow);
+  --c:#FFFFFF;
+  width:46px;height:46px;border-radius:15px;position:relative;overflow:hidden;
+  border:0;padding:0;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7FAFD 48%,#E9EFF6 100%);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.9),
+    0 3px 0 #C9D4E2,
+    0 5px 11px rgba(16,22,37,.18);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-  transition:transform .12s cubic-bezier(.2,1.7,.4,1);
+  transition:transform .1s ease, box-shadow .1s ease;
 }
-.pw:active{transform:scale(.9)}
+.pw:active{transform:translateY(3px);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 5px rgba(16,22,37,.18)}
 .pw .g{font-size:15px;line-height:1;color:var(--ink)}
 .pw .l{font-size:7px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
 .pw .cd{position:absolute;inset:0;background:rgba(244,247,250,.88);display:grid;place-items:center;
   font-size:10px;color:var(--ink-2)}
-.pw.ready{border-color:rgba(232,162,0,.55);box-shadow:0 0 0 2px rgba(232,162,0,.12),var(--shadow)}
+.pw.ready{background:linear-gradient(180deg,#FFF6DE 0%,#FFEFC4 48%,#FFE39A 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #D9A518,0 5px 11px rgba(180,120,0,.24)}
 .pw.ready .l{color:var(--yellow)}
-.pw.active{border-color:var(--mint);box-shadow:0 0 0 2px rgba(15,185,129,.18),var(--shadow)}
+.pw.active{background:linear-gradient(180deg,#E6FCF3 0%,#CFF7E6 48%,#A9EDD2 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #0FB981,0 5px 11px rgba(15,185,129,.26)}
 .pw.locked{opacity:.7}
 .pw.locked .l{color:var(--yellow);font-size:8px;letter-spacing:.02em}
 .pw.locked .g{opacity:.4}
@@ -794,6 +824,15 @@ const SKINS=[
   {id:"circuit",nm:"Circuit", cost:30},
   {id:"vortex", nm:"Vortex",  cost:38},
 ];
+/* your pet's coat: core, the two accretion arcs, and the halo it drags */
+const PETS=[
+  {id:"void",  nm:"Void",   cost:0,  core:"#0B0616", arc:"#C6A0FF", glow:"158,96,255",  d:"The one you started with."},
+  {id:"ember", nm:"Ember",  cost:8,  core:"#1A0703", arc:"#FFB27A", glow:"255,122,45",  d:"Burns as it feeds."},
+  {id:"frost", nm:"Frost",  cost:12, core:"#04141C", arc:"#9FE8FF", glow:"64,196,255",  d:"Cold and quiet."},
+  {id:"toxic", nm:"Toxic",  cost:16, core:"#08160A", arc:"#B9F87A", glow:"120,224,60",  d:"Something is wrong with this one."},
+  {id:"rose",  nm:"Rose",   cost:22, core:"#1B0510", arc:"#FFA6D2", glow:"255,90,170",  d:"Sweet, briefly."},
+];
+const pet=()=>PETS.find(p=>p.id===G.pet)||PETS[0];
 const TRAILS=[
   {id:"gold",  nm:"Golden Path",  c:"#FFD23F", cost:0,  d:"The default cleave."},
   {id:"plasma",nm:"Plasma Wave",  c:"#FF3DCB", cost:6,  d:"Swirling magenta energy."},
@@ -997,6 +1036,7 @@ function freshState(){
     pw:{}, boost:{},
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
+    pet:"void", ownPet:["void"],
     obj:null, objDone:0, achv:{}, ad:{},
     opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
@@ -1012,6 +1052,8 @@ function load(){
     m.opt=Object.assign(f.opt,s.opt||{});
     m.stat=Object.assign(f.stat,s.stat||{});
     m.achv=s.achv||{}; m.ad={};   // cooldowns are per session
+    if(!Array.isArray(m.ownPet)||!m.ownPet.length) m.ownPet=["void"];
+    if(!m.pet) m.pet="void";
     m.pw=s.pw||{}; m.boost=s.boost||{};
     if(!Array.isArray(m.wiz)||m.wiz.length!==16) m.wiz=Array(16).fill(null);
     if(!Array.isArray(m.wlvl)||m.wlvl.length!==6) m.wlvl=[0,0,0,0,0,0];
@@ -2576,26 +2618,27 @@ function drawBH(x){
   const r=bhR(), R=bhPull(), k=1+BH.fed*.16;
   x.save();
   // its reach, stated faintly — everything inside is fair game
-  x.globalAlpha=.14; x.strokeStyle="#5B3FA8"; x.lineWidth=1.4;
+  const P=pet();
+  x.globalAlpha=.14; x.strokeStyle=P.arc; x.lineWidth=1.4;
   x.setLineDash([5*S,7*S]); x.lineDashOffset=-BH.ph*14*S;
   x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
   x.setLineDash([]); x.globalAlpha=1;
   const glow=Math.max(r*2.9*k,15*S);
   const g=x.createRadialGradient(BH.x,BH.y,r*.6,BH.x,BH.y,glow);
-  g.addColorStop(0,"rgba(158,96,255,.44)");
-  g.addColorStop(.45,"rgba(96,62,196,.20)");
-  g.addColorStop(1,"rgba(60,40,140,0)");
+  g.addColorStop(0,"rgba("+P.glow+",.44)");
+  g.addColorStop(.45,"rgba("+P.glow+",.20)");
+  g.addColorStop(1,"rgba("+P.glow+",0)");
   x.fillStyle=g;
   x.beginPath(); x.arc(BH.x,BH.y,glow,0,TAU); x.fill();
   // accretion: two arcs, opposite sides, spinning
-  x.strokeStyle="rgba(198,160,255,.9)"; x.lineWidth=Math.max(1.1,r*.22);
+  x.strokeStyle=P.arc; x.globalAlpha=.9; x.lineWidth=Math.max(1.1,r*.22);
   x.lineCap="round";
   const a=BH.ph*3.1;
   const ar=Math.max(r*1.42*k,6*S);
   x.beginPath(); x.arc(BH.x,BH.y,ar,a,a+2.2); x.stroke();
   x.beginPath(); x.arc(BH.x,BH.y,ar,a+Math.PI,a+Math.PI+1.4); x.stroke();
   // and the hole
-  x.fillStyle="#0B0616";
+  x.globalAlpha=1; x.fillStyle=P.core;
   x.beginPath(); x.arc(BH.x,BH.y,r*k,0,TAU); x.fill();
   x.restore();
 }
@@ -3336,7 +3379,7 @@ let uiT=0;
 const $=id=>document.getElementById(id);
 const ICONS={
   /* a filled silhouette with real teeth — the stroked ring read as a sun */
-  gear:'<path fill="var(--ink-2)" stroke="none" fill-rule="evenodd" d="M19.08 9.53L22.09 9.95L22.09 14.05L19.08 14.47A7.5 7.5 0 0 1 18.75 15.26L20.58 17.69L17.69 20.58L15.26 18.75A7.5 7.5 0 0 1 14.47 19.08L14.05 22.09L9.95 22.09L9.53 19.08A7.5 7.5 0 0 1 8.74 18.75L6.31 20.58L3.42 17.69L5.25 15.26A7.5 7.5 0 0 1 4.92 14.47L1.91 14.05L1.91 9.95L4.92 9.53A7.5 7.5 0 0 1 5.25 8.74L3.42 6.31L6.31 3.42L8.74 5.25A7.5 7.5 0 0 1 9.53 4.92L9.95 1.91L14.05 1.91L14.47 4.92A7.5 7.5 0 0 1 15.26 5.25L17.69 3.42L20.58 6.31L18.75 8.74A7.5 7.5 0 0 1 19.08 9.53ZM12 8.55A3.45 3.45 0 1 0 12 15.45A3.45 3.45 0 1 0 12 8.55Z"/>',
+  gear:'<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M19.08 9.53L22.09 9.95L22.09 14.05L19.08 14.47A7.5 7.5 0 0 1 18.75 15.26L20.58 17.69L17.69 20.58L15.26 18.75A7.5 7.5 0 0 1 14.47 19.08L14.05 22.09L9.95 22.09L9.53 19.08A7.5 7.5 0 0 1 8.74 18.75L6.31 20.58L3.42 17.69L5.25 15.26A7.5 7.5 0 0 1 4.92 14.47L1.91 14.05L1.91 9.95L4.92 9.53A7.5 7.5 0 0 1 5.25 8.74L3.42 6.31L6.31 3.42L8.74 5.25A7.5 7.5 0 0 1 9.53 4.92L9.95 1.91L14.05 1.91L14.47 4.92A7.5 7.5 0 0 1 15.26 5.25L17.69 3.42L20.58 6.31L18.75 8.74A7.5 7.5 0 0 1 19.08 9.53ZM12 8.55A3.45 3.45 0 1 0 12 15.45A3.45 3.45 0 1 0 12 8.55Z"/>',
   chart:'<path d="M3.5 20.5h17"/><path d="M7 20.5V14M12 20.5V9.5M17 20.5V5.5"/>',
   bag:'<path d="M4.6 8.2h14.8l-1.1 11.1a2 2 0 0 1-2 1.8H7.7a2 2 0 0 1-2-1.8z"/>'+
       '<path d="M8.9 8.2V6.4a3.1 3.1 0 0 1 6.2 0v1.8"/>',
@@ -3346,9 +3389,9 @@ const ICONS={
   flag:'<path d="M6 21V3.5"/><path d="M6 4.6h11.4l-2.8 3.9 2.8 3.9H6"/>',
   /* this opens Your Balls — palette and trail, so draw an actual palette */
   brush:'<path d="M12 3.2a8.8 8.8 0 000 17.6 2 2 0 001.55-3.27 2 2 0 011.55-3.27h2.6a3 3 0 002.98-3.35A8.8 8.8 0 0012 3.2z"/>'+
-        '<circle cx="8.1" cy="9.6" r="1.15" fill="var(--ink-2)" stroke="none"/>'+
-        '<circle cx="12.7" cy="7.7" r="1.15" fill="var(--ink-2)" stroke="none"/>'+
-        '<circle cx="7" cy="14.3" r="1.15" fill="var(--ink-2)" stroke="none"/>',
+        '<circle cx="8.1" cy="9.6" r="1.15" fill="currentColor" stroke="none"/>'+
+        '<circle cx="12.7" cy="7.7" r="1.15" fill="currentColor" stroke="none"/>'+
+        '<circle cx="7" cy="14.3" r="1.15" fill="currentColor" stroke="none"/>',
 };
 function toast(msg){
   const t=$("toast"); t.textContent=msg;
@@ -3369,14 +3412,15 @@ function alertOrb(id,on){ const o=$("orb-"+id); if(o) o.classList.toggle("alert"
 function buildRails(){
   const L=$("railL"); L.innerHTML="";
   for(const it of [
-    {id:"set",svg:ICONS.gear,fn:sheetSettings},
-    {id:"stat",svg:ICONS.chart,fn:sheetStats},
-    {id:"ach",svg:ICONS.trophy,fn:sheetAchievements},
-    {id:"shop",svg:ICONS.bag,fn:sheetShop},
-    {id:"cos",svg:ICONS.brush,fn:sheetCustomise},
+    {id:"set", svg:ICONS.gear,   fn:sheetSettings,     c:"#232B39", ic:"#FFFFFF"},
+    {id:"stat",svg:ICONS.chart,  fn:sheetStats,        c:"#FFFFFF", ic:"#3A4A5E"},
+    {id:"ach", svg:ICONS.trophy, fn:sheetAchievements, c:"#F7B500", ic:"#5A3B00"},
+    {id:"shop",svg:ICONS.bag,    fn:sheetShop,         c:"#22C55E", ic:"#FFFFFF"},
+    {id:"cos", svg:ICONS.brush,  fn:sheetCustomise,    c:"#F97316", ic:"#FFFFFF"},
   ]){
     const b=document.createElement("button");
     b.className="orb"; b.id="orb-"+it.id;
+    b.style.setProperty("--c",it.c); b.style.setProperty("--ic",it.ic);
     b.innerHTML='<svg viewBox="0 0 24 24">'+it.svg+'</svg><span class="dot"></span>';
     b.onclick=it.fn; L.appendChild(b);
   }
@@ -3789,6 +3833,22 @@ function objRows(b){
 }
 function sheetCustomise(){
   openSheet("◑","Your Balls","Cleave colour and powers",b=>{
+    b.appendChild(lbl("Your pet"));
+    for(const p of PETS){
+      const own=G.ownPet.includes(p.id), sel=G.pet===p.id;
+      b.appendChild(row({
+        swatch:p.arc, t:p.nm, s:p.d, sel,
+        btn:sel?"Equipped":(own?"Equip":ICO_SPORE+p.cost), btnOn:!sel,
+        fn:()=>{
+          if(sel) return;
+          if(own){ G.pet=p.id; save(); }
+          else if(G.spore>=p.cost){ G.spore-=p.cost; G.ownPet.push(p.id); G.pet=p.id;
+                                    toast(p.nm+" unlocked"); save(); }
+          else toast("Needs "+p.cost+" shards");
+        }
+      }));
+    }
+
     b.appendChild(lbl("Cleave colour"));
     for(const t of TRAILS){
       const own=G.ownTrail.includes(t.id), sel=G.trail===t.id;
@@ -4073,6 +4133,14 @@ const TUT=[
   {room:"wiz",   t:"Wizards do the dropping",
    s:"Each one casts a ball on its own timer, so the dish fills while you are away. A wizard’s column decides which lane its balls fall down — line them up and their balls meet and fuse, spread them out and they will not.",
    go(){}},
+  {room:"arena", t:"This is your black hole",
+   s:"Your pet. It drifts around the dish on its own, pulling balls together so they merge, and swallowing the small ones whole. Feed it Size and it can take on bigger ones. You can change how it looks under Your Balls.",
+   go(){
+     // make sure there is one to look at, even on a fresh run
+     if(!bhOn()) G.up.pulse=Math.max(1,G.up.pulse|0);
+     BH.init=false;
+     tutBall("plain",6); tutBall("plain",6);
+   }},
   {room:"arena", t:"Some of them are unstable",
    s:"A pale ball ringed with pulsing spokes is unstable. It will not fuse with anything, and tapping it does not split it — it detonates, and takes whatever is nearby with it. Useful on a crowded dish, expensive on a tidy one.",
    go(){ tutBall("unstable",2); }},
