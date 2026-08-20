@@ -277,6 +277,13 @@ input{font:inherit;color:inherit}
   stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
 .orb .dot{position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:50%;
   background:#FF3B47;box-shadow:0 1px 2px rgba(16,22,37,.3);display:none}
+/* the shop shouts about whatever is on the shelf, the way the reference does */
+.orb .pill{position:absolute;top:-8px;left:-7px;display:none;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:7px;letter-spacing:.1em;padding:2.5px 6px;border-radius:99px;color:#fff;
+  box-shadow:0 1.5px 4px rgba(16,22,37,.35)}
+.orb.pill-epic .pill{display:block;background:linear-gradient(180deg,#F472B6,#DB2777)}
+.orb.pill-deal .pill{display:block;background:linear-gradient(180deg,#38BDF8,#0284C7)}
 .orb.alert .dot{display:block}
 .pw{
   --c:#FFFFFF;
@@ -368,11 +375,13 @@ input{font:inherit;color:inherit}
   background:var(--panel);border-top:1px solid var(--edge);box-shadow:var(--shadow-up);
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
-#tabs{display:flex;height:38px;flex:none;border-bottom:1px solid var(--edge);
+#tabs{display:flex;height:var(--tab-h,38px);flex:none;border-bottom:1px solid var(--edge);
   overflow-x:auto;scrollbar-width:none;
   transition:opacity .26s ease,visibility .26s}
-#dock.min{height:calc(16px + env(safe-area-inset-bottom))}
-#dock.min #tabs,#dock.min #cards{opacity:0;visibility:hidden;pointer-events:none}
+/* collapsed leaves the tabs standing, so the upgrades fold into the tab
+   they belong to rather than the whole shelf disappearing */
+#dock.min{height:calc(var(--tab-h,38px) + env(safe-area-inset-bottom))}
+#dock.min #cards{opacity:0;visibility:hidden;pointer-events:none}
 #cards{transition:opacity .26s ease,visibility .26s}
 #tabs::-webkit-scrollbar{display:none}
 .tab{
@@ -592,7 +601,7 @@ input{font:inherit;color:inherit}
 /* short windows still need a playable dish, so the dock gives ground */
 @media (max-height:540px){
   :root{--dock-h:116px}
-  #tabs{height:32px}
+  :root{--tab-h:32px}
   .tab{font-size:8px;padding:0 6px}
   .card{flex-basis:70px;padding:6px 4px 5px;gap:1px}
   .card .g{font-size:14px}
@@ -3725,7 +3734,8 @@ function buildRails(){
     const b=document.createElement("button");
     b.className="orb"; b.id="orb-"+it.id;
     b.style.setProperty("--c",it.c); b.style.setProperty("--ic",it.ic);
-    b.innerHTML='<svg viewBox="0 0 24 24">'+it.svg+'</svg><span class="dot"></span>';
+    b.innerHTML='<svg viewBox="0 0 24 24">'+it.svg+'</svg><span class="dot"></span>'+
+                 '<span class="pill"></span>';
     b.onclick=it.fn; L.appendChild(b);
   }
   const R=$("railR"); R.innerHTML="";
@@ -3747,7 +3757,20 @@ function buildRails(){
     for(const p of bought) add(p,false);
   }
 }
+/* The shop badge alternates between the two rarities actually on the shelf,
+   so both get seen rather than one sitting there forever. */
+let pillT=-99, pillOn=0;
+function syncShopPill(){
+  const o=document.getElementById("orb-shop"); if(!o) return;
+  if(el-pillT>4.5){ pillT=el; pillOn^=1; }
+  const kind=pillOn?"deal":"epic";
+  o.classList.toggle("pill-epic",kind==="epic");
+  o.classList.toggle("pill-deal",kind==="deal");
+  const p=o.querySelector(".pill");
+  if(p) p.textContent=kind==="epic"?"EPIC":"DEAL";
+}
 function syncRails(){
+  syncShopPill();
   for(const p of POWERS){
     const s=pwState(p), b=$("pw-"+p.id); if(!b) continue;
     const cd=b.querySelector(".cd"), lab=b.querySelector(".l");
@@ -3926,7 +3949,22 @@ function setCur(id,v){
   const pre = id==="bioN" ? "$" : "";
   $(id).innerHTML = m ? pre+m[1]+'<span class="u">'+m[2]+'</span>' : pre+str;
 }
+let bioSeen=0, twT=-1;
+/* the note kicks and clicks whenever the number climbs. Throttled to ten a
+   second, or a fast dish would machine-gun it. */
+function twitchMoney(){
+  const p=document.querySelector("#bioWrap .pip"); if(!p) return;
+  p.animate([
+    {transform:"scale(1) rotate(0deg)"},
+    {transform:"scale(1.26) rotate(-8deg)",offset:.3},
+    {transform:"scale(.97) rotate(3deg)",offset:.62},
+    {transform:"scale(1) rotate(0deg)"}
+  ],{duration:220,easing:"cubic-bezier(.2,1.7,.35,1)"});
+  tick(1180,.032);
+}
 function syncTop(){
+  if(G.bio>bioSeen+0.5 && el-twT>0.1){ twT=el; twitchMoney(); }
+  bioSeen=G.bio;
   setCur("bioN",G.bio);
   setCur("sporeN",G.spore);
 }
@@ -3996,6 +4034,8 @@ const PACKS=[
    b:"+1T cash", p:"$99.99", tone:"teal", off:"70% OFF", rar:"deal"},
   {id:"powers",t:"Touch Powers Master Pack", s:"Unlock & max out all powers \u2014 Scatter, Crush, Chain, Storm",
    p:"$9.99", tone:"blue"},
+  {id:"allup", t:"Unlock All Upgrades", s:"Every card on every tab, open from the start",
+   b:"all tabs", p:"$4.99", tone:"violet", off:"BEST"},
 ];
 const BOOSTS_IAP=[
   {t:"Offline Commander", s:"2x offline earnings permanently", p:"$2.99"},
