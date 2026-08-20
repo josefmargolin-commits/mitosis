@@ -717,6 +717,100 @@ input{font:inherit;color:inherit}
 .bd.g1 .pos{color:#E8A200}.bd.g2 .pos{color:#94A3B8}.bd.g3 .pos{color:#B87333}
 .bd .who{flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bd .sc{font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+/* ---- the store, laid out like the reference ---- */
+#sheetBody.store{gap:8px}
+.stTabs{display:flex;gap:0;border-bottom:1px solid var(--edge);margin:-4px -16px 4px;padding:0 16px}
+.stTab{flex:1;padding:9px 4px 8px;background:none;border:0;border-bottom:2.5px solid transparent;
+  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  display:flex;align-items:center;justify-content:center;gap:5px}
+.stTab.on{color:#16A34A;border-bottom-color:#16A34A}
+.stTab.on.gem{color:#7C3AED;border-bottom-color:#7C3AED}
+
+.stCard{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);
+  padding:11px 12px;display:flex;flex-direction:column;gap:8px;position:relative}
+.stCard.gift{border-color:rgba(245,166,35,.5);background:#FFFBF0}
+.stCard.streak{border-color:rgba(124,58,237,.4);background:#F9F6FF}
+.stCard.spent{opacity:.62}
+.stHead{display:flex;align-items:center;gap:8px}
+.stHead .ic{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;
+  color:#fff;font-size:12px}
+.stHead .t{font-size:12.5px;font-weight:600;flex:1;min-width:0}
+.tag{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:99px;
+  font-weight:700;flex:none}
+.tag.new{background:#22C55E;color:#fff}
+.tag.day{background:#7C3AED;color:#fff}
+.tag.ok{background:#DCFCE7;color:#15803D}
+.stSub{font-size:10px;color:var(--ink-3);line-height:1.45}
+.stRow{display:flex;gap:7px}
+.stBtn{flex:1;padding:9px;border-radius:10px;border:0;color:#fff;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:600;font-size:11px;
+  transition:transform .1s ease, box-shadow .1s ease}
+.stBtn:active{transform:translateY(2.5px);box-shadow:none!important}
+.stBtn.amber{background:linear-gradient(180deg,#F7CE55,#E0A81A);box-shadow:0 2.5px 0 #B98A10}
+.stBtn.violet{background:linear-gradient(180deg,#9B6BFF,#7C3AED);box-shadow:0 2.5px 0 #5B23BE}
+.stBtn.orange{background:linear-gradient(180deg,#FB923C,#EA580C);box-shadow:0 2.5px 0 #C2410C}
+.stBtn.off{background:var(--surface);color:var(--ink-3);box-shadow:none}
+
+/* the seven day chips */
+.days{display:flex;gap:4px}
+.day{flex:1;border-radius:8px;border:1px solid var(--edge);background:var(--panel);
+  padding:5px 2px 4px;text-align:center;min-width:0}
+.day .d{font-size:7px;letter-spacing:.05em;color:var(--ink-3)}
+.day .m{font-size:10px;font-weight:700;color:var(--ink-2);margin-top:1px}
+.day.past{background:#DCFCE7;border-color:rgba(34,197,94,.45)}
+.day.past .m{color:#15803D}
+.day.now{background:#EDE4FF;border-color:#7C3AED}
+.day.now .m{color:#7C3AED}
+
+/* the priced packs */
+.pk{border-radius:13px;border:1.5px solid var(--edge);background:var(--panel);
+  padding:10px 11px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}
+.pk .l{flex:1;min-width:0}
+.pk .t{font-size:12px;font-weight:600}
+.pk .s{font-size:9.5px;color:var(--ink-3);line-height:1.4;margin-top:1px}
+.pk .b{font-size:9.5px;color:var(--ink-2);margin-top:3px}
+.pk .p{flex:none;padding:8px 13px;border-radius:10px;color:#fff;font-weight:700;font-size:12px;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif}
+.pk.blue .p{background:#2F6BFF}.pk.violet .p{background:#7C3AED}
+.pk.orange .p{background:#F97316}.pk.teal .p{background:#0FB981}
+.pk .off{position:absolute;top:0;right:0;font-size:7.5px;font-weight:700;letter-spacing:.06em;
+  padding:3px 8px;border-bottom-left-radius:9px;background:#FF3B57;color:#fff}
+.pk .rar{position:absolute;top:0;left:0;font-size:7.5px;font-weight:700;letter-spacing:.08em;
+  padding:3px 8px;border-bottom-right-radius:9px;color:#fff}
+.pk .rar.epic{background:#EC4899}.pk .rar.deal{background:#0EA5E9}
+.pk.epic{border-color:rgba(236,72,153,.45);background:#FFF8FC}
+.pk.deal{border-color:rgba(14,165,233,.4);background:#F5FCFF}
+
+/* the cash and shard grids */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tiles.g3{grid-template-columns:repeat(3,1fr)}
+.tile{border-radius:11px;border:1.5px solid var(--edge);background:var(--panel);
+  padding:8px 4px 7px;text-align:center;position:relative}
+.tile .v{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.tile .n{font-size:7.5px;color:var(--ink-3);line-height:1.3;margin-top:1px}
+.tile .p{margin-top:5px;font-size:9.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.tile.best{border-color:#E8A200;background:#FFFBF0}
+.tile.best .p{color:#B98A10;font-weight:700}
+.tile .bb{position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+  font-size:7px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:99px;
+  background:#E8A200;color:#fff}
+.tile.gem{border-color:rgba(124,58,237,.35)}
+.tile.gem.best{border-color:#7C3AED;background:#F8F5FF}
+.tile.gem.best .bb{background:#7C3AED}
+
+.dashBtn{width:100%;padding:11px;border-radius:12px;border:1.5px dashed var(--edge-2);
+  background:transparent;color:var(--ink-2);font-size:10.5px;display:flex;
+  align-items:center;justify-content:center;gap:6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.mini{border-radius:12px;border:1.5px solid var(--edge);background:var(--panel);padding:9px 10px;
+  display:flex;flex-direction:column;gap:3px;text-align:center}
+.mini.vip{border-color:#E8A200;background:#FFFBF0}
+.mini .t{font-size:11px;font-weight:600}
+.mini .s{font-size:8.5px;color:var(--ink-3);line-height:1.35;flex:1}
+.mini .p{font-size:12px;font-weight:700;color:var(--ink);margin-top:2px;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif}
+.restore{width:100%;padding:12px;background:none;border:0;color:var(--ink-3);font-size:10.5px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1097,7 +1191,7 @@ function freshState(){
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
     pet:"void", ownPet:["void"],
-    obj:null, objDone:0, achv:{}, ad:{},
+    obj:null, objDone:0, objT:0, achv:{}, ad:{}, stTab:"shop", streakDay:1,
     opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
@@ -1114,6 +1208,7 @@ function load(){
     m.achv=s.achv||{}; m.ad={};   // cooldowns are per session
     if(!Array.isArray(m.ownPet)||!m.ownPet.length) m.ownPet=["void"];
     if(!m.pet) m.pet="void";
+    m.stTab="shop"; m.streakDay=s.streakDay||1;
     m.pw=s.pw||{}; m.boost=s.boost||{};
     if(!Array.isArray(m.wiz)||m.wiz.length!==16) m.wiz=Array(16).fill(null);
     if(!Array.isArray(m.wlvl)||m.wlvl.length!==6) m.wlvl=[0,0,0,0,0,0];
@@ -2879,15 +2974,15 @@ function appPt(el){
 function rewardPill(srcEl,txt){
   const p=document.getElementById("rwPill"); if(!p) return;
   const r=srcEl.getBoundingClientRect(), a=app.getBoundingClientRect();
-  p.textContent=txt;
+  p.innerHTML=txt;      // the reward carries its currency mark, so this is markup
   p.style.left=(r.left-a.left+r.width/2)+"px";
   p.style.top=(r.top-a.top+r.height/2)+"px";
   p.animate([
-    {opacity:0,transform:"translate(-50%,-50%) scale(.5)"},
-    {opacity:1,transform:"translate(-50%,-72%) scale(1.14)",offset:.3},
-    {opacity:1,transform:"translate(-50%,-86%) scale(1)",offset:.62},
-    {opacity:0,transform:"translate(-50%,-150%) scale(.96)"}
-  ],{duration:1500,easing:"cubic-bezier(.2,.9,.3,1)"});
+    {opacity:0,transform:"translate(-50%,-50%) scale(.42)"},
+    {opacity:1,transform:"translate(-50%,-58%) scale(1.18)",offset:.26},
+    {opacity:1,transform:"translate(-50%,-62%) scale(1)",offset:.66},
+    {opacity:0,transform:"translate(-50%,-108%) scale(.98)"}
+  ],{duration:1600,easing:"cubic-bezier(.2,.9,.3,1)"});
 }
 function celebrate(src,n,col,homeEl){
   const p=appPt(src);
@@ -3562,7 +3657,7 @@ function syncRails(){
     else cd.style.display="none";
   }
   alertOrb("ach",false);
-  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
+  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done&&!o.claimed)));
 }
 
 function buildTabs(){
@@ -3765,65 +3860,244 @@ function row(o){
 }
 function lbl(t){ const d=document.createElement("div"); d.className="secLbl"; d.textContent=t; return d; }
 
-function sheetShop(){
-  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.bag+'</svg>',
-    "Shop","Powers, gold and a boost",b=>{
+/* ---- the store ----------------------------------------------------------
+   Structure, sections and prices lifted from the reference, with its cash and
+   gems as our gold and shards. Everything with a dollar sign is inert and says
+   so at the bottom: a single HTML file cannot take a payment. */
+const CASH_PACKS=[
+  {v:1.35e3,p:"$0.99"},{v:6.75e3,p:"$1.99"},{v:20.3e3,p:"$2.99"},{v:67.5e3,p:"$4.99"},
+  {v:675e3,p:"$9.99"},{v:6.75e6,p:"$19.99"},{v:67.5e6,p:"$29.99"},{v:675e6,p:"$49.99",best:1},
+  {v:13.5e9,p:"$79.99"},{v:135e9,p:"$99.99",best:1},
+];
+const SHARD_PACKS=[
+  {v:50,n:"Handful",p:"$0.99"},{v:150,n:"Pouch",p:"$2.99"},{v:400,n:"Chest",p:"$4.99",best:1},
+  {v:1000,n:"Vault",p:"$9.99"},{v:2500,n:"Treasury",p:"$19.99",best:1},
+];
+const PACKS=[
+  {id:"pocket", t:"Pocket Gold",  s:"Enough for your next upgrades!", p:"$0.99", tone:"blue"},
+  {id:"starter",t:"Starter Pack", s:"No Forced Ads + 100K Gold + 2x Offline (24h)",
+   b:"+100k gold", p:"$4.99", tone:"blue",   off:"50% OFF", best:1},
+  {id:"premium",t:"Premium Pack", s:"No Banners + No Forced Ads + Skip Gates + Auto 2x + 10M Gold",
+   b:"+10.0M gold", p:"$14.99", tone:"violet", off:"55% OFF"},
+  {id:"ultimate",t:"Ultimate Pack",s:"100% Ad-Free + 10B Gold + All Boosts",
+   b:"+10.0B gold", p:"$49.99", tone:"orange", off:"65% OFF", rar:"epic"},
+  {id:"whale", t:"Whale Pack",   s:"100% Ad-Free + 1T Gold + All Boosts + Exclusive Badge",
+   b:"+1T gold", p:"$99.99", tone:"teal", off:"70% OFF", rar:"deal"},
+  {id:"powers",t:"Touch Powers Master Pack", s:"Unlock & max out all powers \u2014 Scatter, Crush, Chain, Storm",
+   p:"$9.99", tone:"blue"},
+];
+const BOOSTS_IAP=[
+  {t:"Offline Commander", s:"2x offline earnings permanently", p:"$2.99"},
+  {t:"Golden Hunter",     s:"2x lucky ball spawn rate permanently", p:"$1.99"},
+  {t:"Lucky Star",        s:"2x luck multiplier permanently", p:"$2.99"},
+];
+const STREAK=[1,2,4,8,16,32,64];
 
-    b.appendChild(lbl("Double gold"));
+function stDay(){ return Math.min(7,(G.streakDay|0)||1); }
+function soon(el2){ toast("Paid items need a store build"); }
+
+function sheetShop(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#22C55E">'+ICONS.bag+'</svg>',
+    "Store","Gold, shards and boosts",b=>{
+    b.parentElement && b.classList.add("store");
+    const tabs=document.createElement("div"); tabs.className="stTabs";
+    for(const t of [["shop","Shop"],["cos","Cosmetics"]]){
+      const x=document.createElement("button");
+      x.className="stTab"+(G.stTab===t[0]?" on":"")+(t[0]==="cos"?" gem":"");
+      x.textContent=t[1];
+      x.onclick=()=>{ G.stTab=t[0]; sheetSync&&sheetSync(); };
+      tabs.appendChild(x);
+    }
+    b.appendChild(tabs);
+    if(G.stTab==="cos"){ stCosmetics(b); return; }
+
+    /* --- daily free gift --- */
+    const giftReady=adReady("gift");
+    const gift=document.createElement("div");
+    gift.className="stCard gift"+(giftReady?"":" spent");
+    gift.innerHTML='<div class="stHead">'+
+      '<span class="ic" style="background:#F59E0B">\u2617</span>'+
+      '<span class="t">Daily Free Gift</span>'+
+      (giftReady?'<span class="tag new">New</span>':'')+
+      '</div><div class="stSub">'+(giftReady?"+20 shards, on the house.":"Next free gift in "+adWait("gift"))+'</div>';
+    if(giftReady){
+      const r=document.createElement("div"); r.className="stRow";
+      const c=document.createElement("button"); c.className="stBtn amber"; c.textContent="Claim";
+      c.onclick=function(){ G.spore+=20; G.ad.gift=el+86400;
+        celebrate(this,52,"#F5B301",document.querySelector("#sporeWrap .pip"));
+        rewardPill(this,"+20"); save(); syncTop(); sheetSync&&sheetSync(); };
+      const d=document.createElement("button"); d.className="stBtn orange"; d.innerHTML="2\u00D7 (40)";
+      d.onclick=function(){ G.spore+=40; G.ad.gift=el+86400;
+        celebrate(this,74,"#F5B301",document.querySelector("#sporeWrap .pip"));
+        rewardPill(this,"+40"); save(); syncTop(); sheetSync&&sheetSync(); };
+      r.appendChild(c); r.appendChild(d); gift.appendChild(r);
+    }
+    b.appendChild(gift);
+
+    /* --- daily streak --- */
+    const day=stDay(), stReady=adReady("streak");
+    const st=document.createElement("div");
+    st.className="stCard streak"+(stReady?"":" spent");
+    st.innerHTML='<div class="stHead">'+
+      '<span class="ic" style="background:#7C3AED">\u2606</span>'+
+      '<span class="t">Daily Streak</span>'+
+      '<span class="tag day">Day '+day+'</span>'+
+      (stReady?'<span class="tag ok">Claim</span>':'')+
+      '</div>'+
+      '<div class="days">'+STREAK.map((m,i)=>
+        '<span class="day '+(i+1<day?"past":(i+1===day?"now":""))+'">'+
+        '<span class="d">0'+(i+1)+'</span><span class="m">'+m+'\u00D7</span></span>').join("")+'</div>'+
+      '<div class="stSub">'+(stReady
+        ? "Today: "+ICO_SPORE+(3*STREAK[day-1])+" \u00B7 "+ICO_MASS+" "+fmt(4000*STREAK[day-1])
+        : "Claimed today! Come back tomorrow.")+'</div>';
+    if(stReady){
+      const r=document.createElement("div"); r.className="stRow";
+      const mk=(cls,txt,mult)=>{
+        const x=document.createElement("button"); x.className="stBtn "+cls; x.innerHTML=txt;
+        x.onclick=function(){
+          const sp=3*STREAK[day-1]*mult, go=4000*STREAK[day-1]*mult;
+          G.spore+=sp; G.bio+=go; G.earned+=go; G.totalEarned+=go;
+          G.streakDay=Math.min(7,day+1); G.ad.streak=el+86400;
+          celebrate(this,52*mult,"#A78BFA",document.querySelector("#sporeWrap .pip"));
+          rewardPill(this,"+"+sp); save(); syncTop(); sheetSync&&sheetSync();
+        };
+        return x;
+      };
+      r.appendChild(mk("violet","Claim",1));
+      r.appendChild(mk("orange","2\u00D7 ("+(6*STREAK[day-1])+")",2));
+      st.appendChild(r);
+    }
+    b.appendChild(st);
+
+    /* --- ads that pay --- */
+    b.appendChild(lbl("Watch an ad"));
     const left=Math.max(0,Math.ceil(x2Until-el));
-    b.appendChild(row({ic:"◑",t:x2On()?"Double gold is running":"Watch an ad for double gold",
-      s:x2On()?left+"s left":"Doubles everything for sixty seconds, so your streak tops out at ×4.",
+    b.appendChild(row({ic:"\u25D1",t:x2On()?"Double gold is running":"Double gold for 60s",
+      s:x2On()?left+"s left":"Everything pays twice as much, so your streak tops out at \u00D74.",
       btn:x2On()?left+"s":(adReady("x2")?"Watch":adWait("x2")), btnOn:!x2On()&&adReady("x2"),
       fn:(x2On()||!adReady("x2"))?null:function(){
-        // the reward loop is real; swap this line for the SDK callback in a
-        // store build, because no ad network can load inside one HTML file
-        x2Until=el+60; G.ad.x2=el+300;
-        toast("Double gold for 60s"); sheetSync&&sheetSync();
-      }}));
-
-    b.appendChild(row({ic:ICO_MASS,t:"Watch an ad for gold",
-      s:"A lump scaled to what you are earning now.",
+        x2Until=el+60; G.ad.x2=el+300; toast("Double gold for 60s"); sheetSync&&sheetSync(); }}));
+    b.appendChild(row({ic:ICO_MASS,t:"Free gold",s:"A lump scaled to what you are earning now.",
       btn:adReady("gold")?"Watch":adWait("gold"), btnOn:adReady("gold"),
       fn:adReady("gold")?function(){
         const v=Math.max(500,passiveRate()*240+throughput()*120);
         G.bio+=v; G.earned+=v; G.totalEarned+=v; G.ad.gold=el+300;
-        toast("+"+fmt(v)+" gold"); save(); syncTop(); sheetSync&&sheetSync();
+        rewardPill(this,"+"+fmt(v)); toast("+"+fmt(v)+" gold"); save(); syncTop(); sheetSync&&sheetSync();
       }:null}));
-    b.appendChild(row({ic:ICO_SPORE,t:"Watch an ad for shards",
-      s:"Three shards. Once every five minutes.",
+    b.appendChild(row({ic:ICO_SPORE,t:"Free shards",s:"Three shards. Once every five minutes.",
       btn:adReady("sp")?"Watch":adWait("sp"), btnOn:adReady("sp"),
-      fn:adReady("sp")?function(){
-        G.spore+=3; G.ad.sp=el+300;
-        toast("+3 shards"); save(); syncTop(); sheetSync&&sheetSync();
-      }:null}));
+      fn:adReady("sp")?function(){ G.spore+=3; G.ad.sp=el+300;
+        rewardPill(this,"+3"); save(); syncTop(); sheetSync&&sheetSync(); }:null}));
 
+    /* --- powers you can actually buy --- */
     b.appendChild(lbl("Powers"));
     for(const p of POWERS){
       if(p.cost===0) continue;
-      const st=pwState(p);
-      b.appendChild(row({ic:p.g,t:p.nm,s:p.d+" · "+p.cd+"s cooldown",
-        btn:st.owned?"Owned":ICO_SPORE+p.cost, btnOn:!st.owned,
-        fn:st.owned?null:function(){
+      const stp=pwState(p);
+      b.appendChild(row({ic:p.g,t:p.nm,s:p.d+" \u00B7 "+p.cd+"s cooldown",
+        btn:stp.owned?"Owned":ICO_SPORE+p.cost, btnOn:!stp.owned,
+        fn:stp.owned?null:function(){
           if(G.spore<p.cost){ toast("Needs "+p.cost+" shards"); return; }
-          G.spore-=p.cost; st.owned=true; toast(p.nm+" unlocked");
-          save(); syncTop(); buildRails(); syncRails();
+          G.spore-=p.cost; stp.owned=true; toast(p.nm+" unlocked");
+          save(); syncTop(); buildRails(); syncRails(); sheetSync&&sheetSync();
         }}));
     }
 
-    b.appendChild(lbl("Buy outright"));
-    for(const it of [
-      {ic:"◉",t:"Pouch of gold",   s:"A leg-up when a scale is dragging."},
-      {ic:"◉",t:"Chest of gold",   s:"Ten times the pouch."},
-      {ic:"✦",t:"Shard bundle",    s:"A pile of shards, bought outright."},
-    ]) b.appendChild(row({ic:it.ic,t:it.t,s:it.s,btn:"Soon",btnOn:false}));
-    const n=document.createElement("div");
-    n.className="wpHint";
-    n.innerHTML="<span>Paid items need a store build — nothing can take a payment "+
-                "from a single HTML file.</span>";
-    b.appendChild(n);
+    /* --- the paid shelf --- */
+    b.appendChild(lbl("For you"));
+    for(const p of PACKS){
+      if(p.id==="starter") b.appendChild(lbl("Best value"));
+      const d=document.createElement("div");
+      d.className="pk "+p.tone+(p.rar?" "+p.rar:"");
+      d.innerHTML=(p.rar?'<span class="rar '+p.rar+'">'+p.rar.toUpperCase()+'</span>':'')+
+        (p.off?'<span class="off">'+p.off+'</span>':'')+
+        '<span class="l"><span class="t">'+p.t+'</span>'+
+        '<span class="s">'+p.s+'</span>'+
+        (p.b?'<span class="b">\u2605 '+p.b+'</span>':'')+'</span>'+
+        '<span class="p">'+p.p+'</span>';
+      d.onclick=soon;
+      b.appendChild(d);
+    }
+
+    b.appendChild(lbl("Gold packs"));
+    const cg=document.createElement("div"); cg.className="tiles";
+    for(const c of CASH_PACKS){
+      const t=document.createElement("div"); t.className="tile"+(c.best?" best":"");
+      t.innerHTML=(c.best?'<span class="bb">Best</span>':'')+
+        '<div class="v">'+fmt(c.v)+'</div><div class="p">'+c.p+'</div>';
+      t.onclick=soon; cg.appendChild(t);
+    }
+    b.appendChild(cg);
+
+    b.appendChild(lbl("Shard packs"));
+    const sg=document.createElement("div"); sg.className="tiles g3";
+    for(const c of SHARD_PACKS){
+      const t=document.createElement("div"); t.className="tile gem"+(c.best?" best":"");
+      t.innerHTML=(c.best?'<span class="bb">Best</span>':'')+
+        '<div class="v">'+fmt(c.v)+'</div><div class="n">'+c.n+' of Shards</div>'+
+        '<div class="p">'+c.p+'</div>';
+      t.onclick=soon; sg.appendChild(t);
+    }
+    b.appendChild(sg);
+
+    const br=document.createElement("button");
+    br.className="dashBtn"; br.innerHTML=ICO_SPORE+" Browse cosmetics";
+    br.onclick=()=>{ G.stTab="cos"; sheetSync&&sheetSync(); };
+    b.appendChild(br);
+
+    b.appendChild(lbl("Remove ads"));
+    const pr=document.createElement("div"); pr.className="pair";
+    pr.innerHTML=
+      '<div class="mini"><span class="t">No Forced Ads</span>'+
+      '<span class="s">Remove all interstitial ad breaks</span><span class="p">$2.99</span></div>'+
+      '<div class="mini vip"><span class="t">VIP Pass \u2605</span>'+
+      '<span class="s">No banners, no forced ads, skip gates \u2192 auto 2x bonuses</span>'+
+      '<span class="p">$5.99</span></div>';
+    [...pr.children].forEach(c=>c.onclick=soon);
+    b.appendChild(pr);
+
+    b.appendChild(lbl("Permanent boosts"));
+    const bp=document.createElement("div"); bp.className="pair";
+    bp.style.gridTemplateColumns="repeat(3,1fr)";
+    bp.innerHTML=BOOSTS_IAP.map(x=>'<div class="mini"><span class="t">'+x.t+'</span>'+
+      '<span class="s">'+x.s+'</span><span class="p">'+x.p+'</span></div>').join("");
+    [...bp.children].forEach(c=>c.onclick=soon);
+    b.appendChild(bp);
+
+    const rs=document.createElement("button");
+    rs.className="restore"; rs.innerHTML="\u21BB Restore purchases";
+    rs.onclick=soon;
+    b.appendChild(rs);
+
+    const note=document.createElement("div");
+    note.className="wpHint";
+    note.innerHTML="<span>Every price above is inert. Nothing can take a payment from a "+
+      "single HTML file \u2014 that needs a store build.</span>";
+    b.appendChild(note);
   });
 }
-
+function stCosmetics(b){
+  b.appendChild(lbl("Your pet"));
+  for(const p of PETS){
+    const own=G.ownPet.includes(p.id), sel=G.pet===p.id;
+    b.appendChild(row({swatch:p.arc,t:p.nm,s:p.d,sel,
+      btn:sel?"Equipped":(own?"Equip":ICO_SPORE+p.cost), btnOn:!sel,
+      fn:()=>{ if(sel) return;
+        if(own){ G.pet=p.id; save(); }
+        else if(G.spore>=p.cost){ G.spore-=p.cost; G.ownPet.push(p.id); G.pet=p.id; toast(p.nm+" unlocked"); save(); }
+        else toast("Needs "+p.cost+" shards"); }}));
+  }
+  b.appendChild(lbl("Cleave colour"));
+  for(const t of TRAILS){
+    const own=G.ownTrail.includes(t.id), sel=G.trail===t.id;
+    b.appendChild(row({swatch:t.c,t:t.nm,s:t.d,sel,
+      btn:sel?"Equipped":(own?"Equip":ICO_SPORE+t.cost), btnOn:!sel,
+      fn:()=>{ if(sel) return;
+        if(own){ G.trail=t.id; save(); }
+        else if(G.spore>=t.cost){ G.spore-=t.cost; G.ownTrail.push(t.id); G.trail=t.id; toast(t.nm+" unlocked"); save(); }
+        else toast("Needs "+t.cost+" shards"); }}));
+  }
+}
 /* ---- daily missions -----------------------------------------------------
    Card per goal: icon, name, difficulty stars, a count and a percent, a bar,
    the reward, then Claim beside a doubled Claim that costs an ad. The whole
@@ -3831,11 +4105,11 @@ function sheetShop(){
 function msCard(o){
   const d=document.createElement("div");
   const pct=clamp(o.prog/o.goal,0,1);
-  d.className="ms "+(o.done?"ready":"prog");
+  d.className="ms "+(o.claimed?"done":(o.done?"ready":"prog"));
   const stars=[0,1,2].map(i=>'<i class="'+(i<=Math.min(2,Math.floor(o.sp/3))?"on":"")+'">\u2605</i>').join("");
   d.innerHTML=
     '<div class="top">'+
-      '<span class="ic">'+(o.done?"\u2713":"\u25CB")+'</span>'+
+      '<span class="ic">'+(o.claimed?"\u2713":(o.done?"\u2713":"\u25CB"))+'</span>'+
       '<span class="nm">'+objLabel(o)+'</span>'+
       '<span class="stars">'+stars+'</span>'+
     '</div>'+
@@ -3844,7 +4118,11 @@ function msCard(o){
     '<div class="msBar"><i style="width:'+(pct*100).toFixed(0)+'%"></i></div>'+
     '<div class="foot"><span class="rw">'+ICO_SPORE+o.sp+'</span></div>';
   const foot=d.querySelector(".foot");
-  if(o.done){
+  if(o.claimed){
+    const st=document.createElement("span");
+    st.className="status"; st.textContent="\u2713 Claimed";
+    foot.appendChild(st);
+  } else if(o.done){
     const b=document.createElement("button");
     b.className="msBtn claim"; b.textContent="Claim";
     b.onclick=function(){ claimObj(o,this,1); };
@@ -3865,17 +4143,14 @@ function msCard(o){
 }
 function claimObj(o,btn,mult){
   if(!o.done) return;
+  if(o.claimed) return;
   const sp=o.sp*mult;
   G.spore+=sp; G.bio+=180*yieldMul()*(1+G.objDone*0.6);
-  G.objDone++;
-  G.obj.splice(G.obj.indexOf(o),1);
-  const tier=Math.min(4,Math.floor(G.objDone/6));
-  const used=G.obj.map(x=>x.k);
-  const pool=OBJPOOL.filter(p=>!used.includes(p.k));
-  const p=pool[(Math.random()*pool.length)|0]||OBJPOOL[0];
-  G.obj.push({k:p.k,goal:p.goals[tier],prog:0,sp:p.sp+tier,done:false});
+  G.objDone++; o.claimed=true;
+  // the burst comes off the card, and the chip lands in the middle of it
+  const card=btn.closest(".ms")||btn;
   celebrate(btn, 46+sp*5, "#F5B301", document.querySelector("#sporeWrap .pip"));
-  rewardPill(btn,"+"+sp);
+  rewardPill(card, ICO_SPORE+"+"+sp);
   chime(523,{vol:.16,len:.9,wet:.5});
   chime(659,{vol:.13,len:.85,delay:.07,wet:.5});
   chime(784,{vol:.11,len:.9,delay:.14,wet:.55});
@@ -3883,12 +4158,30 @@ function claimObj(o,btn,mult){
   thud(78,{vol:.2,len:.26});
   haptic([14,26,14,40]);
   save(); syncTop(); sheetSync&&sheetSync();
-  alertOrb("mis",!!(G.obj&&G.obj.some(x=>x.done)));
+  alertOrb("mis",!!(G.obj&&G.obj.some(x=>x.done&&!x.claimed)));
+}
+const DAY_MS=24*3600*1000;
+function missionsLeft(){
+  const t0=G.objT||(G.objT=Date.now());
+  return Math.max(0, DAY_MS-(Date.now()-t0));
+}
+function rollDaily(){
+  G.objT=Date.now();
+  G.obj=null; rollObjectives();
+  G.obj.forEach(o=>o.claimed=false);
+  save();
+}
+function fmtClock(ms){
+  const s2=Math.floor(ms/1000), h=Math.floor(s2/3600),
+        m=Math.floor(s2%3600/60), q=s2%60;
+  return h+":"+String(m).padStart(2,"0")+":"+String(q).padStart(2,"0");
 }
 function sheetMissions(){
   if(!G.obj) rollObjectives();
+  if(!G.objT) G.objT=Date.now();
+  if(missionsLeft()<=0) rollDaily();
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#F97316">'+ICONS.target+'</svg>',
-    "Daily Missions","Three at a time",b=>{
+    "Daily Missions","Resets in "+fmtClock(missionsLeft()),b=>{
     const done=G.obj.filter(o=>o.done).length;
     const top=document.createElement("div");
     top.className="msTop";
@@ -3969,7 +4262,7 @@ function achRows(b){
           toast(a.nm+" \u2014 "+got);
           save(); syncTop(); buildCards();
           alertOrb("ach",false);
-  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done)));
+  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done&&!o.claimed)));
         }:null
       }));
     }
