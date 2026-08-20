@@ -576,6 +576,17 @@ input{font:inherit;color:inherit}
   font-size:10px;letter-spacing:.15em;text-transform:uppercase;
   color:var(--ink-3);text-decoration:underline;text-underline-offset:4px;
 }
+/* the screen edge catches fire on a long combo — intensity is set inline from
+   the combo count, the breathing is the animation */
+#frenzy{
+  position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;
+  transition:opacity .22s ease;
+  box-shadow:inset 0 0 0 2px rgba(255,176,32,.70), inset 0 0 34px 4px rgba(255,140,26,.22);
+}
+#frenzy.on{animation:fzBreathe 1.15s ease-in-out infinite}
+@keyframes fzBreathe{
+  50%{box-shadow:inset 0 0 0 3.5px rgba(255,176,32,.88), inset 0 0 62px 12px rgba(255,140,26,.38)}
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -638,6 +649,7 @@ input{font:inherit;color:inherit}
 
   <div id="banner"></div>
   <div id="toast"></div>
+  <div id="frenzy"></div>
   <canvas id="burst"></canvas>
   <div id="scrim"></div>
   <div id="sheet">
@@ -800,17 +812,17 @@ const UP={
   force:  {tab:"touch",g:"✥",nm:"Damage", base:26, gr:1.42, max:24,
            d:"Damage every tap deals. Tougher balls need more of it.",
            v:l=>1+Math.floor(l/4), fmt:l=>(1+Math.floor(l/4))+" dmg"},
-  reach:  {tab:"touch",g:"◜",nm:"Swipe", base:14, gr:1.16, max:60,
+  reach:  {tab:"touch",g:"◜",nm:"Size", base:14, gr:1.16, max:60,
            d:"How wide your swipe cuts.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
-  cascade:{tab:"touch",g:"⁘",nm:"Repeat",base:90,gr:1.24, max:50,
+  cascade:{tab:"touch",g:"⁘",nm:"Double",base:90,gr:1.24, max:50,
            d:"Chance a split splits its halves again, all the way down.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
-  rupture:{tab:"touch",g:"✷",nm:"Burst",base:60,gr:1.21, max:45,
+  rupture:{tab:"touch",g:"✷",nm:"Instant",base:60,gr:1.21, max:45,
            d:"Chance a tap pops a whole ball at once, whatever its size.",
            v:l=>Math.min(.4,l*.009), fmt:l=>(Math.min(40,l*.9)).toFixed(1)+"%"},
 
-  cap:    {tab:"arena",g:"⬢",nm:"Room",base:46,gr:1.20,max:46,
+  cap:    {tab:"arena",g:"⬢",nm:"Space",base:46,gr:1.20,max:46,
            d:"How many balls the dish will hold.",
            v:l=>16+l*3, fmt:l=>(16+l*3)+" max"},
   purity: {tab:"arena",g:"✦",nm:"Gold",base:130,gr:1.24, max:40,
@@ -831,21 +843,21 @@ const UP={
            v:l=>Math.min(1,.2+l*.04), fmt:l=>Math.round(Math.min(1,.2+l*.04)*100)+"%"},
 
   fusion: {tab:"field",g:"⊕",nm:"Merge", base:60, gr:1.20, max:40,
-           d:"How long two balls of the same colour must touch before they merge.",
+           d:"Two balls of the same colour that touch turn into one bigger ball. This is the wait before that happens.",
            v:l=>Math.max(0.12,0.42*Math.pow(0.955,l)), fmt:l=>Math.max(0.12,0.42*Math.pow(0.955,l)).toFixed(2)+"s"},
-  attract:{tab:"field",g:"◑",nm:"Pull",base:75,gr:1.19, max:44,
-           d:"How far balls of the same colour reach for each other.",
+  attract:{tab:"field",g:"◑",nm:"Seek",base:75,gr:1.19, max:44,
+           d:"How far balls of the same colour drift toward each other on their own.",
            v:l=>72+l*10, fmt:l=>Math.round(72+l*10)+"px"},
   yield:  {tab:"arena",g:"◉",nm:"Payout", base:22, gr:1.15, max:200,
            d:"Mass you get from every split and pop.",
            v:l=>1+l*0.13, fmt:l=>"×"+(1+l*0.13).toFixed(2)},
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
-           d:"Balls drift toward your finger while it is down.",
+           d:"Balls drift toward your finger while you hold it down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
-  chain:  {tab:"field",g:"⌁",nm:"Jump", base:190,gr:1.23, max:44,
+  chain:  {tab:"field",g:"⌁",nm:"Spread", base:190,gr:1.23, max:44,
            d:"Chance a split jumps to a nearby ball.",
            v:l=>Math.min(.7,l*.016), fmt:l=>(Math.min(70,l*1.6)).toFixed(0)+"%"},
-  reson:  {tab:"field",g:"≋",nm:"Combo",base:150,gr:1.22,max:50,
+  reson:  {tab:"field",g:"≋",nm:"Streak",base:150,gr:1.22,max:50,
            d:"Your combo lasts longer and each link pays more.",
            v:l=>l, fmt:l=>"+"+(l*4)+"%"},
 };
@@ -1293,6 +1305,15 @@ function bumpCombo(){
   const c=document.getElementById("combo");
   c.textContent="×"+comboMul().toFixed(2);
   c.classList.remove("on"); void c.offsetWidth; c.classList.add("on");
+  setFrenzy(combo);
+}
+/* nothing below five, then it climbs to full by twenty — a long combo should
+   feel like it is running away with you without drowning the dish */
+function setFrenzy(n){
+  const f=document.getElementById("frenzy"); if(!f) return;
+  const on=n>=5;
+  f.classList.toggle("on",on);
+  f.style.opacity=on?(.42+Math.min(.58,(n-5)*.045)).toFixed(2):0;
 }
 function earn(base,x,y,col){
   const v=base*yieldMul()*comboMul();
@@ -2510,7 +2531,7 @@ function step(dt){
   }
   for(let i=trail.length-1;i>=0;i--){ trail[i].t+=dt; if(trail[i].t>.34) trail.splice(i,1); }
 
-  if(comboT>0){ comboT-=dt; if(comboT<=0){ combo=0; document.getElementById("combo").classList.remove("on"); } }
+  if(comboT>0){ comboT-=dt; if(comboT<=0){ combo=0; document.getElementById("combo").classList.remove("on"); setFrenzy(0); } }
   shake*=Math.pow(.02,dt); flash*=Math.pow(.004,dt);
 }
 
@@ -3037,7 +3058,7 @@ function draw(){
   const fill=Math.max(balls.length/val("cap"), areaSum()/(arenaArea()*0.44));
   if(fill>.88){
     const g=xFx.createLinearGradient(0,AR.y1,0,AR.y1-90);
-    g.addColorStop(0,"rgba(255,75,92,"+((fill-.88)/.12*.20)+")");
+    g.addColorStop(0,"rgba(255,75,92,"+((fill-.88)/.12*.13)+")");
     g.addColorStop(1,"rgba(255,75,92,0)");
     xFx.fillStyle=g; xFx.fillRect(0,AR.y1-90,W,90);
   }
@@ -3064,10 +3085,8 @@ function frame(t){
 let uiT=0;
 const $=id=>document.getElementById(id);
 const ICONS={
-  /* a ring with eight stubby teeth survives 19px; a detailed gear does not */
-  gear:'<circle cx="12" cy="12" r="6.6"/><circle cx="12" cy="12" r="2.5"/>'+
-       '<path d="M18.6 12h2.3M5.4 12H3.1M12 5.4V3.1M12 18.6v2.3"/>'+
-       '<path d="M16.67 7.33l1.62-1.62M7.33 16.67l-1.62 1.62M7.33 7.33L5.71 5.71M16.67 16.67l1.62 1.62"/>',
+  /* a filled silhouette with real teeth — the stroked ring read as a sun */
+  gear:'<path fill="var(--ink-2)" stroke="none" fill-rule="evenodd" d="M19.08 9.53L22.09 9.95L22.09 14.05L19.08 14.47A7.5 7.5 0 0 1 18.75 15.26L20.58 17.69L17.69 20.58L15.26 18.75A7.5 7.5 0 0 1 14.47 19.08L14.05 22.09L9.95 22.09L9.53 19.08A7.5 7.5 0 0 1 8.74 18.75L6.31 20.58L3.42 17.69L5.25 15.26A7.5 7.5 0 0 1 4.92 14.47L1.91 14.05L1.91 9.95L4.92 9.53A7.5 7.5 0 0 1 5.25 8.74L3.42 6.31L6.31 3.42L8.74 5.25A7.5 7.5 0 0 1 9.53 4.92L9.95 1.91L14.05 1.91L14.47 4.92A7.5 7.5 0 0 1 15.26 5.25L17.69 3.42L20.58 6.31L18.75 8.74A7.5 7.5 0 0 1 19.08 9.53ZM12 8.55A3.45 3.45 0 1 0 12 15.45A3.45 3.45 0 1 0 12 8.55Z"/>',
   chart:'<path d="M3.5 20.5h17"/><path d="M7 20.5V14M12 20.5V9.5M17 20.5V5.5"/>',
   flag:'<path d="M6 21V3.5"/><path d="M6 4.6h11.4l-2.8 3.9 2.8 3.9H6"/>',
   /* this opens Your Balls — palette and trail, so draw an actual palette */
@@ -3345,20 +3364,16 @@ function row(o){
 function lbl(t){ const d=document.createElement("div"); d.className="secLbl"; d.textContent=t; return d; }
 
 function sheetSettings(){
-  openSheet("⚙","Settings","System preferences",b=>{
-    b.appendChild(row({ic:"♪",t:"Sound",s:"Split tones and squelches",sw:G.opt.sound,
+  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.gear+'</svg>',
+    "Settings","Sound and feel",b=>{
+    b.appendChild(row({ic:"♪",t:"Sound",s:"Sound effects",sw:G.opt.sound,
       fn:()=>{G.opt.sound=!G.opt.sound; if(G.opt.sound){Sn.dead=false;actx();} save();}}));
-    b.appendChild(row({ic:"⋮⋮",t:"Haptics",s:"Vibration on every split",sw:G.opt.haptic,
+    b.appendChild(row({ic:"⋮⋮",t:"Vibration",s:"Buzz when a ball breaks",sw:G.opt.haptic,
       fn:()=>{G.opt.haptic=!G.opt.haptic; save();}}));
-    b.appendChild(row({ic:"◱",t:"Screen shake",s:"Camera kick on big breaks",sw:G.opt.shake,
+    b.appendChild(row({ic:"◱",t:"Screen shake",s:"Screen kicks on big breaks",sw:G.opt.shake,
       fn:()=>{G.opt.shake=!G.opt.shake; save();}}));
-    b.appendChild(row({ic:"∞",t:"Sandbox",s:"Unlimited mass and spores, and the next scale always unlocked. For testing — turn off for a real run.",sw:G.opt.sandbox,
+    b.appendChild(row({ic:"∞",t:"Sandbox",s:"Unlimited money and every scale unlocked. For testing — turn off for a real run.",sw:G.opt.sandbox,
       fn:()=>{G.opt.sandbox=!G.opt.sandbox; save();}}));
-    b.appendChild(row({ic:"◍",t:"Magnetised balls",s:"Balls fuse and stretch a neck when they touch. Costs performance.",sw:G.opt.goo,
-      fn:()=>{G.opt.goo=!G.opt.goo; app.classList.toggle("lowfx",!G.opt.goo); slowN=0; save();}}));
-    b.appendChild(lbl("Culture"));
-    b.appendChild(row({ic:ICO_SPORE,t:"Spores",s:"From objectives. Spend on powers and looks.",v:fmt(G.spore)}));
-    b.appendChild(row({ic:"⌾",t:"Scale",s:"One ball is "+curScale().ball,v:ROMAN[G.strain]+" · "+curScale().n}));
     if(!CAN_STORE) b.appendChild(row({ic:"⚠",t:"Progress is not saving",s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
     b.appendChild(row({ic:"?",t:"How to play",s:"Replay the three-step walkthrough.",
       fn:()=>{ closeSheet(); setTimeout(tutStart,320); }}));
@@ -3429,27 +3444,8 @@ function sheetObjectives(){
   });
 }
 function sheetCustomise(){
-  openSheet("◑","Your Balls","Palette and trail",b=>{
-    b.appendChild(lbl("Palette"));
-    const chips=document.createElement("div"); chips.className="chips";
-    for(const p of PALETTES){
-      const own=G.ownPal.includes(p.id), sel=G.pal===p.id;
-      const d=document.createElement("button");
-      d.className="chip"+(sel?" sel":"");
-      d.innerHTML='<span class="sw4">'+p.c.map(c=>'<i style="background:'+c+'"></i>').join("")+'</span>'+
-        p.nm+(own?"":" "+ICO_SPORE+p.cost);
-      d.onclick=()=>{
-        if(sel) return;
-        if(own) G.pal=p.id;
-        else if(G.spore>=p.cost){ G.spore-=p.cost; G.ownPal.push(p.id); G.pal=p.id; toast(p.nm+" unlocked"); }
-        else { toast("Needs "+p.cost+" spores"); return; }
-        save(); sheetSync&&sheetSync();
-      };
-      chips.appendChild(d);
-    }
-    b.appendChild(chips);
-
-    b.appendChild(lbl("Cleave trail"));
+  openSheet("◑","Your Balls","Cleave colour and powers",b=>{
+    b.appendChild(lbl("Cleave colour"));
     for(const t of TRAILS){
       const own=G.ownTrail.includes(t.id), sel=G.trail===t.id;
       b.appendChild(row({
