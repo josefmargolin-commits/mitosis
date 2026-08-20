@@ -227,8 +227,14 @@ input{font:inherit;color:inherit}
 .pip{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}
 .pip.bio{background:linear-gradient(140deg,#16C98D,#0A9E6C)}
 .pip.spore{background:linear-gradient(140deg,var(--blue),var(--purple))}
-.cur .n{font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:22px;line-height:1;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
-#sporeWrap .n{font-size:16px}
+.cur .n{font-family:"Archivo",system-ui,sans-serif;font-weight:800;font-size:23px;line-height:1;
+  letter-spacing:-.032em;font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1;
+  display:inline-flex;align-items:baseline}
+/* the magnitude is not part of the number — set it down a step */
+.cur .n .u{font-size:.56em;font-weight:700;letter-spacing:.03em;opacity:.48;
+  margin-left:.13em;font-variant-numeric:normal}
+#sporeWrap .n{font-size:17px;letter-spacing:-.02em}
 .pip svg{width:13px;height:13px;display:block;fill:#fff}
 #sporeWrap .pip svg{width:12px;height:12px}
 
@@ -293,20 +299,20 @@ input{font:inherit;color:inherit}
 
 /* ============ dock ============ */
 #dockHandle{
-  position:absolute;top:-15px;left:0;right:0;margin-inline:auto;
-  width:60px;height:30px;border-radius:15px 15px 0 0;
-  background:rgba(255,255,255,.52);
-  -webkit-backdrop-filter:blur(11px) saturate(1.45);backdrop-filter:blur(11px) saturate(1.45);
-  border:1px solid rgba(255,255,255,.5);border-bottom:0;
-  box-shadow:0 -2px 9px rgba(16,22,37,.045);
-  display:grid;place-items:center;z-index:2;padding-bottom:2px;
-  transition:background .2s,opacity .2s;opacity:.9;
+  position:absolute;top:-52px;left:0;right:0;margin-inline:auto;
+  width:40px;height:40px;border-radius:50%;padding:0;
+  background:var(--panel);border:1px solid var(--edge);
+  box-shadow:var(--shadow);
+  display:grid;place-items:center;z-index:6;
+  animation:handleBob 3.6s ease-in-out infinite;
+  transition:transform .12s cubic-bezier(.2,1.7,.4,1);
 }
-#dockHandle svg{width:18px;height:18px;stroke:var(--ink-2);fill:none;opacity:.8;
-  stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+@keyframes handleBob{50%{translate:0 -4px}}
+#dockHandle svg{width:19px;height:19px;stroke:var(--ink-2);fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
 #dock.min #dockHandle svg{transform:rotate(180deg)}
-#dockHandle:active{transform:scale(.94);opacity:1;background:rgba(255,255,255,.72)}
+#dockHandle:active{transform:scale(.9)}
 #dock{
   position:absolute;z-index:5;left:0;right:0;bottom:0;
   height:calc(var(--dock-h) + env(safe-area-inset-bottom));
@@ -3224,9 +3230,19 @@ function syncStrainCard(){
     : (ok ? "Go up<small>ready</small>" : "Go up<small>"+ICO_MASS+" "+fmt(need)+"</small>");
 }
 
+/* syncTop runs every frame, so only touch the DOM when the string changes */
+const CURC=Object.create(null);
+const CURSPLIT=/^(-?[\d.]+)([A-Za-z]+)$/;
+function setCur(id,v){
+  const str=fmt(v);
+  if(CURC[id]===str) return;
+  CURC[id]=str;
+  const m=CURSPLIT.exec(str);
+  $(id).innerHTML = m ? m[1]+'<span class="u">'+m[2]+'</span>' : str;
+}
 function syncTop(){
-  $("bioN").textContent=fmt(G.bio);
-  $("sporeN").textContent=fmt(G.spore);
+  setCur("bioN",G.bio);
+  setCur("sporeN",G.spore);
 }
 
 /* ---------------------------------------------------------------- sheets */
