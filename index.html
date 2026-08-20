@@ -791,62 +791,62 @@ const ROMAN=["I","II","III","IV","V","VI"];
 const TABS=[
   {id:"touch",  lbl:"Touch",   g:"✥", accent:"#B44BFF"},
   {id:"arena",  lbl:"Arena",   g:"⬢", accent:"#3B6FFF"},
-  {id:"lysis",  lbl:"Lysis",   g:"◍", accent:"#4BE3B0"},
+  {id:"lysis",  lbl:"Idle",    g:"◍", accent:"#4BE3B0"},
   {id:"field",  lbl:"Field",   g:"◆", accent:"#FFD23F"},
   {id:"strain", lbl:"Scale",   g:"⌾", accent:"#FF7A3D"},
 ];
 
 const UP={
-  force:  {tab:"touch",g:"✥",nm:"Force", base:26, gr:1.42, max:24,
-           d:"Damage every touch deals. Tougher balls need more of it.",
+  force:  {tab:"touch",g:"✥",nm:"Damage", base:26, gr:1.42, max:24,
+           d:"Damage every tap deals. Tougher balls need more of it.",
            v:l=>1+Math.floor(l/4), fmt:l=>(1+Math.floor(l/4))+" dmg"},
-  reach:  {tab:"touch",g:"◜",nm:"Reach", base:14, gr:1.16, max:60,
-           d:"Radius of the swipe cleave.",
+  reach:  {tab:"touch",g:"◜",nm:"Swipe", base:14, gr:1.16, max:60,
+           d:"How wide your swipe cuts.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
-  cascade:{tab:"touch",g:"⁘",nm:"Cascade",base:90,gr:1.24, max:50,
-           d:"Chance a split immediately splits its halves too. Chains all the way down.",
+  cascade:{tab:"touch",g:"⁘",nm:"Repeat",base:90,gr:1.24, max:50,
+           d:"Chance a split splits its halves again, all the way down.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
-  rupture:{tab:"touch",g:"✷",nm:"Rupture",base:60,gr:1.21, max:45,
-           d:"Chance a touch bursts the whole ball at once, whatever its size.",
+  rupture:{tab:"touch",g:"✷",nm:"Burst",base:60,gr:1.21, max:45,
+           d:"Chance a tap pops a whole ball at once, whatever its size.",
            v:l=>Math.min(.4,l*.009), fmt:l=>(Math.min(40,l*.9)).toFixed(1)+"%"},
 
-  cap:    {tab:"arena",g:"⬢",nm:"Capacity",base:46,gr:1.20,max:46,
+  cap:    {tab:"arena",g:"⬢",nm:"Room",base:46,gr:1.20,max:46,
            d:"How many balls the dish will hold.",
            v:l=>16+l*3, fmt:l=>(16+l*3)+" max"},
-  purity: {tab:"arena",g:"✦",nm:"Purity",base:130,gr:1.24, max:40,
-           d:"Chance a released ball is golden — worth twenty-five times over.",
+  purity: {tab:"arena",g:"✦",nm:"Gold",base:130,gr:1.24, max:40,
+           d:"Chance a new ball is golden — worth twenty-five times as much.",
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
-  pulse:  {tab:"lysis",g:"◍",nm:"Pulse", base:70, gr:1.175,max:80,
-           d:"Autonomous hits per second. Keeps working while you are away.",
+  pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
+           d:"Automatic hits per second. Keeps going while you are away.",
            v:l=>l*0.16, fmt:l=>(l*0.16).toFixed(2)+"/s"},
-  depth:  {tab:"lysis",g:"◎",nm:"Depth", base:300,gr:1.30, max:40,
-           d:"Damage each autonomous hit deals.",
+  depth:  {tab:"lysis",g:"◎",nm:"Power", base:300,gr:1.30, max:40,
+           d:"Damage each automatic hit deals.",
            v:l=>1+Math.floor(l/8), fmt:l=>(1+Math.floor(l/8))+" dmg"},
-  spread: {tab:"lysis",g:"⁙",nm:"Spread",base:480,gr:1.32, max:36,
-           d:"Balls caught per pulse.",
+  spread: {tab:"lysis",g:"⁙",nm:"Targets",base:480,gr:1.32, max:36,
+           d:"Balls hit at the same time.",
            v:l=>1+Math.floor(l/6), fmt:l=>(1+Math.floor(l/6))+" balls"},
-  dorm:   {tab:"lysis",g:"☾",nm:"Dormancy",base:560,gr:1.36,max:20,
-           d:"Share of lysis yield banked while closed. Caps at eight hours.",
+  dorm:   {tab:"lysis",g:"☾",nm:"Offline",base:560,gr:1.36,max:20,
+           d:"Share of idle earnings kept while the game is closed. Caps at eight hours.",
            v:l=>Math.min(1,.2+l*.04), fmt:l=>Math.round(Math.min(1,.2+l*.04)*100)+"%"},
 
-  fusion: {tab:"field",g:"⊕",nm:"Bond",  base:60, gr:1.20, max:40,
-           d:"How long two balls of the same colour must touch before they fuse.",
+  fusion: {tab:"field",g:"⊕",nm:"Merge", base:60, gr:1.20, max:40,
+           d:"How long two balls of the same colour must touch before they merge.",
            v:l=>Math.max(0.12,0.42*Math.pow(0.955,l)), fmt:l=>Math.max(0.12,0.42*Math.pow(0.955,l)).toFixed(2)+"s"},
-  attract:{tab:"field",g:"◑",nm:"Attraction",base:75,gr:1.19, max:44,
+  attract:{tab:"field",g:"◑",nm:"Pull",base:75,gr:1.19, max:44,
            d:"How far balls of the same colour reach for each other.",
            v:l=>72+l*10, fmt:l=>Math.round(72+l*10)+"px"},
-  yield:  {tab:"arena",g:"◉",nm:"Yield", base:22, gr:1.15, max:200,
-           d:"Mass returned by every split and burst.",
+  yield:  {tab:"arena",g:"◉",nm:"Payout", base:22, gr:1.15, max:200,
+           d:"Mass you get from every split and pop.",
            v:l=>1+l*0.13, fmt:l=>"×"+(1+l*0.13).toFixed(2)},
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
            d:"Balls drift toward your finger while it is down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
-  chain:  {tab:"field",g:"⌁",nm:"Chain", base:190,gr:1.23, max:44,
-           d:"Chance a split jumps to a neighbouring ball.",
+  chain:  {tab:"field",g:"⌁",nm:"Jump", base:190,gr:1.23, max:44,
+           d:"Chance a split jumps to a nearby ball.",
            v:l=>Math.min(.7,l*.016), fmt:l=>(Math.min(70,l*1.6)).toFixed(0)+"%"},
-  reson:  {tab:"field",g:"≋",nm:"Resonance",base:150,gr:1.22,max:50,
-           d:"Combo holds longer and each link is worth more.",
+  reson:  {tab:"field",g:"≋",nm:"Combo",base:150,gr:1.22,max:50,
+           d:"Your combo lasts longer and each link pays more.",
            v:l=>l, fmt:l=>"+"+(l*4)+"%"},
 };
 const UPK=Object.keys(UP);
@@ -873,7 +873,7 @@ const OBJPOOL=[
 ];
 
 /* ---------------------------------------------------------------- state */
-const SAVE_KEY="mitosis.save.v5";
+const SAVE_KEY="mitosis.save.v6";
 let G=null;
 const CAN_STORE=(()=>{ try{ localStorage.setItem("m.probe","1"); localStorage.removeItem("m.probe"); return true; }catch(e){ return false; } })();
 
@@ -3203,7 +3203,7 @@ function buy(k){
   G.bio-=c; G.up[k]++;
   tick(520+lv(k)*9,.1);
   haptic(9); save(); syncCards();
-  if(k==="pulse"&&lv(k)===1) toast("Lysis online — it keeps hitting while you are away");
+  if(k==="pulse"&&lv(k)===1) toast("Idle hits are on — they keep going while you are away");
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
 /* A preview of what a ball looks like at another scale: swap FORM for the
@@ -3385,7 +3385,7 @@ function sheetStats(){
       ["⊕","Fusions",fmt(s.merges)],
       ["✸","Detonations",fmt(s.bursts)],
       ["≋","Best combo","×"+(1+s.bestCombo*0.05).toFixed(2)],
-      ["◍","Lysis rate",fmt(passiveRate())+"/s"],
+      ["◍","Idle rate",fmt(passiveRate())+"/s"],
       ["⬤","Producing",fmt(throughput())+"/s"],
       ["◎","Total banked",fmt(G.totalEarned)],
       ["⌾","Scales ascended",fmt(s.strains)],
@@ -3475,7 +3475,7 @@ function sheetCustomise(){
 }
 function sheetWelcome(secs,gain){
   openSheet("☾","While you were away",fmtTime(secs)+" dormant",b=>{
-    b.appendChild(row({ic:"◍",t:"Lysis kept hitting",s:"At "+Math.round(val("dorm")*100)+"% dormancy efficiency",v:fmt(gain)}));
+    b.appendChild(row({ic:"◍",t:"Idle hits kept going",s:"At "+Math.round(val("dorm")*100)+"% offline rate",v:fmt(gain)}));
     b.appendChild(row({ic:ICO_MASS,t:"Mass now",s:"Ready to spend",v:fmt(G.bio)}));
     const d=document.createElement("button");
     d.className="dangerBtn"; d.style.borderColor="rgba(255,210,63,.4)"; d.style.color="var(--yellow)";
