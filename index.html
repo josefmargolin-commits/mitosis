@@ -575,45 +575,69 @@ input{font:inherit;color:inherit}
 /* ============ intro ============ */
 #intro{
   position:absolute;inset:0;z-index:30;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:center;
-  justify-content:safe center;   /* never push Begin off the bottom */
+  display:flex;align-items:center;justify-content:center;
+  justify-content:safe center;
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  gap:22px;padding:30px;text-align:center;
-  background:radial-gradient(115% 80% at 50% 46%,rgba(255,255,255,.82),rgba(255,255,255,.96) 55%,#fff);
+  padding:26px 22px;
+  background:
+    radial-gradient(120% 70% at 50% 0%,rgba(124,58,237,.13),rgba(124,58,237,0) 60%),
+    radial-gradient(110% 70% at 50% 100%,rgba(34,197,94,.13),rgba(34,197,94,0) 60%),
+    rgba(247,249,252,.97);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
   transition:opacity .4s;
 }
 #intro.hide{opacity:0}
-#intro .eb{font-size:9px;letter-spacing:.36em;text-transform:uppercase;color:var(--ink-3)}
+/* one card, so the title and the rules read as a single object rather than
+   three things floating in the middle of the dish */
+#intro .card{
+  pointer-events:auto;width:100%;max-width:330px;
+  background:var(--panel);border:1px solid var(--edge);border-radius:24px;
+  padding:26px 22px 22px;text-align:center;
+  box-shadow:0 2px 4px rgba(15,23,32,.04),0 18px 44px rgba(15,23,32,.14);
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+#intro .eb{font-size:8.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3)}
 #intro h1{
   font-family:"Syne",var(--sym),sans-serif;font-weight:800;
-  font-size:clamp(52px,16vw,86px);line-height:.85;letter-spacing:-.04em;
+  font-size:clamp(44px,13vw,62px);line-height:.86;letter-spacing:-.045em;margin-top:-4px;
   background:linear-gradient(96deg,var(--blue),var(--purple) 38%,var(--red) 68%,#F5B301);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-#intro p{max-width:27ch;font-size:12px;line-height:1.7;color:var(--ink-2)}
-#intro p b{color:var(--ink);font-weight:400}
-#begin{
-  pointer-events:auto;padding:15px 44px;border-radius:999px;background:var(--ink);color:#fff;
-  font-family:"Syne",var(--sym),sans-serif;font-weight:700;font-size:16px;letter-spacing:.07em;
-  text-transform:uppercase;box-shadow:var(--shadow);
-  transition:transform .12s cubic-bezier(.2,1.7,.4,1);
+#intro .rules{list-style:none;width:100%;display:flex;flex-direction:column;gap:9px}
+#intro .rules li{
+  display:flex;align-items:center;gap:11px;text-align:left;
+  background:var(--surface);border-radius:13px;padding:10px 12px;
+  font-size:12px;line-height:1.35;color:var(--ink-2);
 }
-#begin:active{transform:scale(.95)}
-#introHint{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+#intro .rules b{color:var(--ink);font-weight:600}
+#intro .rules .k{
+  width:30px;height:30px;border-radius:10px;display:grid;place-items:center;
+  font-size:14px;flex:none;
+}
+#begin{
+  pointer-events:auto;width:100%;padding:15px;border-radius:15px;border:0;
+  background:linear-gradient(180deg,#3B4657,#1B2431);color:#fff;
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:15px;letter-spacing:.12em;text-transform:uppercase;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.18),0 3.5px 0 #0E1620,0 7px 16px rgba(15,23,32,.28);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+#begin:active{transform:translateY(3.5px);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.18),0 0 0 #0E1620,0 2px 6px rgba(15,23,32,.28)}
 #intro > *{flex:0 0 auto}
 /* short windows: landscape phones, small browser panes */
 @media (max-height:600px){
-  #intro{gap:12px;padding:18px 24px}
-  #intro h1{font-size:clamp(34px,12vw,54px)}
-  #intro p{font-size:11px;line-height:1.55;max-width:34ch}
-  #begin{padding:12px 34px;font-size:14px}
+  #intro{padding:14px}
+  #intro .card{padding:18px 16px 16px;gap:11px}
+  #intro h1{font-size:clamp(32px,11vw,44px)}
+  #intro .rules li{padding:8px 10px;font-size:11px}
+  #begin{padding:12px;font-size:14px}
 }
 @media (max-height:420px){
   #intro .eb,#introHint{display:none}
-  #intro{gap:9px}
-  #intro h1{font-size:clamp(26px,10vw,38px)}
-  #intro p{font-size:10.5px;line-height:1.45}
+  #intro .card{gap:8px}
+  #intro h1{font-size:clamp(26px,9vw,34px)}
+  #intro .rules li{padding:7px 9px;font-size:10.5px}
 }
 
 @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
@@ -1085,12 +1109,21 @@ input{font:inherit;color:inherit}
   </div>
 
   <div id="intro">
-    <div class="eb">You are somewhere inside an atom</div>
-    <h1>Mitosis</h1>
-    <p><b>Tap a ball and it splits in two.</b> Swipe to cleave a line of them. Balls of the same colour fuse into bigger ones — let them, then break the giant all the way down. Bank enough and the camera pulls back a scale.</p>
-    <button id="begin">Begin</button>
-    <button id="howto">How to play</button>
-    <div id="introHint"></div>
+    <div class="card">
+      <div class="eb">You are somewhere inside an atom</div>
+      <h1>Mitosis</h1>
+      <ul class="rules">
+        <li><span class="k" style="background:#DBEAFE;color:#2563EB">✥</span>
+            <span><b>Tap</b> a ball and it splits in two</span></li>
+        <li><span class="k" style="background:#FFEDD5;color:#EA580C">◜</span>
+            <span><b>Swipe</b> to cleave a whole line of them</span></li>
+        <li><span class="k" style="background:#DCFCE7;color:#16A34A">⊕</span>
+            <span><b>Matching colours merge</b> into something bigger</span></li>
+      </ul>
+      <button id="begin">Begin</button>
+      <button id="howto">How to play</button>
+      <div id="introHint"></div>
+    </div>
   </div>
 </div>
 
