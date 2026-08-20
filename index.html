@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mitosis">
-<meta name="description" content="Split balls for gold, let matching colours fuse, and send your wizards to work.">
+<meta name="description" content="Split balls for cash, let matching colours fuse, and send your wizards to work.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
@@ -1157,7 +1157,7 @@ const UP={
   // and longest track in the game. Diminishing returns, steeper cost, half the
   // levels: it still ends up the biggest single buy, without eclipsing the rest.
   yield:  {tab:"arena",g:"◉",nm:"Payout", base:70, gr:1.28, max:70,
-           d:"Gold you get from every split and pop.",
+           d:"Cash you get from every split and pop.",
            v:l=>1+0.5*Math.pow(l,0.72), fmt:l=>"×"+(1+0.5*Math.pow(l,0.72)).toFixed(2)},
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
            d:"Balls drift toward your finger while you hold it down.",
@@ -1182,16 +1182,16 @@ const BOOSTS=[
 const OBJPOOL=[
   {k:"split", t:n=>"Split "+fmt(n)+" balls",         goals:[60,220,700,2200,7000],  sp:2},
   {k:"pop",   t:n=>"Break down "+fmt(n)+" balls",    goals:[40,150,500,1600,5000],  sp:2},
-  {k:"earn",  t:n=>"Bank "+fmt(n)+" gold",           goals:[900,9e3,1e5,1.4e6,2e7], sp:3},
+  {k:"earn",  t:n=>"Bank "+fmt(n)+" cash",           goals:[900,9e3,1e5,1.4e6,2e7], sp:3},
   {k:"combo", t:n=>"Reach a ×"+(1+n*COMBO_STEP).toFixed(2)+" streak", goals:[25,50,80,110,140], sp:3},
-  {k:"gold",  t:n=>"Break "+n+" golden balls",       goals:[2,6,14,30,60],          sp:4},
+  {k:"gold",  t:n=>"Break "+n+" lucky balls",       goals:[2,6,14,30,60],          sp:4},
   {k:"burst", t:n=>"Detonate "+n+" unstable balls",  goals:[3,10,26,60,140],        sp:4},
   {k:"merge", t:n=>"Fuse "+fmt(n)+" pairs",          goals:[25,90,280,850,2600],    sp:3},
 ];
 
 /* ---- achievements ------------------------------------------------------
    Objectives rotate and pay shards. These are fixed, permanent, and pay in
-   things you keep — gold, shards, and every cosmetic in the game, so the
+   things you keep — cash, shards, and every cosmetic in the game, so the
    whole wardrobe is reachable by playing rather than only by spending. */
 const ACHV=[
   {k:"splits", ic:"\u2725", nm:"Splitter", t:n=>"Split "+fmt(n)+" balls",
@@ -1206,7 +1206,7 @@ const ACHV=[
   {k:"combo", ic:"\u224B", nm:"On a streak", t:n=>"Reach a \u00D7"+(1+n*COMBO_STEP).toFixed(2)+" streak",
    src:()=>G.stat.bestCombo, tiers:[25,60,100,200],
    rw:[{g:800},{sp:4,trail:"arc"},{g:3e6},{sp:14,skin:"circuit"}]},
-  {k:"earn", ic:"\u25C9", nm:"Rich", t:n=>"Bank "+fmt(n)+" gold in total",
+  {k:"earn", ic:"\u25C9", nm:"Rich", t:n=>"Bank "+fmt(n)+" cash in total",
    src:()=>G.totalEarned, tiers:[10e3,1e6,1e9,1e12],
    rw:[{sp:2},{g:120e3,skin:"bloom"},{sp:8},{sp:20,skin:"orbit"}]},
   {k:"gold", ic:"\u2726", nm:"Lucky", t:n=>"Break "+fmt(n)+" lucky balls",
@@ -1230,7 +1230,7 @@ function achClaimable(a){
 function achAny(){ return ACHV.some(achClaimable); }
 function achGive(r){
   const bits=[];
-  if(r.g){ G.bio+=r.g; G.earned+=r.g; G.totalEarned+=r.g; bits.push(fmt(r.g)+" gold"); }
+  if(r.g){ G.bio+=r.g; G.earned+=r.g; G.totalEarned+=r.g; bits.push(fmt(r.g)+" cash"); }
   if(r.sp){ G.spore+=r.sp; bits.push(r.sp+" shards"); }
   if(r.skin&&!G.ownSkin.includes(r.skin)){
     G.ownSkin.push(r.skin); bits.push((SKINS.find(x=>x.id===r.skin)||{}).nm+" skin"); }
@@ -2338,7 +2338,7 @@ const actGate=()=>{
 function summonAt(i){
   if(wiz(i)||!actGate()) return;
   const c=summonCost();
-  if(G.bio<c){ toast("Needs "+fmt(c)+" gold"); return; }
+  if(G.bio<c){ toast("Needs "+fmt(c)+" cash"); return; }
   G.bio-=c; G.summons=(G.summons|0)+1;
   G.wiz[i]={id:++G.wizSeq, rank:0};
   WZ[i].ph=Math.random();
@@ -2352,7 +2352,7 @@ function upgradeWiz(i){
   const r=w.rank;
   if(rCapped(r)){ toast(WRANK[r].nm+" is already at full speed"); return; }
   const c=rUpCost(r);
-  if(G.bio<c){ toast("Needs "+fmt(c)+" gold"); return; }
+  if(G.bio<c){ toast("Needs "+fmt(c)+" cash"); return; }
   G.bio-=c; G.wlvl[r]=rlvl(r)+1;
   toast("Every "+WRANK[r].nm+" now casts every "+rDelay(r).toFixed(2)+"s");
   tick(560+rlvl(r)*8,.1); haptic(9);
@@ -2417,7 +2417,7 @@ function syncWizPanel(force){
     row.appendChild(sw);
     const l=document.createElement("div"); l.className="l";
     l.innerHTML='<div class="t">'+r.nm+(L?" · Lv "+L:"")+'</div>'+
-      '<div class="s">Every '+rDelay(rk).toFixed(2)+'s · '+fmt(r.mass)+' gold · '+
+      '<div class="s">Every '+rDelay(rk).toFixed(2)+'s · '+fmt(r.mass)+' cash · '+
       r.taps+' tap'+(r.taps>1?"s":"")+(many>1?" · "+many+" on the board":"")+'</div>';
     row.appendChild(l);
     const b=document.createElement("button");
@@ -3818,7 +3818,7 @@ function syncCards(){
 function buy(k){
   if(maxed(k)){ toast(UP[k].nm+" is fully developed"); return; }
   const c=cost(k);
-  if(G.bio<c){ toast("Needs "+fmt(c)+" gold"); return; }
+  if(G.bio<c){ toast("Needs "+fmt(c)+" cash"); return; }
   G.bio-=c; G.up[k]++;
   tick(520+lv(k)*9,.1);
   haptic(9); save(); syncCards();
@@ -3966,7 +3966,7 @@ function lbl(t){ const d=document.createElement("div"); d.className="secLbl"; d.
 
 /* ---- the store ----------------------------------------------------------
    Structure, sections and prices lifted from the reference, with its cash and
-   gems as our gold and shards. Everything with a dollar sign is inert and says
+   gems as our cash and shards. Everything with a dollar sign is inert and says
    so at the bottom: a single HTML file cannot take a payment. */
 const CASH_PACKS=[
   {v:1.35e3,p:"$0.99"},{v:6.75e3,p:"$1.99"},{v:20.3e3,p:"$2.99"},{v:67.5e3,p:"$4.99"},
@@ -3978,15 +3978,15 @@ const SHARD_PACKS=[
   {v:1000,n:"Vault",p:"$9.99"},{v:2500,n:"Treasury",p:"$19.99",best:1},
 ];
 const PACKS=[
-  {id:"pocket", t:"Pocket Gold",  s:"Enough for your next upgrades!", p:"$0.99", tone:"blue"},
-  {id:"starter",t:"Starter Pack", s:"No Forced Ads + 100K Gold + 2x Offline (24h)",
-   b:"+100k gold", p:"$4.99", tone:"blue",   off:"50% OFF", best:1},
-  {id:"premium",t:"Premium Pack", s:"No Banners + No Forced Ads + Skip Gates + Auto 2x + 10M Gold",
-   b:"+10.0M gold", p:"$14.99", tone:"violet", off:"55% OFF"},
-  {id:"ultimate",t:"Ultimate Pack",s:"100% Ad-Free + 10B Gold + All Boosts",
-   b:"+10.0B gold", p:"$49.99", tone:"orange", off:"65% OFF", rar:"epic"},
-  {id:"whale", t:"Whale Pack",   s:"100% Ad-Free + 1T Gold + All Boosts + Exclusive Badge",
-   b:"+1T gold", p:"$99.99", tone:"teal", off:"70% OFF", rar:"deal"},
+  {id:"pocket", t:"Pocket Cash",  s:"Enough for your next upgrades!", p:"$0.99", tone:"blue"},
+  {id:"starter",t:"Starter Pack", s:"No Forced Ads + 100K Cash + 2x Offline (24h)",
+   b:"+100k cash", p:"$4.99", tone:"blue",   off:"50% OFF", best:1},
+  {id:"premium",t:"Premium Pack", s:"No Banners + No Forced Ads + Skip Gates + Auto 2x + 10M Cash",
+   b:"+10.0M cash", p:"$14.99", tone:"violet", off:"55% OFF"},
+  {id:"ultimate",t:"Ultimate Pack",s:"100% Ad-Free + 10B Cash + All Boosts",
+   b:"+10.0B cash", p:"$49.99", tone:"orange", off:"65% OFF", rar:"epic"},
+  {id:"whale", t:"Whale Pack",   s:"100% Ad-Free + 1T Cash + All Boosts + Exclusive Badge",
+   b:"+1T cash", p:"$99.99", tone:"teal", off:"70% OFF", rar:"deal"},
   {id:"powers",t:"Touch Powers Master Pack", s:"Unlock & max out all powers \u2014 Scatter, Crush, Chain, Storm",
    p:"$9.99", tone:"blue"},
 ];
@@ -4142,7 +4142,7 @@ function sheetStats(){
 
 function sheetShop(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#22C55E">'+ICONS.bag+'</svg>',
-    "Store","Gold, shards and boosts",b=>{
+    "Store","Cash, shards and boosts",b=>{
     b.parentElement && b.classList.add("store");
     const tabs=document.createElement("div"); tabs.className="stTabs";
     for(const t of [["shop","Shop"],["cos","Cosmetics"]]){
@@ -4231,7 +4231,7 @@ function sheetShop(){
       b.appendChild(d);
     }
 
-    b.appendChild(lbl("Gold packs"));
+    b.appendChild(lbl("Cash packs"));
     const cg=document.createElement("div"); cg.className="tiles";
     for(const c of CASH_PACKS){
       const t=document.createElement("div"); t.className="tile"+(c.best?" best":"");
@@ -4341,6 +4341,7 @@ function msCard(o){
   const d=document.createElement("div");
   const pct=clamp(o.prog/o.goal,0,1);
   d.className="ms "+(o.claimed?"done":(o.done?"ready":"prog"));
+  d.dataset.k=o.k;
   const stars=[0,1,2].map(i=>'<i class="'+(i<=Math.min(2,Math.floor(o.sp/3))?"on":"")+'">\u2605</i>').join("");
   d.innerHTML=
     '<div class="top">'+
@@ -4376,6 +4377,23 @@ function msCard(o){
   }
   return d;
 }
+/* First-Last-Invert-Play. Measure every card, let the list rebuild in its new
+   order, then start each one from where it used to be and let it slide home —
+   which is how the reference shows a claimed mission sinking past the others. */
+function flipMissions(rerender){
+  const body=document.getElementById("sheetBody");
+  const was=new Map();
+  for(const c of body.querySelectorAll(".ms")) was.set(c.dataset.k, c.getBoundingClientRect().top);
+  rerender();
+  for(const c of body.querySelectorAll(".ms")){
+    const from=was.get(c.dataset.k);
+    if(from===undefined) continue;
+    const d=from-c.getBoundingClientRect().top;
+    if(Math.abs(d)<1) continue;
+    c.animate([{transform:"translateY("+d.toFixed(1)+"px)"},{transform:"translateY(0)"}],
+      {duration:430,easing:"cubic-bezier(.2,.85,.25,1)"});
+  }
+}
 function claimObj(o,btn,mult){
   if(!o.done) return;
   if(o.claimed) return;
@@ -4392,7 +4410,8 @@ function claimObj(o,btn,mult){
   noiseHit(.4,{vol:.09,cut:6000,type:"highpass",to:.4,wet:.4});
   thud(78,{vol:.2,len:.26});
   haptic([14,26,14,40]);
-  save(); syncTop(); sheetSync&&sheetSync();
+  save(); syncTop();
+  if(sheetSync) flipMissions(sheetSync);
   alertOrb("mis",!!(G.obj&&G.obj.some(x=>x.done&&!x.claimed)));
 }
 const DAY_MS=24*3600*1000;
@@ -4424,7 +4443,9 @@ function sheetMissions(){
       '<div class="msBar"><i style="width:'+(done/G.obj.length*100).toFixed(0)+'%"></i></div>'+
       '<span class="n">'+done+"/"+G.obj.length+'</span>';
     b.appendChild(top);
-    for(const o of G.obj) b.appendChild(msCard(o));
+    // claimed sink to the bottom, which is the move the reorder animates
+    const ordered=[...G.obj].sort((a,c)=>(a.claimed?1:0)-(c.claimed?1:0));
+    for(const o of ordered) b.appendChild(msCard(o));
 
     const all=document.createElement("div");
     all.className="msAll";
@@ -4456,7 +4477,7 @@ function boardRows(){
 }
 function sheetBoard(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#F7B500">'+ICONS.podium+'</svg>',
-    "Scoreboard","Gold banked, all time",b=>{
+    "Scoreboard","Cash banked, all time",b=>{
     boardRows().forEach((r,i)=>{
       const d=document.createElement("div");
       d.className="bd"+(r.me?" me":"")+(i<3?" g"+(i+1):"");
@@ -4541,7 +4562,7 @@ function sheetCustomise(){
       fn:adReady("gold")?function(){
         const v=Math.max(500,passiveRate()*240+throughput()*120);
         G.bio+=v; G.earned+=v; G.totalEarned+=v; G.ad.gold=el+300;
-        toast("+"+fmt(v)+" gold"); save(); syncTop(); sheetSync&&sheetSync();
+        toast("+"+fmt(v)+" cash"); save(); syncTop(); sheetSync&&sheetSync();
       }:null}));
     b.appendChild(row({ic:ICO_SPORE,t:"Watch an ad for shards",
       s:"Three shards. Once every five minutes.",
@@ -4563,7 +4584,7 @@ function sheetCustomise(){
 function sheetWelcome(secs,gain){
   openSheet("☾","While you were away",fmtTime(secs)+" dormant",b=>{
     b.appendChild(row({ic:"◍",t:"Idle hits kept going",s:"At "+Math.round(OFFLINE_RATE*100)+"% offline rate",v:fmt(gain)}));
-    b.appendChild(row({ic:ICO_MASS,t:"Gold now",s:"Ready to spend",v:fmt(G.bio)}));
+    b.appendChild(row({ic:ICO_MASS,t:"Cash now",s:"Ready to spend",v:fmt(G.bio)}));
     const d=document.createElement("button");
     d.className="dangerBtn"; d.style.borderColor="rgba(255,210,63,.4)"; d.style.color="var(--yellow)";
     d.textContent="Back to the dish"; d.onclick=closeSheet;
@@ -4799,7 +4820,7 @@ function tutBall(kind,tier){
 }
 const TUT=[
   {room:"arena", t:"Tap a ball, it splits",
-   s:"Here is one. Every tap breaks it into two smaller ones — and the smallest rung is the one that actually pays out gold. Swipe across several to cleave a whole line at once.",
+   s:"Here is one. Every tap breaks it into two smaller ones — and the smallest rung is the one that actually pays out cash. Swipe across several to cleave a whole line at once.",
    go(){ tutBall("plain",0); }},
   {room:"wiz",   t:"Wizards do the dropping",
    s:"Each one casts a ball on its own timer, so the dish fills while you are away. A wizard’s column decides which lane its balls fall down — line them up and their balls meet and fuse, spread them out and they will not.",
