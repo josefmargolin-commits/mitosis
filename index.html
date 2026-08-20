@@ -753,14 +753,14 @@ input{font:inherit;color:inherit}
 
 /* the seven day chips */
 .days{display:flex;gap:4px}
-.day{flex:1;border-radius:8px;border:1px solid var(--edge);background:var(--panel);
+.dchip{flex:1;border-radius:8px;border:1px solid var(--edge);background:var(--panel);
   padding:5px 2px 4px;text-align:center;min-width:0}
-.day .d{font-size:7px;letter-spacing:.05em;color:var(--ink-3)}
-.day .m{font-size:10px;font-weight:700;color:var(--ink-2);margin-top:1px}
-.day.past{background:#DCFCE7;border-color:rgba(34,197,94,.45)}
-.day.past .m{color:#15803D}
-.day.now{background:#EDE4FF;border-color:#7C3AED}
-.day.now .m{color:#7C3AED}
+.dchip .d{font-size:7px;letter-spacing:.05em;color:var(--ink-3)}
+.dchip .m{font-size:10px;font-weight:700;color:var(--ink-2);margin-top:1px}
+.dchip.past{background:#DCFCE7;border-color:rgba(34,197,94,.45)}
+.dchip.past .m{color:#15803D}
+.dchip.now{background:#EDE4FF;border-color:#7C3AED}
+.dchip.now .m{color:#7C3AED}
 
 /* the priced packs */
 .pk{border-radius:13px;border:1.5px solid var(--edge);background:var(--panel);
@@ -811,6 +811,94 @@ input{font:inherit;color:inherit}
   font-family:"Fredoka","Archivo",system-ui,sans-serif}
 .restore{width:100%;padding:12px;background:none;border:0;color:var(--ink-3);font-size:10.5px;
   display:flex;align-items:center;justify-content:center;gap:6px}
+/* ---- settings, as the reference draws it: a toggle that is on tints its
+        whole card in the hue of its own icon ---- */
+.stg{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:15px;
+  border:1.5px solid var(--edge);background:var(--panel)}
+.stg .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
+.stg .ic svg{width:19px;height:19px;display:block}
+.stg .t{flex:1;min-width:0;font-size:14px;font-weight:500}
+.stg.off .t{color:var(--ink-3)}
+.stg .go{color:var(--ink-3);font-size:15px;flex:none}
+.stg .val{font-size:12.5px;color:var(--ink-2);flex:none;display:flex;align-items:center;gap:6px}
+.stg.on-blue{background:#EFF6FF;border-color:#93C5FD}
+.stg.on-violet{background:#FAF5FF;border-color:#D8B4FE}
+.stg.on-orange{background:#FFF7ED;border-color:#FDBA74}
+.tog{width:52px;height:30px;border-radius:99px;background:#D8DEE7;position:relative;flex:none;
+  transition:background .2s}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(15,23,32,.3);transition:transform .2s}
+.tog.on{background:#22C55E}
+.tog.on::after{transform:translateX(22px)}
+.saveId{border-radius:15px;border:1.5px solid var(--edge);background:var(--panel);padding:13px 14px;
+  position:relative}
+.saveId .k{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.saveId .v{font-family:"Chivo Mono",ui-monospace,monospace;font-size:12px;margin-top:5px;
+  word-break:break-all;line-height:1.4}
+.saveId .s{font-size:10px;color:var(--ink-3);margin-top:5px}
+.saveId .cp{position:absolute;top:12px;right:12px;color:var(--ink-3);font-size:15px;
+  background:none;border:0}
+
+/* ---- command center ---- */
+.iqCard{border-radius:18px;padding:18px 18px 20px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#7C3AED 0%,#6D3BEF 45%,#4F46E5 100%);color:#fff;
+  display:flex;align-items:center;gap:15px}
+.iqCard .brain{width:56px;height:56px;border-radius:16px;flex:none;display:grid;place-items:center;
+  background:rgba(255,255,255,.18)}
+.iqCard .brain svg{width:30px;height:30px;display:block;fill:#fff}
+.iqCard .l{flex:1;min-width:0;position:relative;z-index:2}
+.iqCard .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+.iqCard .n{font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:44px;line-height:1;margin:2px 0 4px}
+.iqCard .s{font-size:11px;opacity:.82;line-height:1.4}
+.iqCard .wm{position:absolute;right:-16px;top:50%;transform:translateY(-50%);
+  width:150px;height:150px;opacity:.13;pointer-events:none}
+.iqCard .wm svg{width:100%;height:100%;fill:#fff}
+.statGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.stat{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);padding:11px 12px}
+.stat .h{display:flex;align-items:center;gap:7px}
+.stat .ic{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;
+  font-size:13px}
+.stat .k{font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
+  line-height:1.25}
+.stat .v{font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:700;font-size:22px;
+  margin-top:5px;font-variant-numeric:tabular-nums}
+.ddCard{border-radius:14px;background:var(--surface);border:1.5px solid var(--edge);padding:13px 14px}
+.ddCard .h{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-2);font-weight:600;margin-bottom:11px}
+.dd{margin-bottom:10px}
+.dd:last-child{margin-bottom:0}
+.dd .r{display:flex;align-items:center;gap:7px;font-size:12px;margin-bottom:5px}
+.dd .r .n{flex:1}
+.dd .r .p{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.dd .b{height:9px;border-radius:99px;background:#E2E8F0;overflow:hidden}
+.dd .b i{display:block;height:100%;border-radius:99px}
+.ccFoot{display:flex;justify-content:space-between;gap:10px;padding:11px 2px 0;
+  border-top:1px solid var(--edge);font-family:"Chivo Mono",ui-monospace,monospace;
+  font-size:10.5px;color:var(--ink-3)}
+.cosHead{display:flex;align-items:center;gap:9px;padding:2px 0 2px}
+.cosHead .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;
+  background:#7C3AED;color:#fff}
+.cosHead .ic svg{width:17px;height:17px;display:block}
+.cosHead .t{flex:1;font-size:13px;font-weight:600}
+.cosHead .cnt{font-size:11px;color:#7C3AED;background:#F3E8FF;padding:4px 10px;border-radius:99px;
+  display:flex;align-items:center;gap:4px}
+.cosSubs{display:flex;gap:5px;background:var(--surface);padding:4px;border-radius:12px}
+.cosSub{flex:1;padding:8px 4px;border:0;border-radius:9px;background:transparent;
+  font-size:10px;letter-spacing:.08em;color:var(--ink-3)}
+.cosSub.on{background:var(--panel);color:#7C3AED;font-weight:600;
+  box-shadow:0 1px 3px rgba(15,23,32,.12)}
+.cosGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.cos{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);
+  padding:11px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
+.cos.sel{border-color:#7C3AED;background:#FAF7FF}
+.cos .sw{width:38px;height:38px;border-radius:11px;display:block;margin-bottom:3px}
+.cos .nm{font-size:12.5px;font-weight:600}
+.cos .d{font-size:9.5px;color:var(--ink-3);line-height:1.4;flex:1}
+.cos .c{font-size:10.5px;color:#7C3AED;display:flex;align-items:center;gap:4px;margin-top:3px}
+.dchip{position:relative}
+.dchip .tk{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
+  font-size:8px;color:#16A34A;line-height:1}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1191,7 +1279,7 @@ function freshState(){
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
     pet:"void", ownPet:["void"],
-    obj:null, objDone:0, objT:0, achv:{}, ad:{}, stTab:"shop", streakDay:1,
+    sid:"", obj:null, objDone:0, objT:0, achv:{}, ad:{}, stTab:"shop", cosTab:"pet", streakDay:1,
     opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
@@ -1208,7 +1296,7 @@ function load(){
     m.achv=s.achv||{}; m.ad={};   // cooldowns are per session
     if(!Array.isArray(m.ownPet)||!m.ownPet.length) m.ownPet=["void"];
     if(!m.pet) m.pet="void";
-    m.stTab="shop"; m.streakDay=s.streakDay||1;
+    m.stTab="shop"; m.cosTab="pet"; m.streakDay=s.streakDay||1;
     m.pw=s.pw||{}; m.boost=s.boost||{};
     if(!Array.isArray(m.wiz)||m.wiz.length!==16) m.wiz=Array(16).fill(null);
     if(!Array.isArray(m.wlvl)||m.wlvl.length!==6) m.wlvl=[0,0,0,0,0,0];
@@ -3581,6 +3669,26 @@ const ICONS={
          '<rect fill="currentColor" stroke="none" x="15.6" y="13.6" width="5.8" height="7.2" rx="1.1"/>'+
          '<path fill="currentColor" stroke="none" d="M12 1.1l1.05 2.2 2.4.34-1.74 1.72.42 2.4L12 6.64 9.87 7.76l.42-2.4L8.55 3.64l2.4-.34z"/>',
 
+  speaker:'<path fill="currentColor" stroke="none" d="M12.4 3.6 6.9 8H3.4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.5l5.5 4.4a1 1 0 0 0 1.6-.8V4.4a1 1 0 0 0-1.6-.8z"/>'+
+          '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M17.2 8.6a4.8 4.8 0 0 1 0 6.8M20 5.8a8.8 8.8 0 0 1 0 12.4"/>',
+  buzz:'<rect fill="currentColor" stroke="none" x="7.6" y="2.4" width="8.8" height="19.2" rx="2.4"/>'+
+       '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3.4 9.2v5.6M20.6 9.2v5.6"/>',
+  sun:'<circle fill="currentColor" stroke="none" cx="12" cy="12" r="4.4"/>'+
+      '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 1.8v2.6M12 19.6v2.6M1.8 12h2.6M19.6 12h2.6M4.8 4.8l1.9 1.9M17.3 17.3l1.9 1.9M19.2 4.8l-1.9 1.9M6.7 17.3l-1.9 1.9"/>',
+  shake:'<rect fill="currentColor" stroke="none" x="8.4" y="3.2" width="7.2" height="17.6" rx="2"/>'+
+        '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4.6 8.4 2.8 12l1.8 3.6M19.4 8.4l1.8 3.6-1.8 3.6"/>',
+  globe:'<circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="9.1"/>'+
+        '<path fill="none" stroke="currentColor" stroke-width="2" d="M2.9 12h18.2M12 2.9a15 15 0 0 1 0 18.2 15 15 0 0 1 0-18.2z"/>',
+  help:'<circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="9.1"/>'+
+       '<path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M9.4 9.3a2.7 2.7 0 1 1 3.4 3.1c-.6.2-.9.8-.9 1.5"/>'+
+       '<circle fill="currentColor" stroke="none" cx="12" cy="17.3" r="1.3"/>',
+  shield:'<path fill="currentColor" stroke="none" d="M12 2.1 4.4 5.2v6.1c0 4.6 3.2 8.8 7.6 10.6 4.4-1.8 7.6-6 7.6-10.6V5.2z"/>',
+  brain:'<path fill="currentColor" stroke="none" d="M9.2 2.4a3.3 3.3 0 0 0-3.1 2.2 3.2 3.2 0 0 0-2.3 5 3.3 3.3 0 0 0 .6 4.6 3.3 3.3 0 0 0 3 3.7 3.2 3.2 0 0 0 3.1 2.5c.6 0 1.1-.2 1.6-.5V3.6a3.2 3.2 0 0 0-2.9-1.2zM14.8 2.4a3.3 3.3 0 0 1 3.1 2.2 3.2 3.2 0 0 1 2.3 5 3.3 3.3 0 0 1-.6 4.6 3.3 3.3 0 0 1-3 3.7 3.2 3.2 0 0 1-3.1 2.5c-.6 0-1.1-.2-1.6-.5V3.6a3.2 3.2 0 0 1 2.9-1.2z"/>',
+  pie:'<path fill="currentColor" stroke="none" d="M11 2.2A9.9 9.9 0 1 0 21.8 13H11z"/>'+
+      '<path fill="none" stroke="currentColor" stroke-width="2" d="M13.4 2.4A9.9 9.9 0 0 1 21.6 10.6h-8.2z"/>',
+  copy:'<rect fill="none" stroke="currentColor" stroke-width="2" x="8.6" y="8.6" width="12" height="12" rx="2.4"/>'+
+       '<path fill="none" stroke="currentColor" stroke-width="2" d="M15.4 5.4H5.8a2.4 2.4 0 0 0-2.4 2.4v9.6"/>',
+
   /* two balls mid-merge: the silhouette the game is named for */
   brush:'<circle fill="currentColor" stroke="none" cx="9.1" cy="14.4" r="5.9"/>'+
         '<circle fill="currentColor" stroke="none" cx="16.5" cy="8.9" r="4.4"/>'+
@@ -3896,6 +4004,146 @@ const STREAK=[1,2,4,8,16,32,64];
 function stDay(){ return Math.min(7,(G.streakDay|0)||1); }
 function soon(el2){ toast("Paid items need a store build"); }
 
+/* ---- settings ------------------------------------------------------------
+   A row is a card; when its switch is on the card takes the hue of its own
+   icon, which is what the reference does and what makes the page read at a
+   glance. Rows without a switch end in a chevron instead. */
+function stgRow(o){
+  const d=document.createElement("div");
+  const on=o.sw===undefined?false:o.sw;
+  d.className="stg"+(o.sw!==undefined&&!on?" off":"")+(on&&o.tone?" on-"+o.tone:"");
+  d.innerHTML=
+    '<span class="ic" style="background:'+o.bg+';color:'+o.fg+'">'+
+      '<svg viewBox="0 0 24 24">'+o.svg+'</svg></span>'+
+    '<span class="t">'+o.t+'</span>'+
+    (o.sw!==undefined ? '<span class="tog'+(on?" on":"")+'"></span>'
+     : o.val ? '<span class="val">'+o.val+'</span><span class="go">\u203A</span>'
+     : '<span class="go">\u203A</span>');
+  if(o.fn) d.onclick=()=>{ o.fn(); sheetSync&&sheetSync(); };
+  return d;
+}
+function sheetSettings(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#3A4A5E">'+ICONS.gear+'</svg>',
+    "Settings","System preferences",b=>{
+    b.appendChild(stgRow({t:"Sound FX", svg:ICONS.speaker, bg:"#DBEAFE", fg:"#2563EB",
+      tone:"blue", sw:G.opt.sound,
+      fn:()=>{G.opt.sound=!G.opt.sound; if(G.opt.sound){Sn.dead=false;actx();} save();}}));
+    b.appendChild(stgRow({t:"Haptic Feedback", svg:ICONS.buzz, bg:"#F3E8FF", fg:"#7C3AED",
+      tone:"violet", sw:G.opt.haptic,
+      fn:()=>{G.opt.haptic=!G.opt.haptic; save();}}));
+    b.appendChild(stgRow({t:"Dark Mode", svg:ICONS.sun, bg:"#F1F5F9", fg:"#94A3B8",
+      sw:false, fn:()=>toast("Dark mode arrives with the later scales")}));
+    b.appendChild(stgRow({t:"Screen Shake", svg:ICONS.shake, bg:"#FFEDD5", fg:"#EA580C",
+      tone:"orange", sw:G.opt.shake,
+      fn:()=>{G.opt.shake=!G.opt.shake; save();}}));
+    b.appendChild(stgRow({t:"Sandbox", svg:ICONS.target, bg:"#DCFCE7", fg:"#16A34A",
+      tone:"blue", sw:G.opt.sandbox,
+      fn:()=>{G.opt.sandbox=!G.opt.sandbox; save();}}));
+    b.appendChild(stgRow({t:"Language", svg:ICONS.globe, bg:"#DBEAFE", fg:"#2563EB",
+      val:"\uD83C\uDDFA\uD83C\uDDF8 English", fn:()=>toast("English only for now")}));
+
+    const sv=document.createElement("div");
+    sv.className="saveId";
+    sv.innerHTML='<div class="k">Cloud save id</div>'+
+      '<div class="v">'+saveId()+'</div>'+
+      '<div class="s">Useful for support and save recovery.</div>'+
+      '<button class="cp"><svg viewBox="0 0 24 24" style="width:16px;height:16px;display:block">'+ICONS.copy+'</svg></button>';
+    sv.querySelector(".cp").onclick=()=>{
+      try{ navigator.clipboard.writeText(saveId()); toast("Save id copied"); }
+      catch(e){ toast(saveId()); }
+    };
+    b.appendChild(sv);
+
+    b.appendChild(stgRow({t:"How to play", svg:ICONS.help, bg:"#DCFCE7", fg:"#16A34A",
+      fn:()=>{ closeSheet(); setTimeout(tutStart,320); }}));
+    b.appendChild(stgRow({t:"Build "+((document.lastModified||"").slice(0,16)), svg:ICONS.shield,
+      bg:"#DBEAFE", fg:"#2563EB",
+      fn:()=>toast("If a change is missing the page is cached \u2014 reload after a minute")}));
+    if(!CAN_STORE) b.appendChild(row({ic:"\u26A0",t:"Progress is not saving",
+      s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
+
+    b.appendChild(lbl("Danger"));
+    const d=document.createElement("button");
+    d.className="dangerBtn"; d.textContent="Reset everything";
+    d.onclick=()=>{
+      if(d.dataset.armed){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); }
+      else { d.dataset.armed="1"; d.textContent="Tap again to wipe the dish"; }
+    };
+    b.appendChild(d);
+  });
+}
+function saveId(){
+  if(!G.sid){
+    const h="0123456789abcdef"; let o="";
+    for(const n of [8,4,4,4,12]){ if(o)o+="-"; for(let i=0;i<n;i++) o+=h[(Math.random()*16)|0]; }
+    G.sid=o; save();
+  }
+  return G.sid;
+}
+
+/* ---- command center ------------------------------------------------------
+   The hero number is a made-up composite, exactly as the reference's "IQ" is:
+   it reads efficiency, how far you have zoomed out, and how much you have
+   banked, and lands somewhere in the 60-140 range. */
+function playerIQ(){
+  const s2=G.stat;
+  const eff=Math.min(1,(s2.merges||0)/Math.max(1,(s2.splits||0)*0.35));
+  const reach=Math.min(1,(G.strain||0)/5);
+  const bank=Math.min(1,Math.log10(Math.max(10,G.totalEarned))/12);
+  return Math.round(62+eff*26+reach*28+bank*24);
+}
+function statCard(k,v,bg,fg,glyph){
+  return '<div class="stat"><div class="h">'+
+    '<span class="ic" style="background:'+bg+';color:'+fg+'">'+glyph+'</span>'+
+    '<span class="k">'+k+'</span></div><div class="v">'+v+'</div></div>';
+}
+function sheetStats(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2563EB">'+ICONS.chart+'</svg>',
+    "Command Center","Live statistics",b=>{
+    const s2=G.stat;
+
+    const iq=document.createElement("div");
+    iq.className="iqCard";
+    iq.innerHTML='<span class="brain"><svg viewBox="0 0 24 24">'+ICONS.brain+'</svg></span>'+
+      '<span class="l"><span class="k">Player IQ estimate</span>'+
+      '<div class="n">'+playerIQ()+'</div>'+
+      '<span class="s">Based on efficiency, how far you have zoomed out & how much you have banked</span></span>'+
+      '<span class="wm"><svg viewBox="0 0 24 24">'+ICONS.brain+'</svg></span>';
+    b.appendChild(iq);
+
+    const g=document.createElement("div");
+    g.className="statGrid";
+    g.innerHTML=
+      statCard("Balls broken",  fmt(s2.pops),      "#FEE2E2","#DC2626","\u25CF")+
+      statCard("Splits",        fmt(s2.splits),    "#FFEDD5","#EA580C","\u2725")+
+      statCard("Lucky balls",   fmt(s2.gold),      "#FEF3C7","#D97706","\u2726")+
+      statCard("Time active",   fmtTime(s2.play),  "#DCFCE7","#16A34A","\u25F7")+
+      statCard("Fusions",       fmt(s2.merges),    "#DBEAFE","#2563EB","\u2295")+
+      statCard("Detonations",   fmt(s2.bursts),    "#F3E8FF","#7C3AED","\u2738");
+    b.appendChild(g);
+
+    const finger=Math.max(0,(s2.splits||0)+(s2.pops||0));
+    const auto=Math.max(0,Math.round(passiveRate()*(s2.play||0)*0.02)+(s2.merges||0));
+    const tot=Math.max(1,finger+auto);
+    const dd=document.createElement("div");
+    dd.className="ddCard";
+    dd.innerHTML='<div class="h"><span style="color:#EA580C">\u25D4</span> Damage distribution</div>'+
+      '<div class="dd"><div class="r"><span class="n">Finger</span>'+
+        '<span class="p">'+(finger/tot*100).toFixed(1)+'%</span></div>'+
+        '<div class="b"><i style="width:'+(finger/tot*100).toFixed(1)+'%;background:#F59E0B"></i></div></div>'+
+      '<div class="dd"><div class="r"><span class="n">Wizards & pet</span>'+
+        '<span class="p">'+(auto/tot*100).toFixed(1)+'%</span></div>'+
+        '<div class="b"><i style="width:'+(auto/tot*100).toFixed(1)+'%;background:#1F2937"></i></div></div>';
+    b.appendChild(dd);
+
+    const f=document.createElement("div");
+    f.className="ccFoot";
+    f.innerHTML='<span>Lifetime: '+fmt(G.totalEarned)+'</span>'+
+      '<span>Scales: '+fmt(s2.strains)+'</span>';
+    b.appendChild(f);
+  });
+}
+
 function sheetShop(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block;color:#22C55E">'+ICONS.bag+'</svg>',
     "Store","Gold, shards and boosts",b=>{
@@ -3919,7 +4167,7 @@ function sheetShop(){
       '<span class="ic" style="background:#F59E0B">\u2617</span>'+
       '<span class="t">Daily Free Gift</span>'+
       (giftReady?'<span class="tag new">New</span>':'')+
-      '</div><div class="stSub">'+(giftReady?"+20 shards, on the house.":"Next free gift in "+adWait("gift"))+'</div>';
+      '</div><div class="stSub">'+(giftReady?"+20 shards, on the house.":"\u25F7 Next free gift in "+adWait("gift"))+'</div>';
     if(giftReady){
       const r=document.createElement("div"); r.className="stRow";
       const c=document.createElement("button"); c.className="stBtn amber"; c.textContent="Claim";
@@ -3945,8 +4193,9 @@ function sheetShop(){
       (stReady?'<span class="tag ok">Claim</span>':'')+
       '</div>'+
       '<div class="days">'+STREAK.map((m,i)=>
-        '<span class="day '+(i+1<day?"past":(i+1===day?"now":""))+'">'+
-        '<span class="d">0'+(i+1)+'</span><span class="m">'+m+'\u00D7</span></span>').join("")+'</div>'+
+        '<span class="dchip '+(i+1<day?"past":(i+1===day?"now":""))+'">'+
+        '<span class="d">'+(i===6?"BONUS":"D"+(i+1))+'</span>'+
+        '<span class="m">'+m+'\u00D7</span>'+(i+1<day?'<span class="tk">\u2713</span>':'')+'</span>').join("")+'</div>'+
       '<div class="stSub">'+(stReady
         ? "Today: "+ICO_SPORE+(3*STREAK[day-1])+" \u00B7 "+ICO_MASS+" "+fmt(4000*STREAK[day-1])
         : "Claimed today! Come back tomorrow.")+'</div>';
@@ -3969,40 +4218,7 @@ function sheetShop(){
     }
     b.appendChild(st);
 
-    /* --- ads that pay --- */
-    b.appendChild(lbl("Watch an ad"));
-    const left=Math.max(0,Math.ceil(x2Until-el));
-    b.appendChild(row({ic:"\u25D1",t:x2On()?"Double gold is running":"Double gold for 60s",
-      s:x2On()?left+"s left":"Everything pays twice as much, so your streak tops out at \u00D74.",
-      btn:x2On()?left+"s":(adReady("x2")?"Watch":adWait("x2")), btnOn:!x2On()&&adReady("x2"),
-      fn:(x2On()||!adReady("x2"))?null:function(){
-        x2Until=el+60; G.ad.x2=el+300; toast("Double gold for 60s"); sheetSync&&sheetSync(); }}));
-    b.appendChild(row({ic:ICO_MASS,t:"Free gold",s:"A lump scaled to what you are earning now.",
-      btn:adReady("gold")?"Watch":adWait("gold"), btnOn:adReady("gold"),
-      fn:adReady("gold")?function(){
-        const v=Math.max(500,passiveRate()*240+throughput()*120);
-        G.bio+=v; G.earned+=v; G.totalEarned+=v; G.ad.gold=el+300;
-        rewardPill(this,"+"+fmt(v)); toast("+"+fmt(v)+" gold"); save(); syncTop(); sheetSync&&sheetSync();
-      }:null}));
-    b.appendChild(row({ic:ICO_SPORE,t:"Free shards",s:"Three shards. Once every five minutes.",
-      btn:adReady("sp")?"Watch":adWait("sp"), btnOn:adReady("sp"),
-      fn:adReady("sp")?function(){ G.spore+=3; G.ad.sp=el+300;
-        rewardPill(this,"+3"); save(); syncTop(); sheetSync&&sheetSync(); }:null}));
-
-    /* --- powers you can actually buy --- */
-    b.appendChild(lbl("Powers"));
-    for(const p of POWERS){
-      if(p.cost===0) continue;
-      const stp=pwState(p);
-      b.appendChild(row({ic:p.g,t:p.nm,s:p.d+" \u00B7 "+p.cd+"s cooldown",
-        btn:stp.owned?"Owned":ICO_SPORE+p.cost, btnOn:!stp.owned,
-        fn:stp.owned?null:function(){
-          if(G.spore<p.cost){ toast("Needs "+p.cost+" shards"); return; }
-          G.spore-=p.cost; stp.owned=true; toast(p.nm+" unlocked");
-          save(); syncTop(); buildRails(); syncRails(); sheetSync&&sheetSync();
-        }}));
-    }
-
+    /* the reference sells its powers inside the Master Pack, not loose */
     /* --- the paid shelf --- */
     b.appendChild(lbl("For you"));
     for(const p of PACKS){
@@ -4077,31 +4293,54 @@ function sheetShop(){
   });
 }
 function stCosmetics(b){
-  b.appendChild(lbl("Your pet"));
-  for(const p of PETS){
-    const own=G.ownPet.includes(p.id), sel=G.pet===p.id;
-    b.appendChild(row({swatch:p.arc,t:p.nm,s:p.d,sel,
-      btn:sel?"Equipped":(own?"Equip":ICO_SPORE+p.cost), btnOn:!sel,
-      fn:()=>{ if(sel) return;
-        if(own){ G.pet=p.id; save(); }
-        else if(G.spore>=p.cost){ G.spore-=p.cost; G.ownPet.push(p.id); G.pet=p.id; toast(p.nm+" unlocked"); save(); }
-        else toast("Needs "+p.cost+" shards"); }}));
+  const head=document.createElement("div");
+  head.className="cosHead";
+  head.innerHTML='<span class="ic"><svg viewBox="0 0 24 24">'+ICONS.brush+'</svg></span>'+
+    '<span class="t">Cosmetics</span>'+
+    '<span class="cnt">'+ICO_SPORE+" "+fmt(G.spore)+'</span>';
+  b.appendChild(head);
+
+  const subs=document.createElement("div"); subs.className="cosSubs";
+  for(const t of [["pet","Pets"],["trail","Trails"],["skin","Skins"]]){
+    const x=document.createElement("button");
+    x.className="cosSub"+(G.cosTab===t[0]?" on":"");
+    x.textContent=t[1];
+    x.onclick=()=>{ G.cosTab=t[0]; sheetSync&&sheetSync(); };
+    subs.appendChild(x);
   }
-  b.appendChild(lbl("Cleave colour"));
-  for(const t of TRAILS){
-    const own=G.ownTrail.includes(t.id), sel=G.trail===t.id;
-    b.appendChild(row({swatch:t.c,t:t.nm,s:t.d,sel,
-      btn:sel?"Equipped":(own?"Equip":ICO_SPORE+t.cost), btnOn:!sel,
-      fn:()=>{ if(sel) return;
-        if(own){ G.trail=t.id; save(); }
-        else if(G.spore>=t.cost){ G.spore-=t.cost; G.ownTrail.push(t.id); G.trail=t.id; toast(t.nm+" unlocked"); save(); }
-        else toast("Needs "+t.cost+" shards"); }}));
+  b.appendChild(subs);
+
+  const grid=document.createElement("div"); grid.className="cosGrid";
+  const items = G.cosTab==="trail" ? TRAILS.map(t=>({id:t.id,nm:t.nm,d:t.d,cost:t.cost,sw:t.c,
+                    own:G.ownTrail.includes(t.id), sel:G.trail===t.id,
+                    take:()=>{G.ownTrail.push(t.id);}, wear:()=>{G.trail=t.id;}}))
+    : G.cosTab==="skin" ? SKINS.map(k=>({id:k.id,nm:k.nm,d:"A different face on every ball.",cost:k.cost,
+                    sw:"linear-gradient(140deg,#B6F03C,#4BE36E)",
+                    own:G.ownSkin.includes(k.id), sel:G.skin===k.id,
+                    take:()=>{G.ownSkin.push(k.id);}, wear:()=>{G.skin=k.id;}}))
+    : PETS.map(p=>({id:p.id,nm:p.nm,d:p.d,cost:p.cost,
+                    sw:"radial-gradient(circle,"+p.arc+" 0%,"+p.core+" 78%)",
+                    own:G.ownPet.includes(p.id), sel:G.pet===p.id,
+                    take:()=>{G.ownPet.push(p.id);}, wear:()=>{G.pet=p.id;}}));
+  for(const it of items){
+    const c=document.createElement("button");
+    c.className="cos"+(it.sel?" sel":"");
+    c.innerHTML='<span class="sw" style="background:'+it.sw+'"></span>'+
+      '<span class="nm">'+it.nm+'</span>'+
+      '<span class="d">'+it.d+'</span>'+
+      '<span class="c">'+(it.sel?"Equipped":(it.own?"Owned":ICO_SPORE+" "+it.cost))+'</span>';
+    c.onclick=()=>{
+      if(it.sel) return;
+      if(it.own){ it.wear(); save(); }
+      else if(G.spore>=it.cost){ G.spore-=it.cost; it.take(); it.wear();
+        toast(it.nm+" unlocked"); save(); syncTop(); }
+      else { toast("Needs "+it.cost+" shards"); return; }
+      sheetSync&&sheetSync();
+    };
+    grid.appendChild(c);
   }
+  b.appendChild(grid);
 }
-/* ---- daily missions -----------------------------------------------------
-   Card per goal: icon, name, difficulty stars, a count and a percent, a bar,
-   the reward, then Claim beside a doubled Claim that costs an ad. The whole
-   set pays a bonus when all four are in. */
 function msCard(o){
   const d=document.createElement("div");
   const pct=clamp(o.prog/o.goal,0,1);
@@ -4266,51 +4505,6 @@ function achRows(b){
         }:null
       }));
     }
-}
-function sheetSettings(){
-  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.gear+'</svg>',
-    "Settings","Sound and feel",b=>{
-    b.appendChild(row({ic:"♪",t:"Sound",s:"Sound effects",sw:G.opt.sound,
-      fn:()=>{G.opt.sound=!G.opt.sound; if(G.opt.sound){Sn.dead=false;actx();} save();}}));
-    b.appendChild(row({ic:"⋮⋮",t:"Vibration",s:"Buzz when a ball breaks",sw:G.opt.haptic,
-      fn:()=>{G.opt.haptic=!G.opt.haptic; save();}}));
-    b.appendChild(row({ic:"◱",t:"Screen shake",s:"Screen kicks on big breaks",sw:G.opt.shake,
-      fn:()=>{G.opt.shake=!G.opt.shake; save();}}));
-    b.appendChild(row({ic:"∞",t:"Sandbox",s:"Unlimited gold and shards, every scale unlocked. For testing — turn off for a real run.",sw:G.opt.sandbox,
-      fn:()=>{G.opt.sandbox=!G.opt.sandbox; save();}}));
-    if(!CAN_STORE) b.appendChild(row({ic:"⚠",t:"Progress is not saving",s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
-    b.appendChild(row({ic:"?",t:"How to play",s:"Replay the three-step walkthrough.",
-      fn:()=>{ closeSheet(); setTimeout(tutStart,320); }}));
-    b.appendChild(row({ic:"⧖",t:"Build",
-      s:"If a change is missing, this page is cached — reload after a minute.",
-      v:(document.lastModified||"").replace(/:dd /," ").slice(0,16)}));
-    b.appendChild(lbl("Danger"));
-    const d=document.createElement("button");
-    d.className="dangerBtn"; d.textContent="Reset everything";
-    d.onclick=()=>{
-      if(d.dataset.armed){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); }
-      else { d.dataset.armed="1"; d.textContent="Tap again to wipe the dish"; }
-    };
-    b.appendChild(d);
-  });
-}
-function sheetStats(){
-  openSheet("▥","Statistics","This culture, all time",b=>{
-    const s=G.stat;
-    for(const [i,t,v] of [
-      ["✥","Splits",fmt(s.splits)],
-      ["◉","Balls broken down",fmt(s.pops)],
-      ["✦","Golden balls",fmt(s.gold)],
-      ["⊕","Fusions",fmt(s.merges)],
-      ["✸","Detonations",fmt(s.bursts)],
-      ["≋","Best streak","×"+Math.min(4,1+s.bestCombo*COMBO_STEP).toFixed(2)],
-      ["◍","Idle rate",fmt(passiveRate())+"/s"],
-      ["⬤","Producing",fmt(throughput())+"/s"],
-      ["◎","Total banked",fmt(G.totalEarned)],
-      ["⌾","Scales ascended",fmt(s.strains)],
-      ["☾","Time in the dish",fmtTime(s.play)],
-    ]) b.appendChild(row({ic:i,t,v}));
-  });
 }
 function sheetCustomise(){
   openSheet("◑","Your Balls","Cleave colour and powers",b=>{
