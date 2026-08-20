@@ -528,6 +528,33 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
   #wizChrome{padding:6px 12px calc(6px + env(safe-area-inset-bottom));gap:6px}
   #wizPanel{min-height:62px}
 }
+/* ---- the tutorial coach ---- */
+#tut{
+  position:absolute;z-index:24;left:0;right:0;bottom:0;
+  background:var(--panel);border-top:1px solid var(--edge);
+  border-radius:22px 22px 0 0;box-shadow:var(--shadow-up);
+  padding:14px 16px calc(16px + env(safe-area-inset-bottom));
+  transform:translateY(102%);transition:transform .32s cubic-bezier(.2,.9,.25,1);
+}
+#tut.on{transform:translateY(0)}
+.tutTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#tutStep{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+#tutSkip{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  background:none;border:0;padding:4px 2px}
+#tutT{font-family:"Syne",var(--sym),sans-serif;font-weight:800;font-size:17px;line-height:1.15}
+#tutS{font-size:11.5px;line-height:1.6;color:var(--ink-2);margin:5px 0 12px}
+#tutNext{
+  width:100%;padding:12px;border-radius:13px;border:0;
+  background:var(--ink);color:var(--ground);
+  font-family:"Syne",var(--sym),sans-serif;font-weight:800;
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+}
+#tutNext:active{transform:scale(.98)}
+#howto{
+  margin-top:11px;background:none;border:0;padding:8px 12px;
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-3);text-decoration:underline;text-underline-offset:4px;
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -601,11 +628,19 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
     <div id="sheetBody"></div>
   </div>
 
+  <div id="tut">
+    <div class="tutTop"><span id="tutStep"></span><button id="tutSkip">Skip</button></div>
+    <div id="tutT"></div>
+    <div id="tutS"></div>
+    <button id="tutNext">Next</button>
+  </div>
+
   <div id="intro">
     <div class="eb">You are somewhere inside an atom</div>
     <h1>Mitosis</h1>
     <p><b>Tap a ball and it splits in two.</b> Swipe to cleave a line of them. Balls of the same colour fuse into bigger ones — let them, then break the giant all the way down. Bank enough and the camera pulls back a scale.</p>
     <button id="begin">Begin</button>
+    <button id="howto">How to play</button>
     <div id="introHint"></div>
   </div>
 </div>
@@ -3238,6 +3273,8 @@ function sheetSettings(){
     b.appendChild(row({ic:ICO_SPORE,t:"Spores",s:"From objectives. Spend on powers and looks.",v:fmt(G.spore)}));
     b.appendChild(row({ic:"⌾",t:"Scale",s:"One ball is "+curScale().ball,v:ROMAN[G.strain]+" · "+curScale().n}));
     if(!CAN_STORE) b.appendChild(row({ic:"⚠",t:"Progress is not saving",s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
+    b.appendChild(row({ic:"?",t:"How to play",s:"Replay the three-step walkthrough.",
+      fn:()=>{ closeSheet(); setTimeout(tutStart,320); }}));
     b.appendChild(row({ic:"⧖",t:"Build",
       s:"If a change is missing, this page is cached — reload after a minute.",
       v:(document.lastModified||"").replace(/:dd /," ").slice(0,16)}));
@@ -3555,6 +3592,43 @@ document.getElementById("goDown").onclick=()=>goRoom("arena");
 buildRails(); buildTabs(); syncTop(); syncRails();
 $("introHint").textContent = G.totalEarned>0
   ? "Banked "+fmt(G.totalEarned)+" · Strain "+ROMAN[G.strain] : "";
+/* ---------------------------------------------------------------- tutorial
+   Opt-in only: nothing here runs unless the player asks for it. Each beat
+   parks the camera in the room it talks about and drops the ball it needs. */
+function tutBall(kind,tier){
+  const cls=WRANK[0], rr=tierRadius(tier,cls);
+  balls.push(makeBall(tier, clamp(W*.5,rr+2,W-rr-2), AR.y0+(AR.y1-AR.y0)*.34,
+                      rnd(-14,14)*S, 40*S, cls, undefined, kind));
+}
+const TUT=[
+  {room:"arena", t:"Tap a ball, it splits",
+   s:"Here is one. Every tap breaks it into two smaller ones — and the smallest rung is the one that actually pays out mass. Swipe across several to cleave a whole line at once.",
+   go(){ tutBall("plain",0); }},
+  {room:"wiz",   t:"Wizards do the dropping",
+   s:"Each one casts a ball on its own timer, so the dish fills while you are away. A wizard’s column decides which lane its balls fall down — line them up and their balls meet and fuse, spread them out and they will not.",
+   go(){}},
+  {room:"arena", t:"Some of them are unstable",
+   s:"A pale ball ringed with pulsing spokes is unstable. It will not fuse with anything, and tapping it does not split it — it detonates, and takes whatever is nearby with it. Useful on a crowded dish, expensive on a tidy one.",
+   go(){ tutBall("unstable",2); }},
+];
+let tutI=-1;
+function tutShow(){
+  const st=TUT[tutI], moving=(room!==st.room);
+  if(moving) goRoom(st.room);
+  $("tutStep").textContent="Step "+(tutI+1)+" of "+TUT.length;
+  $("tutT").textContent=st.t;
+  $("tutS").textContent=st.s;
+  $("tutNext").textContent=(tutI===TUT.length-1)?"Got it":"Next";
+  setTimeout(()=>{ if(tutI>=0 && st.go) st.go(); }, moving?470:80);
+  $("tut").classList.add("on");
+}
+function tutStart(){ if(!ready) begin(); tutI=0; tutShow(); }
+function tutNext(){ if(++tutI>=TUT.length) return tutEnd(); tutShow(); }
+function tutEnd(){ tutI=-1; $("tut").classList.remove("on"); }
+$("tutNext").onclick=tutNext;
+$("tutSkip").onclick=tutEnd;
+$("howto").onclick=tutStart;
+
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("begin").onclick=begin;
 document.addEventListener("visibilitychange",()=>{ if(document.hidden){ save(); last=0; } });
