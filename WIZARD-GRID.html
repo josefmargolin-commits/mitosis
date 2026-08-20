@@ -1,0 +1,448 @@
+<title>Wizard Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Chivo+Mono:wght@300;400;600&display=swap">
+
+<style>
+:root{
+  --ground:#FBFCFE;
+  --surface:#F2F5FA;
+  --sunk:#E9EDF5;
+  --ink:#101625;
+  --ink-2:#5A6478;
+  --ink-3:#8B94A6;
+  --line:rgba(16,22,37,.12);
+  --line-2:rgba(16,22,37,.22);
+  --accent:#6B46E5;
+  --r0:#2ED8E8; --r1:#3B6FFF; --r2:#B44BFF;
+  --r3:#FF4B6E; --r4:#FF8F3D; --r5:#E8B21B;
+  --good:#0FA97A; --warn:#D9821C; --bad:#E03B54;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1017; --surface:#141924; --sunk:#1B2130;
+    --ink:#E9EEF7; --ink-2:#A3AEC2; --ink-3:#6E7A90;
+    --line:rgba(233,238,247,.14); --line-2:rgba(233,238,247,.26);
+    --accent:#A98CFF; --r5:#F5C838; --good:#3DD9A4; --warn:#F0A93C; --bad:#FF6B7F;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1017; --surface:#141924; --sunk:#1B2130;
+  --ink:#E9EEF7; --ink-2:#A3AEC2; --ink-3:#6E7A90;
+  --line:rgba(233,238,247,.14); --line-2:rgba(233,238,247,.26);
+  --accent:#A98CFF; --r5:#F5C838; --good:#3DD9A4; --warn:#F0A93C; --bad:#FF6B7F;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Chivo Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:14px; line-height:1.72; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:860px;margin:0 auto;padding:52px 22px 120px}
+h1,h2,h3{font-family:"Archivo",system-ui,sans-serif;text-wrap:balance;letter-spacing:-.02em}
+h1{font-size:clamp(38px,7vw,60px);font-weight:800;line-height:.98;margin:0 0 14px}
+h2{font-size:clamp(21px,3.4vw,27px);font-weight:700;margin:60px 0 6px;line-height:1.16}
+h3{font-size:15px;font-weight:700;margin:30px 0 6px;letter-spacing:0}
+p{margin:0 0 14px;max-width:70ch;color:var(--ink-2)}
+p strong,li strong{color:var(--ink);font-weight:400}
+code{font-family:"Chivo Mono",monospace;font-size:.9em;background:var(--sunk);padding:1px 5px;border-radius:4px;color:var(--ink)}
+ul,ol{margin:0 0 16px;padding-left:20px;max-width:70ch;color:var(--ink-2)}
+li{margin:0 0 7px}
+li::marker{color:var(--ink-3)}
+.eyebrow{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3);margin-bottom:16px}
+.lede{font-size:15px;color:var(--ink-2);max-width:64ch;margin-bottom:8px}
+.qref{display:inline-block;font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--accent);border:1px solid var(--line-2);border-radius:99px;padding:2px 9px;margin-bottom:10px}
+hr{border:0;border-top:1px solid var(--line);margin:52px 0 0}
+
+.note{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);
+  border-radius:0 12px 12px 0;padding:16px 18px;margin:20px 0}
+.note .t{font-family:"Archivo",sans-serif;font-weight:700;font-size:13px;margin-bottom:6px;color:var(--ink)}
+.note p:last-child{margin-bottom:0}
+.note.risk{border-left-color:var(--warn)}
+.note.kill{border-left-color:var(--bad)}
+.note.win{border-left-color:var(--good)}
+
+.scroll{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-family:"Archivo",sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);background:var(--sunk)}
+tbody tr:last-child td{border-bottom:0}
+td{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+td:first-child{color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:7px}
+.chip i{width:11px;height:11px;border-radius:50%;display:block;flex:none}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
+.card{border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:var(--surface)}
+.card .h{font-family:"Archivo",sans-serif;font-weight:700;font-size:12.5px;margin-bottom:5px}
+.card p{font-size:12.5px;margin:0;color:var(--ink-2)}
+.card.dies .h{color:var(--bad)}
+.card.keeps .h{color:var(--good)}
+
+pre{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+  overflow-x:auto;font-size:12.5px;line-height:1.62;margin:16px 0;color:var(--ink)}
+pre .c{color:var(--ink-3)}
+pre .k{color:var(--accent)}
+
+/* the two-room diagram */
+.rooms{display:flex;gap:18px;align-items:stretch;margin:22px 0;flex-wrap:wrap}
+.room{
+  flex:1 1 190px;min-width:180px;border:1px solid var(--line-2);border-radius:14px;
+  background:var(--surface);padding:14px;position:relative;
+}
+.room .lbl{font-family:"Archivo",sans-serif;font-weight:800;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.slot{aspect-ratio:1;border-radius:7px;background:var(--ground);border:1px dashed var(--line-2);
+  display:grid;place-items:center;font-size:8px;color:var(--ink-3)}
+.slot.f{border-style:solid;border-color:transparent}
+.arenaBox{height:150px;border-radius:9px;background:var(--ground);border:1px solid var(--line);
+  position:relative;overflow:hidden}
+.arenaBox i{position:absolute;border-radius:50%;display:block}
+.camArrow{text-align:center;font-size:22px;color:var(--accent);flex:0 0 100%;margin:-6px 0}
+
+.phase{display:flex;gap:14px;align-items:flex-start;margin:0 0 16px}
+.phase .n{flex:none;width:26px;height:26px;border-radius:8px;background:var(--accent);color:#fff;
+  display:grid;place-items:center;font-family:"Archivo",sans-serif;font-weight:800;font-size:12px}
+.phase .b{flex:1;min-width:0}
+.phase .b .t{font-family:"Archivo",sans-serif;font-weight:700;font-size:13.5px;color:var(--ink);margin-bottom:3px}
+.phase .b p{margin:0;font-size:13px}
+
+.ask{border:1px solid var(--line-2);border-radius:12px;padding:15px 17px;margin:0 0 12px;background:var(--surface)}
+.ask .q{font-family:"Archivo",sans-serif;font-weight:700;font-size:13.5px;margin-bottom:5px}
+.ask p{margin:0;font-size:13px}
+.rec{color:var(--good)}
+.settled{border-left:3px solid var(--good)}
+</style>
+
+<div class="wrap">
+
+<div class="eyebrow">Mitosis · design spec · rev 2</div>
+<h1>Wizard Grid</h1>
+<p class="lede">Two rooms stacked vertically with one camera between them. Wizards upstairs cast balls down into the arena below, and keep casting whether or not you're watching.</p>
+
+<div class="note win">
+<div class="t">Rev 2 — the two-screen change fixes the one thing that was wrong</div>
+<p>The previous draft squeezed the board above the arena and had to trade wizard size against arena size. Both surfaces lost. Splitting them into two rooms removes the trade entirely: full-size wizards, full-size arena.</p>
+<p>It also turns out to make <strong>where a wizard stands mechanically meaningful</strong> rather than just tidy — see §5. That was a free win from your change, not something I'd designed for.</p>
+</div>
+
+<hr>
+
+<h2>1 · What this replaces, and what it doesn't</h2>
+<p>The current producer is the <strong>gantry</strong>: <code>DROPS[]</code> heads sweeping a rail, fed by four upgrades. That whole assembly is what the wizards take over. Everything below the drop line is untouched.</p>
+
+<div class="cols">
+  <div class="card dies"><div class="h">Retired</div>
+    <p><code>DROPS[]</code>, <code>drawGantry</code>, <code>headX</code>, <code>syncHeads</code>, <code>releaseBall</code>, and the <code>rate</code> / <code>volume</code> / <code>heads</code> upgrades. All subsumed by per-wizard timers.</p></div>
+  <div class="card dies"><div class="h">Retired</div>
+    <p><code>BALLS[]</code> — the eight classes. Their <code>taps</code> / <code>mass</code> / <code>size</code> fields move onto the wizard rank table, which has the same shape.</p></div>
+  <div class="card keeps"><div class="h">Untouched</div>
+    <p>Fusion, splitting, rupture, detonation, combo, the metaball layer, powers, boosts, objectives, trails, palettes, scales, audio. The entire arena.</p></div>
+  <div class="card keeps"><div class="h">Kept, re-homed</div>
+    <p><code>cap</code> and <code>purity</code> move to a new <strong>Arena</strong> tab alongside <code>yield</code>. <code>magnet</code>, <code>chain</code>, <code>reson</code>, <code>fusion</code>, <code>attract</code> stay in Field.</p></div>
+</div>
+
+<div class="note kill">
+<div class="t">Still the one real collision: ball classes have to go</div>
+<p>A ball has two axes today — <strong>tier</strong> (size, colour, fuse position) and <strong>class</strong> (taps, mass). The gantry always spawns at tier 3 and class is the only thing that grows.</p>
+<p>Your wizards want to spawn different <em>tiers</em>. If classes stayed, a rank-5 wizard and a Singularity would be two ladders doing one job, and every purchase would sit on one of them arbitrarily.</p>
+<p>So the wizard rank <em>becomes</em> the class. <code>WRANK[r]</code> exposes <code>{taps, mass, size}</code> — byte-compatible with what <code>makeBall()</code> already takes as its <code>cls</code> argument. That's why this change is cheap.</p>
+</div>
+
+<h2>2 · The rank ladder <span class="qref">Q8</span></h2>
+<p>Six ranks. Rank <code>r</code> spawns ball tier <code>5 − r</code>. Tier 6 — the rung that cashes out — is left to the arena, and so is tier 0 at the top, so <strong>there is always at least one fusion you have to earn by hand.</strong></p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Rank</th><th>Spawns</th><th>Ball mass</th><th>Taps</th><th>Base delay</th><th>Mass / sec</th><th>Step</th></tr></thead>
+<tbody>
+<tr><td><span class="chip"><i style="background:var(--r0)"></i>0 · Apprentice</span></td><td>tier 5</td><td>16</td><td>1</td><td>2.4 s</td><td>6.7</td><td>—</td></tr>
+<tr><td><span class="chip"><i style="background:var(--r1)"></i>1 · Adept</span></td><td>tier 4</td><td>58</td><td>2</td><td>3.2 s</td><td>18.1</td><td>×2.7</td></tr>
+<tr><td><span class="chip"><i style="background:var(--r2)"></i>2 · Magus</span></td><td>tier 3</td><td>208</td><td>3</td><td>4.2 s</td><td>49.5</td><td>×2.7</td></tr>
+<tr><td><span class="chip"><i style="background:var(--r3)"></i>3 · Archon</span></td><td>tier 2</td><td>750</td><td>4</td><td>5.6 s</td><td>134</td><td>×2.7</td></tr>
+<tr><td><span class="chip"><i style="background:var(--r4)"></i>4 · Sovereign</span></td><td>tier 1</td><td>2 700</td><td>6</td><td>7.4 s</td><td>365</td><td>×2.7</td></tr>
+<tr><td><span class="chip"><i style="background:var(--r5)"></i>5 · Ascendant</span></td><td>tier 0</td><td>9 700</td><td>8</td><td>9.8 s</td><td>990</td><td>×2.7</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>3 · Two rooms, one camera <span class="qref">Q1 · Q15</span></h2>
+<p>The world is a vertical strip two viewports tall. The camera shows one at a time and slides between them.</p>
+
+<div class="rooms">
+  <div class="room">
+    <div class="lbl">Wizard room</div>
+    <div class="wgrid">
+      <div class="slot f" style="background:var(--r2)"></div>
+      <div class="slot f" style="background:var(--r0)"></div>
+      <div class="slot f" style="background:var(--r0)"></div>
+      <div class="slot f" style="background:var(--r1)"></div>
+      <div class="slot f" style="background:var(--r0)"></div>
+      <div class="slot f" style="background:var(--r3)"></div>
+      <div class="slot"></div>
+      <div class="slot f" style="background:var(--r0)"></div>
+      <div class="slot f" style="background:var(--r1)"></div>
+      <div class="slot"></div><div class="slot"></div>
+      <div class="slot f" style="background:var(--r0)"></div>
+      <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+    </div>
+  </div>
+  <div class="camArrow">↕</div>
+  <div class="room">
+    <div class="lbl">Arena</div>
+    <div class="arenaBox">
+      <i style="width:34px;height:34px;background:var(--r2);left:22px;top:44px"></i>
+      <i style="width:24px;height:24px;background:var(--r0);left:70px;top:80px"></i>
+      <i style="width:44px;height:44px;background:var(--r3);left:104px;top:56px"></i>
+      <i style="width:20px;height:20px;background:var(--r1);left:160px;top:26px"></i>
+      <i style="width:28px;height:28px;background:var(--r4);left:150px;top:90px"></i>
+    </div>
+  </div>
+</div>
+
+<h3>How it's built</h3>
+<p>The wizard room is <strong>DOM, not canvas</strong>. It's a grid of interactive elements with text, drag targets and panels — everything DOM is already good at and canvas is a chore for. The arena stays exactly as it is, three canvases untouched.</p>
+<pre><span class="k">#world</span>            <span class="c">// translateY(camY * 100%) — the camera</span>
+  <span class="k">.room--wizard</span>   <span class="c">// DOM grid, plus one small canvas for spell bolts</span>
+  <span class="k">.room--arena</span>    <span class="c">// #bg #goo #fx — completely unchanged</span>
+<span class="k">#topbar</span>           <span class="c">// fixed above both; mass and spores always visible</span></pre>
+<p>The camera is one CSS transform on <code>#world</code>, so the slide is GPU-composited and costs nothing. <code>camY</code> runs 0 → −1.</p>
+
+<div class="note">
+<div class="t">Three consequences worth stating plainly</div>
+<ul>
+<li><strong>The simulation never pauses.</strong> <code>step(dt)</code> runs every frame regardless of which room you're looking at — wizard timers, ball physics, fusion, all of it. Only <em>drawing</em> is conditional.</li>
+<li><strong>The arena stops drawing when it's off-screen.</strong> The metaball filter is the single most expensive thing in the game, so the wizard room will run cooler than the arena does. During the slide, both rooms draw.</li>
+<li><strong>The bottom chrome is per-room.</strong> Arena keeps its tab dock; the wizard room gets a summon bar and a selected-wizard panel. The top bar is global, because you need to see your money while upgrading.</li>
+</ul>
+</div>
+
+<h2>4 · Moving between them <span class="qref">Q13</span></h2>
+<p>Target feel: a camera move, not a menu. <strong>380 ms</strong>, <code>cubic-bezier(.32,.72,.24,1)</code> — quick off the mark, settling rather than bouncing.</p>
+<ul>
+<li><strong>Up arrow</strong> — top centre of the arena, below the currency readouts. Carries a dot when something upstairs wants attention: an affordable summon, or a legal merge sitting on the board.</li>
+<li><strong>Down arrow</strong> — bottom centre of the wizard room, above the summon bar.</li>
+<li><strong>Parallax</strong> — the wizard room's backdrop translates at ~0.85× the foreground, so the rooms feel like they're at different depths rather than a flat sheet sliding.</li>
+<li><strong>Audio</strong> — an ascending filtered whoosh going up, descending coming down. Haptic tick on arrival.</li>
+<li><strong>Seam</strong> — a soft shadow under the wizard room's floor edge, so the arena reads as genuinely below it.</li>
+</ul>
+
+<div class="note risk">
+<div class="t">Gesture conflict — this one would have bitten us</div>
+<p>Swipe is already the arena's core verb: <code>pointermove</code> cleaves every ball the line crosses. A swipe-up-to-ascend gesture would fire constantly during normal play.</p>
+<p>So: <strong>on the arena screen, the arrow is the only way up.</strong> No swipe. In the wizard room there's no such conflict, so swipe-down works anywhere that isn't a wizard being dragged, alongside the arrow.</p>
+<p>Asymmetric, but the alternative is a game that cleaves your board every time you try to leave it.</p>
+</div>
+
+<h2>5 · Columns are a real decision <span class="qref">Q2</span></h2>
+<p>A wizard in column <code>c</code> drops its balls at <code>x = (c + 0.5) / 4 × W</code>, jittered a few pixels. Four columns, four entry lanes.</p>
+
+<div class="note win">
+<div class="t">This makes rearranging the board strategic, not cosmetic</div>
+<p>Balls only fuse when two of the same colour touch and hold for 0.42 s. Two same-rank wizards in the <strong>same column</strong> drop their balls into the same lane — they land near each other and fuse almost immediately. Spread across <strong>different columns</strong>, they arrive far apart and mostly don't.</p>
+<p>So stacking a column is a fusion engine, and spreading is a breadth strategy that keeps the arena evenly fed and easier to work by hand. Neither is strictly better, and the player discovers it by watching rather than by reading a tooltip.</p>
+<p>In rev 1 "move wizards around the grid" was housekeeping. Now it's a build.</p>
+</div>
+
+<p>Row position has no mechanical effect. I'd leave it that way — one spatial axis carrying meaning is legible, two is a puzzle.</p>
+
+<h2>6 · Casting, from both sides <span class="qref">Q14</span></h2>
+<p>One event, two presentations, and the mechanical part is identical either way.</p>
+
+<h3>Seen from the arena</h3>
+<p>The ball materialises just above the top edge in its wizard's column, with the existing muzzle burst — ring, sparks, <code>pop()</code> pitched to the tier, panned by x — then falls under normal physics. Effectively what the gantry does now, minus the machine.</p>
+
+<h3>Seen from the wizard room</h3>
+<ol>
+<li><strong>Charge</strong> — last 0.4 s of the timer: staff-tip glows, the cell's progress ring closes, the figure crouches.</li>
+<li><strong>Release</strong> — snaps upright with recoil, a glyph flashes, and a bolt of the ball's colour launches downward.</li>
+<li><strong>Exit</strong> — the bolt accelerates and disappears off the bottom edge of the screen. You watch your production leave for the room below.</li>
+</ol>
+<p>Drawn on a small dedicated canvas layered over the wizard grid, so bolts pass in front of the wizards and behind the panels.</p>
+
+<h3>Blocked casts</h3>
+<p>If the arena is at capacity the wizard holds at full charge and visibly strains — glow pulsing, no release, a small warning pip on the cell. From the arena you see nothing arriving; from upstairs you see exactly why. Alongside that, the wizard room shows a <strong>live arena strip</strong> — a capacity bar and ball count — so you can tell from upstairs when the dish needs you.</p>
+
+<h2>7 · Merging <span class="qref">Q3 · Q9</span></h2>
+<p>Drag a wizard onto another of the same rank. Both vanish into a swirl; the successor rises from the target slot with a flash, a shake, and a chime one step up the pentatonic ladder. Tap-select then tap-target does the same, with legal targets outlined while a wizard is held.</p>
+
+<div class="note">
+<div class="t">What happens to upgrades — the decision that sets the strategy</div>
+<ul>
+<li><strong>Lose everything.</strong> Nobody upgrades anything they might merge. Dead end.</li>
+<li><strong>Sum the levels.</strong> Compounds violently; one super-wizard becomes the only play.</li>
+<li><strong>Refund and reset.</strong> Clean, but every merge feels like a step backwards.</li>
+<li class="rec"><strong>Inherit the higher level, refund half the lower one.</strong> ← recommended</li>
+</ul>
+<p>The last gives a strategy you can say in one line: <em>pick a champion, pour upgrades in, feed it fodder.</em> The champion keeps everything you spent; the fodder returns half. Nothing is ever wasted, and choosing which slot becomes the champion is a real decision — especially now that the column it stands in matters.</p>
+</div>
+
+<h2>8 · Merge economics <span class="qref">Q5 · Q10</span></h2>
+<p>Two rank-<em>r</em> wizards use two slots and produce <code>2 × T(r)</code>. One rank-<em>r+1</em> uses one slot and produces <code>2.7 × T(r)</code>. A merge is therefore:</p>
+<ul>
+<li><strong>×1.35 throughput per slot</strong> — real, but small</li>
+<li><strong>−1 slot used</strong> — the actual prize, once the board is full</li>
+</ul>
+<p>Early, with empty slots, summoning two Apprentices beats merging. Late, with sixteen full, merging is the only direction left. The crossover arrives on its own as the board fills; no rule has to announce it. A fully-upgraded wizard is <strong>×3.4</strong>, more than a merge gives, so upgrading is a genuine third option.</p>
+
+<h3>Pacing target</h3>
+<p>World 1 completes at <strong>100 K banked</strong>. From one Apprentice at ~7 mass/sec, the run has to average ~200/sec to land in an 8–12 minute window. That means reaching roughly rank 2–3 plus a handful of upgrades — the intended shape of a first world.</p>
+<div class="note">
+<div class="t">How I'd verify it</div>
+<p>Not by feel. The economy is a closed system, so I'd write a headless simulator that plays it under three policies — merge-greedy, upgrade-greedy, mixed — and reports time-to-100K for each. Within ~25% of each other means the strategy space is real. If one dominates by 3×, the numbers are wrong, and I'd rather find that in a script than in your hands.</p>
+</div>
+
+<h2>9 · Upgrades and prices <span class="qref">Q4 · Q6 · Q7</span></h2>
+<p>Upgrades attach to the wizard instance, never to the rank. Three Magi can sit on the board at levels 14, 0 and 0.</p>
+<pre><span class="c">// speed: the primary upgrade, and the only one I'd ship in v1</span>
+delay(w)  = WRANK[w.rank].delay * 0.94 ** w.lvl     <span class="c">// floors at 0.30 × base, ~lvl 20</span>
+upCost(w) = 90 * 7 ** w.rank * 1.19 ** w.lvl</pre>
+<p>The <code>7 ** rank</code> term is what makes rank matter: an Apprentice's first upgrade is <strong>90</strong>, an Ascendant's is <strong>1.5 M</strong>. Cheap wizards are cheap to tune; expensive ones are a commitment.</p>
+<p>Two secondaries held back for later — <strong>Potency</strong> (mass multiplier) and <strong>Surge</strong> (chance to cast twice). Three sliders per wizard on day one is too many.</p>
+
+<h3>Summoning</h3>
+<p>Everything above rank 0 comes from merging. Rank 0 is bought into any empty slot:</p>
+<pre>summonCost = 120 * 1.42 ** summonsThisWorld</pre>
+<p>First <strong>120</strong>, eighth <strong>1.9 K</strong>, sixteenth <strong>30 K</strong> — roughly <strong>90 K</strong> to fill an empty board against a 100 K world goal. You can't buy a full board <em>and</em> finish the world. You have to merge.</p>
+
+<h2>10 · Keeping it a game <span class="qref">Q12</span></h2>
+<p>The risk is that automated production turns the arena into a screensaver. Four levers, and I'd want all four:</p>
+<div class="cols">
+  <div class="card"><div class="h">Wizards produce, you realise</div><p>A ball is worth nothing until broken down to the smallest rung. Wizards create potential; only tapping converts it.</p></div>
+  <div class="card"><div class="h">Lysis gets demoted</div><p>The auto-splitter becomes an offline trickle rather than competitive income, so active play is always strictly better.</p></div>
+  <div class="card"><div class="h">A full arena stalls the board</div><p>Wizards hold their charge when the dish is full. Neglect downstairs and production visibly stops upstairs.</p></div>
+  <div class="card"><div class="h">Tap to force a cast</div><p>Tapping a charged wizard fires it early and resets its timer. Working both rooms beats idling in either.</p></div>
+</div>
+<p>The two-room split sharpens this rather than softening it: being upstairs has a real cost, because nobody is clearing the dish while you shop.</p>
+
+<h2>11 · Worlds <span class="qref">Q11</span></h2>
+<p>The scale ladder already carries a theme per world; the casters hang off it. On ascent the board clears to a single rank-0 wizard, <code>summonsThisWorld</code> resets, and the art set swaps — including the wizard room's own backdrop, which becomes a second canvas for world identity now that it's a real place.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>World</th><th>Casters</th><th>Room</th><th>Cast reads as</th></tr></thead>
+<tbody>
+<tr><td>Atomic</td><td>Robed wizards, pointed hats</td><td>Stone tower</td><td>Summoning</td></tr>
+<tr><td>Cellular</td><td>Lab technicians, pipettes</td><td>Clean room</td><td>Culturing</td></tr>
+<tr><td>Planetary</td><td>Orbital rigs, dish arrays</td><td>Station deck</td><td>Launching</td></tr>
+<tr><td>Stellar</td><td>Star-priests, braziers</td><td>Observatory</td><td>Kindling</td></tr>
+<tr><td>Galactic</td><td>Drifting monoliths</td><td>Void platform</td><td>Emitting</td></tr>
+<tr><td>Cosmic</td><td>Hands out of the dark</td><td>No floor at all</td><td>Placing</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>12 · Interaction <span class="qref">Q13</span></h2>
+<ul>
+<li><strong>Tap empty slot</strong> → summon, live price shown. Disabled rather than hidden below cost, so you can see what you're saving for.</li>
+<li><strong>Tap wizard</strong> → panel docks at the bottom of the room: rank, ball it makes, current delay, next-level delta, upgrade button with cost. The board stays visible above it.</li>
+<li><strong>Hold + drag</strong> → lifts the wizard; same-rank targets outline for merge, empty slots dim-outline for a move.</li>
+<li><strong>Tap-select → tap-target</strong> → identical outcomes, for anyone who finds drag fiddly on glass.</li>
+<li><strong>Long-press</strong> → stats tooltip, no state change.</li>
+<li><strong>Down arrow / swipe down</strong> → back to the arena.</li>
+</ul>
+<p>Rearranging is always free. It costs nothing mechanically, people want a tidy board anyway, and now it also decides which lane each wizard feeds.</p>
+
+<h2>13 · Data <span class="qref">Q15</span></h2>
+<pre><span class="c">/* ---- static ---- */</span>
+<span class="k">const</span> WRANK = [
+  <span class="c">// cls-shaped: taps / mass / size are what makeBall() already reads</span>
+  {nm:<span class="k">"Apprentice"</span>, tier:5, taps:1, mass:16,   size:1.00, delay:2.4, upBase:90},
+  {nm:<span class="k">"Adept"</span>,      tier:4, taps:2, mass:58,   size:1.05, delay:3.2, upBase:630},
+  {nm:<span class="k">"Magus"</span>,      tier:3, taps:3, mass:208,  size:1.10, delay:4.2, upBase:4410},
+  {nm:<span class="k">"Archon"</span>,     tier:2, taps:4, mass:750,  size:1.15, delay:5.6, upBase:30870},
+  {nm:<span class="k">"Sovereign"</span>,  tier:1, taps:6, mass:2700, size:1.20, delay:7.4, upBase:216090},
+  {nm:<span class="k">"Ascendant"</span>,  tier:0, taps:8, mass:9700, size:1.25, delay:9.8, upBase:1512630},
+];
+<span class="k">const</span> SLOTS = 16, COLS = 4;
+
+<span class="c">/* ---- saved ---- */</span>
+G.wiz     = Array(16).fill(null);   <span class="c">// index === slot, row-major; col = i % 4</span>
+G.summons = 0;                      <span class="c">// resets each world; drives summon price</span>
+G.wizSeq  = 0;
+
+<span class="c">// one occupied slot</span>
+{ id:7, rank:2, lvl:6, spent:1840 }
+
+<span class="c">/* ---- runtime only ---- */</span>
+camY = 0;            <span class="c">// 0 = arena, -1 = wizard room, animated between</span>
+room = <span class="k">"arena"</span>;      <span class="c">// settled state; drives which room draws</span>
+WZ   = [ { t:1.42,   <span class="c">// seconds to next cast</span>
+           cast:0,   <span class="c">// 0..1 release animation</span>
+           held:false, bob:0 } ];
+bolts = [];          <span class="c">// spell bolts falling off the wizard room's bottom edge</span>
+
+<span class="c">/* ---- derived ---- */</span>
+delay(i)     = WRANK[G.wiz[i].rank].delay * 0.94 ** G.wiz[i].lvl
+upCost(i)    = WRANK[G.wiz[i].rank].upBase * 1.19 ** G.wiz[i].lvl
+summonCost() = Math.ceil(120 * 1.42 ** G.summons)
+castX(i)     = ((i % COLS) + 0.5) / COLS * W      <span class="c">// the lane a wizard feeds</span>
+throughput() = Σ WRANK[w.rank].mass / delay(i)    <span class="c">// replaces lysis in offline earnings</span></pre>
+
+<h3>Merge, precisely</h3>
+<pre>merge(from, to):
+  a = G.wiz[from]; b = G.wiz[to]
+  require a.rank === b.rank &amp;&amp; a.rank &lt; WRANK.length - 1
+
+  keep   = Math.max(a.lvl, b.lvl)
+  loser  = a.lvl &lt;= b.lvl ? a : b
+  refund = Math.floor(loser.spent * 0.5)
+
+  G.wiz[to]   = { id:++G.wizSeq, rank:a.rank + 1, lvl:keep,
+                  spent: Math.max(a.spent, b.spent) }
+  G.wiz[from] = null
+  G.bio      += refund</pre>
+
+<h2>14 · Build order</h2>
+<p>Sequenced so the game is playable at the end of every phase, rather than broken for the duration.</p>
+
+<div class="phase"><div class="n">1</div><div class="b"><div class="t">Rank table, no UI</div>
+<p>Add <code>WRANK</code>, point the existing gantry at it instead of <code>BALLS</code>, retire the classes and the Balls tab. The game plays exactly as it does now — this phase only proves the substitution is really byte-compatible.</p></div></div>
+
+<div class="phase"><div class="n">2</div><div class="b"><div class="t">The camera</div>
+<p><code>#world</code> wrapper, both rooms, up and down arrows, the 380 ms slide, per-room chrome. The wizard room is still empty scaffolding. Nothing about the arena changes except that it now lives inside a container.</p></div></div>
+
+<div class="phase"><div class="n">3</div><div class="b"><div class="t">Wizards that cast</div>
+<p><code>G.wiz</code>, the 4×4 render, per-wizard timers, <code>castBall()</code>, column-to-lane mapping. Delete the gantry. One starter Apprentice, no summoning or merging yet — just watch a wizard feed the dish from upstairs.</p></div></div>
+
+<div class="phase"><div class="n">4</div><div class="b"><div class="t">The loop</div>
+<p>Summon prices, drag and tap-target merging, the upgrade panel, refunds, the live arena strip, held-and-straining state. This is where it becomes a game rather than a demo.</p></div></div>
+
+<div class="phase"><div class="n">5</div><div class="b"><div class="t">Balance</div>
+<p>Headless simulator, three policies, tune until nothing dominates. Rewire world reset. Demote Lysis. Repoint offline earnings at wizard throughput.</p></div></div>
+
+<div class="phase"><div class="n">6</div><div class="b"><div class="t">Feel</div>
+<p>Cast animation and falling bolts, merge burst, charge glow, parallax and seam shadow, transition audio, per-world caster art and room backdrops, tap-to-force-cast.</p></div></div>
+
+<h2>15 · What I still need from you</h2>
+
+<div class="ask settled">
+<div class="q">✓ Settled — the board is its own screen</div>
+<p>Your call, and it's the right one. Full-size wizards, full-size arena, and column position gained a mechanical role it didn't have.</p>
+</div>
+
+<div class="ask">
+<div class="q">1 · Do the eight ball classes go?</div>
+<p>Still the one blocking decision. My recommendation is yes — the wizard rank does their job, and two ladders for one idea reads as noise. But the Balls tab is something you asked for, so it's your call.</p>
+</div>
+
+<div class="ask">
+<div class="q">2 · Inherit-the-higher-level on merge?</div>
+<p>It makes "build a champion, feed it fodder" the core strategy. Legible and satisfying, but it is <em>a</em> strategy rather than an open field — worth confirming that's the game you want.</p>
+</div>
+
+<div class="ask">
+<div class="q">3 · Six ranks, or more?</div>
+<p>Six means 32 Apprentices for one Ascendant — a full world's chase. Eight would need a taller ball ladder than the arena currently has, so it isn't free.</p>
+</div>
+
+<div class="ask">
+<div class="q">4 · Should columns matter?</div>
+<p>New question, from your change. Column-to-lane mapping makes board layout a build rather than housekeeping — I think it's the best thing to come out of the two-screen idea. But it does mean a tidy board and an <em>effective</em> board are different things, which some players find annoying rather than interesting.</p>
+</div>
+
+</div>
