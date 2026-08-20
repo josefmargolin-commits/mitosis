@@ -77,15 +77,15 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 #world{
   position:absolute;left:0;right:0;top:0;height:200%;
   transform:translateY(var(--cam,-50%));
-  will-change:transform;
 }
 #world.slide{transition:transform .38s cubic-bezier(.32,.72,.24,1)}
+#world.moving{will-change:transform}
 .room{position:absolute;left:0;right:0;height:50%;overflow:hidden}
 #roomWiz{top:0}
 #roomArena{top:50%}
 /* ============ room arrows ============ */
 #goUp,#goDown{
-  position:absolute;left:50%;transform:translateX(-50%);z-index:6;
+  position:absolute;left:0;right:0;margin-inline:auto;width:max-content;z-index:6;
   display:flex;align-items:center;gap:6px;
   padding:7px 15px 7px 12px;border-radius:999px;
   background:var(--panel);border:1px solid var(--edge);box-shadow:var(--shadow);
@@ -96,7 +96,7 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 #goDown{position:relative;left:auto;transform:none;margin:0 auto}
 #goUp svg,#goDown svg{width:14px;height:14px;flex:none;stroke:var(--ink);fill:none;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-#goUp:active{transform:translateX(-50%) scale(.94)}
+#goUp:active{transform:scale(.94)}
 #goDown:active{transform:scale(.94)}
 #goUp .dot{
   position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;
@@ -181,7 +181,7 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 
 #wizPanel{display:flex;flex-direction:column;gap:7px;height:104px;justify-content:center}
 .wpRow{height:44px}
-.wpHint{height:44px;display:flex;align-items:center;justify-content:center}
+.wpHint{min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .wpSummon{
   display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
   padding:11px 14px;border-radius:12px;
@@ -193,7 +193,8 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 .wpSummon small{font-weight:600;font-size:11px;opacity:.8;letter-spacing:.02em;text-transform:none}
 .wpSummon.no{background:var(--surface);color:var(--ink-3);border-color:var(--edge)}
 .wpSummon:active{transform:scale(.985)}
-.wpHint{font-size:10.5px;color:var(--ink-3);line-height:1.5;text-align:center;padding:2px 0 1px}
+.wpHint{font-size:10.5px;color:var(--ink-3);line-height:1.5;text-align:center;padding:2px 6px 1px}
+.wpHint b{color:var(--ink-2);font-weight:600}
 .wpEmpty{font-size:11px;color:var(--ink-3);text-align:center;line-height:1.6}
 .wpRow{display:flex;align-items:center;gap:11px}
 .wpRow .portrait{
@@ -291,7 +292,7 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 
 /* ============ dock ============ */
 #dockHandle{
-  position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  position:absolute;top:-15px;left:0;right:0;margin-inline:auto;
   width:60px;height:30px;border-radius:15px 15px 0 0;
   background:var(--panel);border:1px solid var(--edge);border-bottom:0;
   box-shadow:0 -3px 10px rgba(16,22,37,.07);
@@ -301,7 +302,7 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
   stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
 #dock.min #dockHandle svg{transform:rotate(180deg)}
-#dockHandle:active{transform:translateX(-50%) scale(.94)}
+#dockHandle:active{transform:scale(.94)}
 #dock{
   position:absolute;z-index:5;left:0;right:0;bottom:0;
   height:calc(var(--dock-h) + env(safe-area-inset-bottom));
@@ -347,6 +348,8 @@ input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 .card.afford .ct{color:var(--yellow)}
 .card.maxed .ct{color:var(--mint)}
 .card .ct i{width:7px;height:7px;border-radius:50%;background:#16C98D;display:block;font-style:normal}
+/* the two currency marks, same shapes as the HUD pips, at text size */
+.cico{width:1em;height:1em;display:inline-block;vertical-align:-.13em;fill:currentColor;flex:none}
 
 /* ball-shop cards */
 .bcard{flex:0 0 96px}
@@ -697,6 +700,9 @@ const TRAILS=[
 /* Six scales, and the ascent has to read as one continuous pull-back: every
    ball in the dish collapses into a single one, and that single ball is what
    you are looking at when the camera settles at the next scale up. */
+const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9.2" cy="14" r="7"/><circle cx="17.6" cy="7.4" r="4.1"/></svg>';
+const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg>';
+
 const SCALES=[
   {n:"Atomic",    ball:"a proton",       mult:1,      spd:1.00,
    form:{lobes:4, rough:.000, oval:1.00, paint:"core"},
@@ -1926,15 +1932,16 @@ function syncWizPanel(force){
     const b=document.createElement("button");
     b.className="wpBtn"+(can&&!capped?"":" no");
     b.innerHTML=capped ? "Maxed<small>fastest it goes</small>"
-                       : "Faster<small>◉ "+fmt(c)+" → "+nd.toFixed(2)+"s · all "+r.nm+"s</small>";
+                       : "Faster<small>"+ICO_MASS+" "+fmt(c)+" → "+nd.toFixed(2)+"s · all "+r.nm+"s</small>";
     b.onclick=()=>{ if(!capped) upgradeWiz(i); };
     row.appendChild(b);
     p.appendChild(row);
   } else {
     const h=document.createElement("div"); h.className="wpHint";
-    h.textContent=wizCount()
-      ? "Tap a kind to speed up all of them · drag one onto another of the same kind to merge"
-      : "Summon your first wizard to start producing.";
+    h.innerHTML=wizCount()
+      ? "<span><b>Tap</b> a wizard to speed up every wizard of its rank</span>"+
+        "<span><b>Drag</b> one onto another of the same rank to merge them</span>"
+      : "<span>Summon your first wizard to start producing.</span>";
     p.appendChild(h);
   }
 
@@ -1943,7 +1950,7 @@ function syncWizPanel(force){
   const sb=document.createElement("button");
   sb.className="wpSummon"+(can&&!full?"":" no");
   sb.innerHTML=full ? "Board full — merge to make room"
-                    : "Summon "+WRANK[0].nm+" <small>◉ "+fmt(cost)+"</small>";
+                    : "Summon "+WRANK[0].nm+" <small>"+ICO_MASS+" "+fmt(cost)+"</small>";
   sb.onclick=()=>{
     if(full){ toast("Merge two of a kind to free a slot"); return; }
     const e=G.wiz.indexOf(null);
@@ -2281,8 +2288,9 @@ let camBusy=0;
 function goRoom(to){
   if(room===to) return;
   room=to; camBusy=1;
-  setTimeout(()=>{ camBusy=0; if(to==="wiz"){ layoutWizards(); syncWizGrid(); } },440);
-  world.classList.add("slide");
+  setTimeout(()=>{ camBusy=0; world.classList.remove("moving");
+    if(to==="wiz"){ layoutWizards(); syncWizGrid(); } },440);
+  world.classList.add("slide"); world.classList.add("moving");
   world.style.setProperty("--cam", to==="wiz"?"0%":"-50%");
   document.documentElement.style.setProperty("--chrome-b",
     to==="wiz" ? (document.getElementById("wizChrome").offsetHeight+"px") : "var(--dock-h)");
@@ -3017,7 +3025,7 @@ function syncRails(){
     b.classList.toggle("locked",!s.owned);
     b.classList.toggle("ready",s.owned&&s.cd<=0);
     b.classList.toggle("active",(p.id==="chain"&&timers.chain>0)||(p.id==="storm"&&timers.storm>0));
-    if(!s.owned){ cd.style.display="none"; lab.textContent="◆"+p.cost; }
+    if(!s.owned){ cd.style.display="none"; lab.innerHTML=ICO_SPORE+p.cost; }
     else if(s.cd>0){ cd.style.display="grid"; cd.textContent=Math.ceil(s.cd); lab.textContent=p.nm; }
     else { cd.style.display="none"; lab.textContent=p.nm; }
   }
@@ -3072,7 +3080,7 @@ function syncCards(){
       b.classList.toggle("afford",af); b.classList.toggle("maxed",m);
       b.querySelector(".lv").textContent=m?"MAX":lv(k);
       b.querySelector(".ef").textContent=u.fmt(lv(k));
-      b.querySelector(".ct").innerHTML=m?"MAXED":'<i></i>'+fmt(cost(k));
+      b.querySelector(".ct").innerHTML=m?"MAXED":ICO_MASS+" "+fmt(cost(k));
     }
   }
 }
@@ -3167,7 +3175,7 @@ function syncStrainCard(){
   PC.card.classList.toggle("ready",ok);
   PC.btn.className="pbtn"+(ok?"":" no");
   PC.btn.innerHTML=at ? "Complete"
-    : (ok ? "Go up<small>ready</small>" : "Go up<small>◉ "+fmt(need)+"</small>");
+    : (ok ? "Go up<small>ready</small>" : "Go up<small>"+ICO_MASS+" "+fmt(need)+"</small>");
 }
 
 function syncTop(){
@@ -3206,7 +3214,7 @@ function row(o){
     d.appendChild(s); d.onclick=()=>{ o.fn(); sheetSync&&sheetSync(); };
   } else if(o.btn){
     const b=document.createElement("button");
-    b.className="claim"+(o.btnOn?"":" no"); b.textContent=o.btn;
+    b.className="claim"+(o.btnOn?"":" no"); b.innerHTML=o.btn;
     b.onclick=e=>{ e.stopPropagation(); if(o.fn) o.fn.call(b,e); sheetSync&&sheetSync(); };
     d.appendChild(b);
   } else if(o.fn){ d.onclick=()=>{ o.fn(); sheetSync&&sheetSync(); }; }
@@ -3227,7 +3235,7 @@ function sheetSettings(){
     b.appendChild(row({ic:"◍",t:"Magnetised balls",s:"Balls fuse and stretch a neck when they touch. Costs performance.",sw:G.opt.goo,
       fn:()=>{G.opt.goo=!G.opt.goo; app.classList.toggle("lowfx",!G.opt.goo); slowN=0; save();}}));
     b.appendChild(lbl("Culture"));
-    b.appendChild(row({ic:"✦",t:"Spores",s:"From objectives. Spend on powers and looks.",v:fmt(G.spore)}));
+    b.appendChild(row({ic:ICO_SPORE,t:"Spores",s:"From objectives. Spend on powers and looks.",v:fmt(G.spore)}));
     b.appendChild(row({ic:"⌾",t:"Scale",s:"One ball is "+curScale().ball,v:ROMAN[G.strain]+" · "+curScale().n}));
     if(!CAN_STORE) b.appendChild(row({ic:"⚠",t:"Progress is not saving",s:"This viewer blocks storage. Open the page in its own tab to keep a run."}));
     b.appendChild(row({ic:"⧖",t:"Build",
@@ -3269,7 +3277,7 @@ function sheetObjectives(){
         ic:o.done?"✓":"○", t:objLabel(o),
         s:fmt(Math.min(o.prog,o.goal))+" / "+fmt(o.goal),
         bar:o.prog/o.goal,
-        btn:o.done?"Claim ◆"+o.sp:"…", btnOn:o.done,
+        btn:o.done?"Claim "+ICO_SPORE+o.sp:"…", btnOn:o.done,
         fn:function(){
           if(!o.done) return;
           G.spore+=o.sp; G.bio+=180*yieldMul()*(1+G.objDone*0.6);
@@ -3305,7 +3313,7 @@ function sheetCustomise(){
       const d=document.createElement("button");
       d.className="chip"+(sel?" sel":"");
       d.innerHTML='<span class="sw4">'+p.c.map(c=>'<i style="background:'+c+'"></i>').join("")+'</span>'+
-        p.nm+(own?"":" ◆"+p.cost);
+        p.nm+(own?"":" "+ICO_SPORE+p.cost);
       d.onclick=()=>{
         if(sel) return;
         if(own) G.pal=p.id;
@@ -3322,7 +3330,7 @@ function sheetCustomise(){
       const own=G.ownTrail.includes(t.id), sel=G.trail===t.id;
       b.appendChild(row({
         swatch:t.c, t:t.nm, s:t.d, sel,
-        btn:sel?"Equipped":(own?"Equip":"◆"+t.cost), btnOn:!sel,
+        btn:sel?"Equipped":(own?"Equip":ICO_SPORE+t.cost), btnOn:!sel,
         fn:()=>{
           if(sel) return;
           if(own){ G.trail=t.id; save(); }
@@ -3336,7 +3344,7 @@ function sheetCustomise(){
     for(const p of POWERS){
       const s=pwState(p);
       b.appendChild(row({ic:p.g,t:p.nm,s:p.d,
-        btn:s.owned?"Owned":"◆"+p.cost, btnOn:!s.owned,
+        btn:s.owned?"Owned":ICO_SPORE+p.cost, btnOn:!s.owned,
         fn:()=>{ if(!s.owned) firePower(p); }}));
     }
   });
@@ -3344,7 +3352,7 @@ function sheetCustomise(){
 function sheetWelcome(secs,gain){
   openSheet("☾","While you were away",fmtTime(secs)+" dormant",b=>{
     b.appendChild(row({ic:"◍",t:"Lysis kept hitting",s:"At "+Math.round(val("dorm")*100)+"% dormancy efficiency",v:fmt(gain)}));
-    b.appendChild(row({ic:"◉",t:"Mass now",s:"Ready to spend",v:fmt(G.bio)}));
+    b.appendChild(row({ic:ICO_MASS,t:"Mass now",s:"Ready to spend",v:fmt(G.bio)}));
     const d=document.createElement("button");
     d.className="dangerBtn"; d.style.borderColor="rgba(255,210,63,.4)"; d.style.color="var(--yellow)";
     d.textContent="Back to the dish"; d.onclick=closeSheet;
