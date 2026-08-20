@@ -644,20 +644,6 @@ input{font:inherit;color:inherit}
       rgba(255,120,20,.34) 90%,
       rgba(255,98,10,.52) 100%)}
 }
-/* the new rank, named where it happened rather than across the middle of the
-   board — the screen banner was competing with its own merge bolts */
-#wizPop{
-  position:absolute;z-index:5;pointer-events:none;opacity:0;left:0;top:0;
-  font-family:"Syne",var(--sym),sans-serif;font-weight:800;
-  font-size:16px;letter-spacing:.01em;white-space:nowrap;
-  padding:6px 14px;border-radius:999px;
-  background:linear-gradient(180deg,#FFE79A 0%,#F5C53A 45%,#D99B0E 100%);
-  color:#3B2A02;border:1px solid #A9760A;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.72),
-             inset 0 -1px 0 rgba(120,84,6,.35),
-             0 3px 12px rgba(16,22,37,.28);
-}
-@media (max-height:540px){ #wizPop{font-size:14px;padding:5px 11px} }
 /* ---- daily missions, laid out like the reference ---- */
 .msTop{display:flex;align-items:center;gap:9px;margin:2px 2px -2px}
 .msTop .k{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
@@ -916,7 +902,6 @@ input{font:inherit;color:inherit}
       <div id="wizStage">
         <div id="wgrid"></div>
         <canvas id="wfx"></canvas>
-        <div id="wizPop"></div>
       </div>
       <div id="wizChrome">
         <div id="arenaStrip">
@@ -2358,8 +2343,7 @@ function summonAt(i){
   G.wiz[i]={id:++G.wizSeq, rank:0};
   WZ[i].ph=Math.random();
   WZ[i].t=wDelay(i)*(0.1+WZ[i].ph*0.85); WZ[i].cast=0; WZ[i].held=false;
-  wizSel=i;
-  wizPop(i,WRANK[0].nm);
+  wizSel=i; WZ[i].popT=el;
   chime(392,{vol:.14,len:.6,wet:.4}); pop(520,{vol:.12});
   haptic(16); save(); syncWizGrid(); syncWizPanel(true);
 }
@@ -2374,19 +2358,6 @@ function upgradeWiz(i){
   tick(560+rlvl(r)*8,.1); haptic(9);
   save(); syncWizGrid(); syncWizPanel(true);
 }
-function wizPop(i,txt){
-  const p=document.getElementById("wizPop"), c=CELLS[i];
-  if(!p||!c) return;
-  p.textContent=txt;
-  p.style.left=c.cx+"px";
-  p.style.top=c.y+"px";
-  p.animate([
-    {opacity:0,transform:"translate(-50%,-30%) scale(.62)"},
-    {opacity:1,transform:"translate(-50%,-88%) scale(1.06)",offset:.28},
-    {opacity:1,transform:"translate(-50%,-104%) scale(1)",offset:.7},
-    {opacity:0,transform:"translate(-50%,-150%) scale(.98)"}
-  ],{duration:1500,easing:"cubic-bezier(.2,.9,.3,1)"});
-}
 function mergeWiz(from,to){
   const a=wiz(from), b=wiz(to);
   if(!a||!b||a.rank!==b.rank||a.rank>=TOPRANK) return false;
@@ -2397,13 +2368,12 @@ function mergeWiz(from,to){
   WZ[to].ph=Math.random();
   WZ[to].t=wDelay(to)*(0.1+WZ[to].ph*0.7); WZ[to].cast=0; WZ[to].held=false;
   WZ[from].t=0; WZ[from].cast=0; WZ[from].held=false;
-  wizSel=to;
+  wizSel=to; WZ[to].popT=el;
   const c=CELLS[to], col=PAL()[WRANK[nr].tier];
   if(c) for(let k=0;k<18;k++){
     const ang=rnd(0,TAU), sp=rnd(70,300);
     bolts.push({x:c.cx,y:c.cy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,t:0,col,r:rnd(2,5),spark:true});
   }
-  wizPop(to,WRANK[nr].nm);
   if(nr===TOPRANK) banner(WRANK[nr].nm.toUpperCase());
   const n=NOTE[Math.max(0,Math.min(NOTE.length-1,WRANK[nr].tier))];
   chime(n*3,{vol:.2,len:.9,wet:.5});
@@ -2537,14 +2507,39 @@ function drawBattlement(x,c){
    Chunky proportions, one light source at the upper left, a hard shadow side
    and a heavy outline on every part — the shorthand that makes flat vector
    characters read as crafted rather than assembled from primitives.        */
+/* how long a rank change reads for */
+const POPT=0.55;
+/* one arc up and back: 1 at both ends, half again as big in the middle */
+function popScale(i){
+  const z=WZ[i]; if(!z||!z.popT) return 1;
+  const k=(el-z.popT)/POPT;
+  if(k<0||k>1){ if(k>1) z.popT=0; return 1; }
+  return 1+0.5*Math.sin(k*Math.PI);
+}
 function drawWizards(){
   xWz.setTransform(DPR,0,0,DPR,0,0);
   xWz.clearRect(0,0,WSW,WSH);
   for(let i=0;i<SLOTS;i++){ const c=CELLS[i]; if(c) drawBattlement(xWz,c); }
+  // a ring off any cell that just changed rank, under the figures
+  for(let i=0;i<SLOTS;i++){
+    const c=CELLS[i], z=WZ[i];
+    if(!c||!z||!z.popT) continue;
+    const k=(el-z.popT)/POPT;
+    if(k<0||k>1) continue;
+    const rr=Math.min(c.w,c.h);
+    xWz.save();
+    xWz.globalAlpha=(1-k)*(1-k)*.85;
+    xWz.strokeStyle=PAL()[WRANK[wiz(i)?wiz(i).rank:0].tier];
+    xWz.lineWidth=Math.max(1.6,rr*.05)*(1-k*.6);
+    xWz.beginPath();
+    xWz.arc(c.cx, c.y+c.h*0.62, rr*(.18+easeOut(k)*.62), 0, TAU);
+    xWz.stroke();
+    xWz.restore();
+  }
   for(let i=0;i<SLOTS;i++){
     const c=CELLS[i];
     if(!wiz(i)||!c||i===wizDrag) continue;
-    drawWizardFigure(i, c.cx, c.y+c.h*0.775, Math.min(c.w,c.h)*0.243, 1);
+    drawWizardFigure(i, c.cx, c.y+c.h*0.775, Math.min(c.w,c.h)*0.243*popScale(i), 1);
   }
   // the one in your hand rides above everything, lifted and a little bigger
   if(wizDrag>=0&&wiz(wizDrag)){
