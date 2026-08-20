@@ -1158,6 +1158,43 @@ input{font:inherit;color:inherit}
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2;
   font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 .wzOpen:active{transform:translateY(3px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2}
+/* ---- the tower's chrome ------------------------------------------------
+   The bottom used to carry a hint, an upgrade button, summon and the way
+   out, four deep. Summon sits in the top bar between the two currencies,
+   upgrades are a dot beside the board, and the bottom is the way out. */
+#summonTop{
+  display:none;align-items:center;gap:7px;pointer-events:auto;flex:none;
+  padding:8px 14px;border-radius:999px;border:0;
+  background:linear-gradient(180deg,#FFDE7A,#F5B301 46%,#DC9A05);color:#3D2B02;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 2.5px 0 #A9760A,0 5px 12px rgba(180,120,0,.28);
+  font-family:"Fredoka","Archivo",system-ui,sans-serif;font-weight:600;font-size:12px;
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+#app.wizRoom #summonTop{display:flex}
+#summonTop:active{transform:translateY(2.5px);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 0 0 #A9760A,0 2px 5px rgba(180,120,0,.28)}
+#summonTop .c{display:flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums;opacity:.85}
+#summonTop.no{background:linear-gradient(180deg,#F4F7FA,#E6ECF3);color:var(--ink-3);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),0 2.5px 0 #CBD5E1}
+
+#wizUpBtn{
+  position:absolute;right:calc(8px + env(safe-area-inset-right));top:50%;
+  transform:translateY(-50%);z-index:4;
+  width:38px;height:38px;border-radius:50%;border:0;padding:0;
+  background:var(--panel);color:var(--ink-2);font-size:17px;line-height:1;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 5px 11px rgba(16,22,37,.18);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+#wizUpBtn:active{transform:translateY(calc(-50% + 3px));
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 5px rgba(16,22,37,.18)}
+
+/* the tower's footer is one button tall now */
+#wizChrome{height:calc(96px + env(safe-area-inset-bottom))}
+#wizStage{bottom:calc(96px + env(safe-area-inset-bottom))}
+@media (max-height:540px){
+  #wizChrome{height:calc(84px + env(safe-area-inset-bottom))}
+  #wizStage{bottom:calc(84px + env(safe-area-inset-bottom))}
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1175,6 +1212,7 @@ input{font:inherit;color:inherit}
       <div id="wizStage">
         <div id="wgrid"></div>
         <canvas id="wfx"></canvas>
+        <button id="wizUpBtn" aria-label="All wizard upgrades">⚙</button>
       </div>
       <div id="wizChrome">
         <div id="arenaStrip">
@@ -1182,7 +1220,6 @@ input{font:inherit;color:inherit}
           <div id="apBar"><i></i></div>
           <span class="v" id="apN">0/0</span>
         </div>
-        <div id="wizPanel"></div>
         <button id="goDown" aria-label="Back to the arena">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
           <span>Arena</span>
@@ -1215,6 +1252,7 @@ input{font:inherit;color:inherit}
 
   <div id="top">
     <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
+    <button id="summonTop"><span class="t">Summon</span><span class="c"></span></button>
     <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2 21.8 12 12 21.8 2.2 12z"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
 
@@ -2726,6 +2764,14 @@ function sheetWizards(){
   });
 }
 function syncWizPanel(force){
+  // the panel is gone; summon lives in the top bar now
+  const st=document.getElementById("summonTop");
+  if(st){
+    const cost=summonCost(), can=G.bio>=cost, full=wizCount()>=SLOTS;
+    st.className=(can&&!full)?"":"no";
+    st.querySelector(".t").textContent=full?"Board full":"Summon";
+    st.querySelector(".c").innerHTML=full?"":(ICO_MASS+" "+fmt(cost));
+  }
   const p=document.getElementById("wizPanel"); if(!p) return;
   const i=wizSel, w=wiz(i);
   const sig=[i,w?w.rank+"/"+rlvl(w.rank):"-",wizCount(),summonCost(),
@@ -3242,6 +3288,7 @@ let camBusy=0;
 function goRoom(to){
   if(room===to) return;
   room=to; camBusy=1; obsChanged();
+  app.classList.toggle("wizRoom",to==="wiz");
   setTimeout(()=>{ camBusy=0; world.classList.remove("moving");
     if(to==="wiz"){ layoutWizards(); syncWizGrid(); } },440);
   world.classList.add("slide"); world.classList.add("moving");
@@ -5468,6 +5515,14 @@ $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
+$("wizUpBtn").onclick=sheetWizards;
+$("summonTop").onclick=function(){
+  const cost=summonCost();
+  if(wizCount()>=SLOTS){ toast("Merge two of a kind to free a slot"); return; }
+  if(G.bio<cost){ toast("Needs $"+fmt(cost)+" to summon"); return; }
+  const e=G.wiz.indexOf(null);
+  if(e>=0) summonAt(e);
+};
 $("wbGo").onclick=function(){ wbCollect(this); };
 $("begin").onclick=begin;
 document.addEventListener("visibilitychange",()=>{ if(document.hidden){ save(); last=0; } });
