@@ -891,6 +891,64 @@ const OBJPOOL=[
   {k:"merge", t:n=>"Fuse "+fmt(n)+" pairs",          goals:[25,90,280,850,2600],    sp:3},
 ];
 
+/* ---- achievements ------------------------------------------------------
+   Objectives rotate and pay spores. These are fixed, permanent, and pay in
+   things you keep — gold, spores, and every cosmetic in the game, so the
+   whole wardrobe is reachable by playing rather than only by spending. */
+const ACHV=[
+  {k:"splits", ic:"\u2725", nm:"Splitter", t:n=>"Split "+fmt(n)+" balls",
+   src:()=>G.stat.splits, tiers:[150,3e3,60e3,1.2e6],
+   rw:[{g:400},{sp:3},{g:250e3,skin:"yolk"},{sp:10,skin:"prism"}]},
+  {k:"pops", ic:"\u25CF", nm:"Breaker", t:n=>"Break "+fmt(n)+" balls all the way down",
+   src:()=>G.stat.pops, tiers:[100,2e3,40e3,800e3],
+   rw:[{g:600},{sp:3,trail:"plasma"},{g:900e3},{sp:12,skin:"vortex"}]},
+  {k:"merges", ic:"\u2295", nm:"Matchmaker", t:n=>"Merge "+fmt(n)+" pairs",
+   src:()=>G.stat.merges, tiers:[50,1e3,20e3,400e3],
+   rw:[{g:500},{sp:4,skin:"eclipse"},{g:1.4e6},{sp:12,trail:"chloro"}]},
+  {k:"combo", ic:"\u224B", nm:"On a streak", t:n=>"Reach a \u00D7"+(1+n*0.05).toFixed(2)+" streak",
+   src:()=>G.stat.bestCombo, tiers:[10,25,50,100],
+   rw:[{g:800},{sp:4,trail:"arc"},{g:3e6},{sp:14,skin:"circuit"}]},
+  {k:"earn", ic:"\u25C9", nm:"Rich", t:n=>"Bank "+fmt(n)+" gold in total",
+   src:()=>G.totalEarned, tiers:[10e3,1e6,1e9,1e12],
+   rw:[{sp:2},{g:120e3,skin:"bloom"},{sp:8},{sp:20,skin:"orbit"}]},
+  {k:"gold", ic:"\u2726", nm:"Lucky", t:n=>"Break "+fmt(n)+" lucky balls",
+   src:()=>G.stat.gold, tiers:[5,50,500,5e3],
+   rw:[{g:1200},{sp:4,trail:"cryo"},{g:6e6},{sp:16}]},
+  {k:"bursts", ic:"\u2738", nm:"Demolition", t:n=>"Detonate "+fmt(n)+" unstable balls",
+   src:()=>G.stat.bursts, tiers:[10,200,4e3,40e3],
+   rw:[{g:900},{sp:4,trail:"ember"},{g:4e6},{sp:14}]},
+  {k:"strains", ic:"\u233E", nm:"Zoom out", t:n=>"Pull back "+n+(n===1?" scale":" scales"),
+   src:()=>G.stat.strains, tiers:[1,2,4,5],
+   rw:[{sp:5},{sp:8},{sp:14},{sp:25}]},
+  {k:"play", ic:"\u263E", nm:"Dedicated", t:n=>"Play for "+fmtTime(n),
+   src:()=>G.stat.play, tiers:[30*60,5*3600,24*3600],
+   rw:[{g:2500},{sp:6},{sp:18}]},
+];
+function achDone(a){ return (G.achv&&G.achv[a.k])||0; }
+function achClaimable(a){
+  const d=achDone(a);
+  return d<a.tiers.length && a.src()>=a.tiers[d];
+}
+function achAny(){ return ACHV.some(achClaimable); }
+function achGive(r){
+  const bits=[];
+  if(r.g){ G.bio+=r.g; G.earned+=r.g; G.totalEarned+=r.g; bits.push(fmt(r.g)+" gold"); }
+  if(r.sp){ G.spore+=r.sp; bits.push(r.sp+" spores"); }
+  if(r.skin&&!G.ownSkin.includes(r.skin)){
+    G.ownSkin.push(r.skin); bits.push((SKINS.find(x=>x.id===r.skin)||{}).nm+" skin"); }
+  if(r.trail&&!G.ownTrail.includes(r.trail)){
+    G.ownTrail.push(r.trail); bits.push((TRAILS.find(x=>x.id===r.trail)||{}).nm+" cleave"); }
+  return bits.join(" + ");
+}
+function rwText(r){
+  const b=[];
+  if(r.g) b.push(ICO_MASS+" "+fmt(r.g));
+  if(r.sp) b.push(ICO_SPORE+r.sp);
+  if(r.skin) b.push((SKINS.find(x=>x.id===r.skin)||{}).nm);
+  if(r.trail) b.push((TRAILS.find(x=>x.id===r.trail)||{}).nm);
+  return b.join(" \u00B7 ");
+}
+
 /* ---------------------------------------------------------------- state */
 const OFFLINE_RATE=0.5;   // was a 20-card track; a flat half is plenty
 const SAVE_KEY="mitosis.save.v6";
@@ -907,7 +965,7 @@ function freshState(){
     pw:{}, boost:{},
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
-    obj:null, objDone:0,
+    obj:null, objDone:0, achv:{},
     opt:{sound:true, haptic:true, shake:true, goo:true, labels:true, sandbox:true, dockMin:false},
     stat:{splits:0, pops:0, gold:0, bursts:0, merges:0, bestCombo:0, taps:0, play:0, strains:0, pellets:0},
     seen:false, t:Date.now(),
@@ -921,6 +979,7 @@ function load(){
     m.up=Object.assign(f.up,s.up||{});
     m.opt=Object.assign(f.opt,s.opt||{});
     m.stat=Object.assign(f.stat,s.stat||{});
+    m.achv=s.achv||{};
     m.pw=s.pw||{}; m.boost=s.boost||{};
     if(!Array.isArray(m.wiz)||m.wiz.length!==16) m.wiz=Array(16).fill(null);
     if(!Array.isArray(m.wlvl)||m.wlvl.length!==6) m.wlvl=[0,0,0,0,0,0];
@@ -3153,6 +3212,9 @@ const ICONS={
   /* a filled silhouette with real teeth — the stroked ring read as a sun */
   gear:'<path fill="var(--ink-2)" stroke="none" fill-rule="evenodd" d="M19.08 9.53L22.09 9.95L22.09 14.05L19.08 14.47A7.5 7.5 0 0 1 18.75 15.26L20.58 17.69L17.69 20.58L15.26 18.75A7.5 7.5 0 0 1 14.47 19.08L14.05 22.09L9.95 22.09L9.53 19.08A7.5 7.5 0 0 1 8.74 18.75L6.31 20.58L3.42 17.69L5.25 15.26A7.5 7.5 0 0 1 4.92 14.47L1.91 14.05L1.91 9.95L4.92 9.53A7.5 7.5 0 0 1 5.25 8.74L3.42 6.31L6.31 3.42L8.74 5.25A7.5 7.5 0 0 1 9.53 4.92L9.95 1.91L14.05 1.91L14.47 4.92A7.5 7.5 0 0 1 15.26 5.25L17.69 3.42L20.58 6.31L18.75 8.74A7.5 7.5 0 0 1 19.08 9.53ZM12 8.55A3.45 3.45 0 1 0 12 15.45A3.45 3.45 0 1 0 12 8.55Z"/>',
   chart:'<path d="M3.5 20.5h17"/><path d="M7 20.5V14M12 20.5V9.5M17 20.5V5.5"/>',
+  trophy:'<path d="M7.5 3.5h9v5.2a4.5 4.5 0 0 1-9 0z"/>'+
+         '<path d="M7.5 5.2H5a2.4 2.4 0 0 0 2.5 2.6M16.5 5.2H19a2.4 2.4 0 0 1-2.5 2.6"/>'+
+         '<path d="M12 13.2v3.1M8.8 20.5h6.4l-.7-4.2H9.5z"/>',
   flag:'<path d="M6 21V3.5"/><path d="M6 4.6h11.4l-2.8 3.9 2.8 3.9H6"/>',
   /* this opens Your Balls — palette and trail, so draw an actual palette */
   brush:'<path d="M12 3.2a8.8 8.8 0 000 17.6 2 2 0 001.55-3.27 2 2 0 011.55-3.27h2.6a3 3 0 002.98-3.35A8.8 8.8 0 0012 3.2z"/>'+
@@ -3182,6 +3244,7 @@ function buildRails(){
     {id:"set",svg:ICONS.gear,fn:sheetSettings},
     {id:"stat",svg:ICONS.chart,fn:sheetStats},
     {id:"obj",svg:ICONS.flag,fn:sheetObjectives},
+    {id:"ach",svg:ICONS.trophy,fn:sheetAchievements},
     {id:"cos",svg:ICONS.brush,fn:sheetCustomise},
   ]){
     const b=document.createElement("button");
@@ -3226,6 +3289,7 @@ function syncRails(){
     else cd.style.display="none";
   }
   alertOrb("obj",!!(G.obj&&G.obj.some(o=>o.done)));
+  alertOrb("ach",achAny());
 }
 
 function buildTabs(){
@@ -3428,6 +3492,32 @@ function row(o){
 }
 function lbl(t){ const d=document.createElement("div"); d.className="secLbl"; d.textContent=t; return d; }
 
+function sheetAchievements(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.trophy+'</svg>',
+    "Achievements","Permanent, and they pay",b=>{
+    for(const a of ACHV){
+      const done=achDone(a), all=done>=a.tiers.length;
+      const goal=all?a.tiers[a.tiers.length-1]:a.tiers[done];
+      const have=a.src(), ready=!all&&have>=goal;
+      const r=all?null:a.rw[done];
+      b.appendChild(row({
+        ic:a.ic,
+        t:a.nm+(all?" \u2713":" "+(done+1)+"/"+a.tiers.length),
+        s:all ? "Every tier claimed."
+              : a.t(goal)+" \u2014 "+rwText(r),
+        bar:all?1:clamp(have/goal,0,1),
+        btn:all?null:(ready?"Claim":(a.k==="play"?fmtTime(Math.max(0,goal-have)):fmt(Math.max(0,goal-have))+" to go")),
+        btnOn:ready,
+        fn:ready?function(){
+          G.achv[a.k]=done+1;
+          const got=achGive(r);
+          toast(a.nm+" \u2014 "+got);
+          save(); syncTop(); buildCards(); alertOrb("ach",achAny());
+        }:null
+      }));
+    }
+  });
+}
 function sheetSettings(){
   openSheet('<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block">'+ICONS.gear+'</svg>',
     "Settings","Sound and feel",b=>{
