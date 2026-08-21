@@ -358,6 +358,10 @@ input{font:inherit;color:inherit}
 /* the left rail's powers cost a watch rather than gems, so the badge is not
    a hint that appears on a cooldown — it is the price, and it always shows */
 .adpw .adb{display:grid!important;opacity:1}
+/* the badge hangs off the corner nearest the screen edge. On the right rail
+   that is the right; on the left rail the same rule pointed it inward, over
+   the dish, so it mirrors. */
+#railL .pw .adb{right:auto;left:-6px}
 .adpw.locked{opacity:.5}
 .adpw.locked .adb{opacity:.35}
 .adpw .cd{background:rgba(238,243,249,.94)}
