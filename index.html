@@ -433,6 +433,18 @@ input{font:inherit;color:inherit}
   transition:transform .12s cubic-bezier(.2,1.7,.4,1);
 }
 @keyframes handleBob{50%{translate:0 -4px}}
+#dockHandle .ah{display:grid;place-items:center;line-height:0}
+/* how long until the next one is loaded. It fills as the chamber does and
+   drains the instant it fires. */
+#vBar{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;
+  width:24px;height:3px;border-radius:99px;overflow:hidden;
+  background:rgba(15,23,32,.11);
+}
+#vBar b{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#7CB2FF,#2F6BFF);
+  transition:width .1s linear}
+#vBar.full b{background:linear-gradient(90deg,#8FE3FF,#2F6BFF)}
 #dockHandle svg{width:19px;height:19px;stroke:var(--ink-2);fill:none;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
@@ -1344,7 +1356,8 @@ input{font:inherit;color:inherit}
       <div id="combo"></div>
       <div id="dock">
         <button id="dockHandle" aria-label="Show or hide upgrades">
-          <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
+          <span class="ah"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></span>
+          <i id="vBar"><b></b></i>
         </button>
         <nav id="tabs"></nav>
         <div id="cards"></div>
@@ -2797,7 +2810,7 @@ function stepWizards(dt){
    nothing. The vent under the handle coughs one up every five to ten
    seconds. It is a floor, not a source — its mass is fixed at eight and
    never follows your rank, so by the time wizards are working it is noise. */
-const VENT={t:3.5, mass:8, n:0};
+const VENT={t:3.5, max:3.5, mass:8, n:0};
 function ventBall(){
   if(!ready||W<10) return false;
   if(balls.length>=val("cap")) return false;  // never fight the dish's own cap
@@ -2835,10 +2848,14 @@ function ventBall(){
       {transform:"translateY(1px) scale(1.05,.95)",offset:.78},
       {transform:"translateY(0) scale(1,1)"}
     ],{duration:520,easing:"cubic-bezier(.3,1.2,.4,1)"});
-    const sv=h.querySelector("svg");
-    if(sv&&sv.animate) sv.animate([
-      {transform:"translateY(0)"},{transform:"translateY(-3px)",offset:.5},{transform:"translateY(0)"}
-    ],{duration:520,easing:"cubic-bezier(.3,1.2,.4,1)"});
+    const ah=h.querySelector(".ah");
+    if(ah&&ah.animate) ah.animate([
+      {transform:"translateY(0) scale(1)",   opacity:1},
+      {transform:"translateY(3px) scale(.86,1.14)",opacity:1,   offset:.16},  // loads
+      {transform:"translateY(-9px) scale(1.1,.8)", opacity:0,   offset:.42},  // fires
+      {transform:"translateY(7px) scale(1)", opacity:0,   offset:.44},  // back from below
+      {transform:"translateY(0) scale(1)",   opacity:1}
+    ],{duration:540,easing:"cubic-bezier(.3,1.15,.4,1)"});
   }
   return true;
 }
@@ -3576,7 +3593,7 @@ function bounceChrome(b){
 function step(dt){
   el+=dt;
   VENT.t-=dt;
-  if(VENT.t<=0) VENT.t = ventBall() ? rnd(5,10) : rnd(2,4); G.stat.play+=dt;
+  if(VENT.t<=0){ VENT.t = ventBall() ? rnd(5,10) : rnd(2,4); VENT.max=VENT.t; } G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
 
@@ -5589,6 +5606,12 @@ function tickUI(dt){
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
     syncTop(); syncCards(); syncRails();
+    const vb=$("vBar");
+    if(vb){
+      const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
+      vb.firstElementChild.style.width=(k*100).toFixed(0)+"%";
+      vb.classList.toggle("full",k>=.999);
+    }
     if(room==="wiz"){ syncWizGrid(); syncWizPanel(); }
     else { const up=$("goUp"); if(up) up.classList.toggle("alert",(G.bio>=summonCost()&&wizCount()<SLOTS)||anyMerge()); }
     if(G.tab==="strain"){
