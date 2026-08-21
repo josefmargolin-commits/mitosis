@@ -101,7 +101,7 @@ input{font:inherit;color:inherit}
 /* back to the dish is the way out of the tower, so it earns its size */
 #goDown{
   position:relative;left:auto;transform:none;margin:0 auto;
-  width:100%;max-width:262px;
+  width:auto;flex:1 1 auto;max-width:262px;
   padding:11px 16px;border-radius:13px;border:0;justify-content:center;
   background:linear-gradient(180deg,#FFFFFF,#EDF2F8);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 6px 14px rgba(16,22,37,.16);
@@ -355,6 +355,31 @@ input{font:inherit;color:inherit}
 .pw.locked .l{color:var(--yellow);font-size:8px;letter-spacing:.02em}
 .pw.locked .g{opacity:.4}
 .railSep{display:block;width:22px;height:1px;background:var(--edge-2);margin:1px auto;flex:none}
+/* the left rail's powers cost a watch rather than gems, so the badge is not
+   a hint that appears on a cooldown — it is the price, and it always shows */
+.adpw .adb{display:grid!important;opacity:1}
+.adpw.locked{opacity:.5}
+.adpw.locked .adb{opacity:.35}
+.adpw .cd{background:rgba(238,243,249,.94)}
+/* the left rail is nine buttons deep now, and on a short screen that ran it
+   into the dock. It gives up size before it gives up a button. */
+@media (max-height:700px){
+  .rail{gap:5px}
+  .orb{width:38px;height:38px}
+  .orb svg{width:18px;height:18px}
+  #railL .pw{width:38px;height:38px;border-radius:12px}
+  #railL .pw .g{font-size:13px}
+  #railL .pw .l{font-size:6px}
+  #railL .pw .cd{border-radius:12px;font-size:11px}
+}
+@media (max-height:610px){
+  .rail{gap:4px}
+  .orb{width:35px;height:35px}
+  .orb svg{width:17px;height:17px}
+  #railL .pw{width:35px;height:35px;border-radius:11px}
+  #railL .pw .l{display:none}
+  #railL .pw .cd{border-radius:11px;font-size:10px}
+}
 
 /* ============ hud text ============ */
 #combo{
@@ -1213,22 +1238,21 @@ input{font:inherit;color:inherit}
    already is. A lava orb read as something dropped in from another game, so
    it keeps the shape language of every other control here — pale face, hard
    shadow underneath — and carries the fire in the glyph instead. */
+#wizRow{display:flex;align-items:center;gap:10px;justify-content:center}
 #wizUpBtn{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;
-  width:58px;height:58px;border-radius:50%;border:0;padding:0;
+  flex:none;width:50px;height:50px;border-radius:50%;border:0;padding:0;
   display:grid;place-items:center;
   background:linear-gradient(180deg,#FFFDF6,#FFF0D4);
   box-shadow:inset 0 1.5px 0 #fff,0 0 0 1px rgba(224,164,32,.34),
-             0 3px 0 #EBCC92,0 7px 16px rgba(140,95,10,.22);
+             0 3px 0 #EBCC92,0 6px 14px rgba(140,95,10,.2);
   transition:transform .1s ease, box-shadow .1s ease;
-  pointer-events:none;
 }
-#wizUpBtn svg{width:29px;height:29px;display:block;overflow:visible}
+#wizUpBtn svg{width:26px;height:26px;display:block;overflow:visible}
 #wizUpBtn .fl{transform-origin:12px 15px;animation:flameBreathe 2.6s ease-in-out infinite}
 @keyframes flameBreathe{50%{transform:scale(.96,1.06)}}
-#wizUpBtn.press{transform:translate(-50%,-50%) translateY(3px);
+#wizUpBtn:active{transform:translateY(3px);
   box-shadow:inset 0 1.5px 0 #fff,0 0 0 1px rgba(224,164,32,.34),
-             0 0 0 #EBCC92,0 2px 6px rgba(140,95,10,.22)}
+             0 0 0 #EBCC92,0 2px 6px rgba(140,95,10,.2)}
 
 /* the tower's footer is one button tall now */
 #wizChrome{height:calc(96px + env(safe-area-inset-bottom))}
@@ -1269,7 +1293,6 @@ input{font:inherit;color:inherit}
       <div id="wizStage">
         <div id="wgrid"></div>
         <canvas id="wfx"></canvas>
-        <button id="wizUpBtn" aria-label="All wizard upgrades"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="flG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC94F"/><stop offset=".52" stop-color="#FB7C1C"/><stop offset="1" stop-color="#E23C09"/></linearGradient></defs><g class="fl"><path fill="url(#flG)" d="M12 2.1c4 4.4 6.4 7.6 6.4 11.4a6.4 6.4 0 0 1-12.8 0C5.6 9.7 8 6.5 12 2.1Z"/><path fill="#FFE9A6" d="M12 10.4c1.9 2.3 3.1 3.9 3.1 5.6a3.1 3.1 0 0 1-6.2 0c0-1.7 1.2-3.3 3.1-5.6Z"/></g></svg></button>
       </div>
       <div id="wizChrome">
         <div id="arenaStrip">
@@ -1277,10 +1300,13 @@ input{font:inherit;color:inherit}
           <div id="apBar"><i></i></div>
           <span class="v" id="apN">0/0</span>
         </div>
+        <div id="wizRow">
         <button id="goDown" aria-label="Back to the arena">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
           <span>Arena</span>
         </button>
+        <button id="wizUpBtn" aria-label="All wizard upgrades"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="flG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC94F"/><stop offset=".52" stop-color="#FB7C1C"/><stop offset="1" stop-color="#E23C09"/></linearGradient></defs><g class="fl"><path fill="url(#flG)" d="M12 2.1c4 4.4 6.4 7.6 6.4 11.4a6.4 6.4 0 0 1-12.8 0C5.6 9.7 8 6.5 12 2.1Z"/><path fill="#FFE9A6" d="M12 10.4c1.9 2.3 3.1 3.9 3.1 5.6a3.1 3.1 0 0 1-6.2 0c0-1.7 1.2-3.3 3.1-5.6Z"/></g></svg></button>
+        </div>
       </div>
     </section>
 
@@ -1524,7 +1550,7 @@ const UP={
            d:"How many balls the dish will hold.",
            v:l=>16+l*3, fmt:l=>(16+l*3)+" max"},
   purity: {tab:"arena",g:"✦",nm:"Income",base:130,gr:1.24, max:40,
-           d:"Chance a new ball pays out twenty-five times over.",
+           d:"Chance a new ball comes in lucky — rainbow, drop sized, and worth twenty-five times over.",
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
@@ -1560,7 +1586,7 @@ const POWERS=[
 ];
 const BOOSTS=[
   {id:"rain",g:"❉",nm:"Rain",cd:45, cost:6, d:"Empties the hopper into the dish at once."},
-  {id:"lucky",g:"✦",nm:"Gold Ball",cd:60, cost:10, d:"Drops a gold ball, worth twenty-five times as much."},
+  {id:"lucky",g:"✦",nm:"Lucky Ball",cd:60, cost:10, d:"Drops a rainbow ball, worth twenty-five times as much."},
 ];
 
 const OBJPOOL=[
@@ -1676,7 +1702,12 @@ function save(){ if(!G) return; G.t=Date.now(); try{ localStorage.setItem(SAVE_K
 
 const lv=k=>G.up[k]|0;
 const val=k=>UP[k].v(lv(k));
-const cost=k=>Math.ceil(UP[k].base*Math.pow(UP[k].gr,lv(k)));
+const GRX=1.35;          // every upgrade's growth rate, raised to this power
+/* measured: a built-out scale earns about 1.65M a minute in its own units,
+   whatever scale that is, since every price now carries the multiplier too */
+const SCALE_INCOME=1.65e6, SCALE_MINUTES=115;
+const scaleMul=()=>curScale().mult;
+const cost=k=>Math.ceil(UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
 const maxed=k=>lv(k)>=UP[k].max;
 const curScale=()=>SCALES[Math.min(G.strain,SCALES.length-1)];
 /* a rewarded-ad window. The multiplier and the countdown are real; only the
@@ -1695,7 +1726,7 @@ const comboMul=()=>Math.min(comboCap(), 1+combo*COMBO_STEP);
 /* what the player actually earns, and what the popup shows: the streak caps at
    2x, the ad doubles on top of it, so the ceiling is 4x */
 const totalMul=()=>comboMul()*(x2On()?2:1);
-const nextScaleCost=()=>100000*Math.pow(40,G.strain);
+const nextScaleCost=()=>SCALE_INCOME*SCALE_MINUTES*scaleMul();
 const PAL=()=>(PALETTES.find(p=>p.id===G.pal)||PALETTES[0]).c;
 
 
@@ -2056,6 +2087,19 @@ let zoom=1,zoomPhase=0,zoomT=0,zoomFade=0;
 const timers={chain:0,storm:0,stormT:0};
 
 
+const RBOW=["#FF3B57","#FF7A1A","#FFD400","#3CD070","#22B8FF","#7A5CFF","#FF4FD0"];
+/* the band each ball sits in walks forward about six a second, and each ball
+   starts somewhere else in the ring, so a dishful never marches in step */
+function rbIdx(b,off){
+  const i=Math.floor(el*6 + (b.id||0)*1.7 + (off||0));
+  return RBOW[((i%RBOW.length)+RBOW.length)%RBOW.length];
+}
+function rbGrad(x,b,r){
+  const a=el*2.2 + (b.id||0);
+  const g=x.createLinearGradient(-Math.cos(a)*r,-Math.sin(a)*r,Math.cos(a)*r,Math.sin(a)*r);
+  for(let i=0;i<=4;i++) g.addColorStop(i/4, rbIdx(b,i));
+  return g;
+}
 function tierRadius(tier,cls){ return TIER[tier].r*S*cls.size; }
 function makeBall(tier,x,y,vx,vy,cls,mass,kind){
   const maxHp=Math.max(1,Math.round(cls.taps*TIER[tier].hp));
@@ -2387,6 +2431,18 @@ roomArena.addEventListener("pointercancel",endPtr);
 
 /* ---------------------------------------------------------------- powers */
 function pwState(p){ return G.pw[p.id]||(G.pw[p.id]={owned:p.cost===0,cd:0}); }
+/* the watch stands in for the ad, which no single html file can actually
+   play. It lends you the power for one firing and takes it straight back. */
+function watchPower(p){
+  const k="adpw_"+p.id;
+  if(!adReady(k)){ toast(p.nm+" again in "+adWait(k)); return; }
+  const st=pwState(p), was=st.owned;
+  G.ad[k]=el+180;
+  st.owned=true; st.cd=0;
+  firePower(p);
+  if(!was){ st.owned=false; st.cd=0; }
+  save(); syncRails();
+}
 function firePower(p){
   const s=pwState(p);
   if(!s.owned){
@@ -2432,9 +2488,9 @@ function fireBoost(bo){
     let best=-1;
     for(let i=0;i<SLOTS;i++) if(wiz(i)&&(best<0||wiz(i).rank>wiz(best).rank)) best=i;
     if(best>=0){
-      const cls=WRANK[wiz(best).rank], t=cls.tier, rr=tierRadius(t,cls);
+      const cls=WRANK[wiz(best).rank], t=Math.min(cls.tier,DROPT), rr=tierRadius(t,cls);
       balls.push(makeBall(t, clamp(castX(best),rr+2,W-rr-2), AR.y0+rr, rnd(-20,20)*S, 230*S, cls, undefined, "golden"));
-      banner("GOLDEN BALL");
+      banner("LUCKY BALL");
     } else toast("No wizards to draw from");
   }
   chime(523,{vol:.15,len:.6,wet:.44}); pop(660,{vol:.14,wet:.3});
@@ -2578,11 +2634,11 @@ const wiz=i=>G.wiz&&G.wiz[i];
 const wrank=i=>WRANK[wiz(i).rank];
 const rlvl=r=>(G.wlvl&&G.wlvl[r])|0;
 const rDelay=r=>WRANK[r].delay*Math.pow(0.94,rlvl(r));
-const rUpCost=r=>Math.ceil(WRANK[r].upBase*Math.pow(1.19,rlvl(r)));
+const rUpCost=r=>Math.ceil(WRANK[r].upBase*Math.pow(1.34,rlvl(r))*scaleMul());
 const rCapped=r=>rDelay(r)<=WRANK[r].delay*0.301;
 const wDelay=i=>rDelay(wiz(i).rank);
 const wUpCost=i=>rUpCost(wiz(i).rank);
-const summonCost=()=>Math.ceil(120*Math.pow(1.42,G.summons|0));
+const summonCost=()=>Math.ceil(120*Math.pow(1.66,G.summons|0)*scaleMul());
 const castX=i=>((i%WCOLS)+0.5)/WCOLS*W;
 const wizCount=()=>G.wiz.reduce((n,w)=>n+(w?1:0),0);
 
@@ -2717,7 +2773,7 @@ function ventBall(){
   const b=makeBall(t, x, y, rnd(-34,34)*S, -rnd(350,440)*S, cls, VENT.mass, dropKind());
   b.wob=.20; b.sq=.16; b.sqA=Math.PI/2;
   balls.push(b);
-  const col=b.kind==="golden"?"#FFC93C":(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
+  const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   rings.push({x, y:AR.y1-2, r:8*S, R:46*S, t:0, life:.34, col, w:2.2});
   for(let k=0;k<8;k++){
     const a=-Math.PI/2+rnd(-1.0,1.0), sp=rnd(70,210)*S;
@@ -2736,13 +2792,16 @@ function ventBall(){
   return true;
 }
 function castBall(i){
-  const cls=WRANK[wiz(i).rank], t=cls.tier;
+  const cls=WRANK[wiz(i).rank];
   const kind=dropKind();
+  // a lucky ball comes in at least drop-sized, so the one that pays
+  // twenty-five times over is never the smallest thing on the dish
+  const t=kind==="golden"?Math.min(cls.tier,DROPT):cls.tier;
   const rr=tierRadius(t,cls);
   const x=clamp(castX(i)+rnd(-9,9), rr+2, Math.max(rr+3,W-rr-2));
   const b=makeBall(t, x, AR.y0+rr*0.9, rnd(-22,22)*S, rnd(190,260)*S, cls, undefined, kind);
   balls.push(b);
-  const col=b.kind==="golden"?"#FFC93C":(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
+  const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   for(let k=0;k<6;k++){
     const a=Math.PI/2+rnd(-1.1,1.1), sp=rnd(60,190)*S;
     parts.push({x:b.x,y:AR.y0+4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*.5,
@@ -2758,7 +2817,9 @@ function castBall(i){
    One gesture, one transaction. Duplicated pointer sequences (and human
    double-taps) must never buy or merge twice. */
 let lastAct=0;
+let holding=false;
 const actGate=()=>{
+  if(holding) return true;      // a hold is deliberate, not a double tap
   const t=now();
   if(t-lastAct<260) return false;
   lastAct=t; return true;
@@ -2848,11 +2909,15 @@ function sheetWizards(){
       btn.innerHTML=capped ? "Maxed<small>fastest it goes</small>"
         : !many ? "Locked<small>merge up to it</small>"
         : "Faster<small>$"+fmt(c)+"</small>";
-      btn.onclick=()=>{
-        if(capped||!many) return;
+      holdRepeat(btn,()=>{
+        if(rCapped(rk)) return false;
+        const many2=G.wiz.filter(x=>x&&x.rank===rk).length;
+        if(!many2 || G.bio<rUpCost(rk)) return false;
         const i=G.wiz.findIndex(x=>x&&x.rank===rk);
-        if(i>=0){ upgradeWiz(i); sheetSync&&sheetSync(); }
-      };
+        if(i<0) return false;
+        upgradeWiz(i); sheetSync&&sheetSync();
+        return true;
+      });
       d.appendChild(btn);
       b.appendChild(d);
     });
@@ -3320,6 +3385,11 @@ function bhStep(dt){
   if(BH.x>W-r){ BH.x=W-r; BH.vx=-Math.abs(BH.vx); }
   if(BH.y<AR.y0+r){ BH.y=AR.y0+r; BH.vy=Math.abs(BH.vy); }
   if(BH.y>AR.y1-r){ BH.y=AR.y1-r; BH.vy=-Math.abs(BH.vy); }
+  const shim={x:BH.x,y:BH.y,r,vx:BH.vx,vy:BH.vy,wob:0};
+  bounceChrome(shim);
+  BH.x=shim.x; BH.y=shim.y;
+  const m=Math.hypot(shim.vx,shim.vy)||1;
+  BH.vx=shim.vx/m; BH.vy=shim.vy/m;
   BH.fed*=Math.pow(.06,dt);
   const R=bhPull();
   for(const b of balls){
@@ -3416,7 +3486,10 @@ function measureObstacles(){
   OBS.length=0;
   const a=roomArena.getBoundingClientRect();
   if(!a.width) return;
-  for(const e2 of document.querySelectorAll("#railL .orb,#railR .pw,#railR .prof,#goUp,#dockHandle")){
+  // anything the player can press is something a ball must not hide behind,
+  // so both rails are measured whole rather than by a list of class names
+  for(const e2 of document.querySelectorAll(
+      "#railL > .orb, #railL > .pw, #railR > .pw, #railR > .prof, #goUp, #dockHandle")){
     const r=e2.getBoundingClientRect();
     if(!r.width||!r.height) continue;
     OBS.push({x:r.left-a.left, y:r.top-a.top, w:r.width, h:r.height});
@@ -3593,7 +3666,7 @@ function step(dt){
    button, arcs, then a handful of it flies up and lands in the counter,
    which pops when each piece arrives.                                     */
 let cele=[], pipPop=0;
-const CONF=["#FF3B57","#2F6BFF","#F5B301","#0FB981","#9B3DFF","#FF6B2C","#FFFFFF"];
+const CONF=["#FFD24D","#F5B301","#FFE58A","#E39A05","#FFC93C"];
 function appPt(el){
   const a=app.getBoundingClientRect(), r=el.getBoundingClientRect();
   return {x:r.left-a.left+r.width/2, y:r.top-a.top+r.height/2};
@@ -3615,18 +3688,22 @@ function rewardPill(srcEl,txt){
 function celebrate(src,n,col,homeEl){
   const p=appPt(src);
   const home=homeEl?appPt(homeEl):null;
-  // ribbons: thin rectangles tumbling on two axes, which is what sells confetti
-  for(let i=0;i<n;i++){
-    const a=-Math.PI/2+rnd(-.95,.95), sp=rnd(420,980);
+  // coins: discs spun edge-on, which is what makes a flat circle read as money
+  const coins=Math.max(8,Math.round(n*.42));
+  for(let i=0;i<coins;i++){
+    // a wide flat spray, not a fountain — the reference keeps it near the row
+    const a=-Math.PI/2+rnd(-1.35,1.35), sp=rnd(170,470);
+    const d=rnd(5.5,9);
     cele.push({
-      kind:"ribbon",
-      x:p.x, y:p.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
-      w:rnd(5,9), h:rnd(9,16),
-      t:0, life:rnd(1.5,2.4),
+      kind:"coin",
+      x:p.x+rnd(-10,10), y:p.y+rnd(-4,4),
+      vx:Math.cos(a)*sp*1.5, vy:Math.sin(a)*sp,
+      w:d, h:d,
+      t:0, life:rnd(.62,1.0),
       col:CONF[(Math.random()*CONF.length)|0],
-      ang:rnd(0,TAU), spin:rnd(-13,13),
-      flip:rnd(0,TAU), flipV:rnd(5,13),
-      drag:rnd(.86,.94),
+      ang:rnd(0,TAU), spin:rnd(-7,7),
+      flip:rnd(0,TAU), flipV:rnd(9,17),
+      drag:rnd(.90,.95),
     });
   }
   // the reward itself: sparkles that arc, then fly home to the counter
@@ -3642,19 +3719,18 @@ function celebrate(src,n,col,homeEl){
       home, hop:0, wait:.16+i*.055, trail:[],
     });
   }
-  rings.push({x:p.x,y:p.y,r:8,R:150,t:0,life:.44,col:col||"#F5B301",w:3.5});
+  rings.push({x:p.x,y:p.y,r:6,R:62,t:0,life:.34,col:col||"#F5B301",w:2.2});
 }
 function stepCele(dt){
   for(let i=cele.length-1;i>=0;i--){
     const c=cele[i];
     c.t+=dt; c.ang+=c.spin*dt;
     if(c.t>=c.life){ cele.splice(i,1); continue; }
-    if(c.kind==="ribbon"){
+    if(c.kind==="coin"){
       c.flip+=c.flipV*dt;
       c.x+=c.vx*dt; c.y+=c.vy*dt;
-      c.vy+=1450*dt;
+      c.vy+=1150*dt;
       const k=Math.pow(c.drag,dt*60); c.vx*=k; c.vy*=k;
-      c.vx+=Math.sin(c.t*3.1+c.flip)*26*dt;      // flutter
       continue;
     }
     // spark
@@ -3689,14 +3765,20 @@ function drawCele(){
   if(!cele.length) return;
   for(const c of cele){
     const k=1-c.t/c.life, fade=Math.min(1,k*3.2);
-    if(c.kind==="ribbon"){
-      // width breathes with the tumble, so each piece reads as a flat strip
-      const t=Math.cos(c.flip), wf=Math.abs(t);
+    if(c.kind==="coin"){
+      // the face narrows as it turns, so a flat disc reads as a spinning coin
+      const wf=Math.abs(Math.cos(c.flip));
       xBu.save();
       xBu.globalAlpha=fade;
       xBu.translate(c.x,c.y); xBu.rotate(c.ang);
-      xBu.fillStyle=wf<.42?shade(c.col,-.30):c.col;   // edge-on faces darken
-      xBu.fillRect(-c.w*wf*.5,-c.h*.5,Math.max(1,c.w*wf),c.h);
+      xBu.beginPath();
+      xBu.ellipse(0,0,Math.max(.8,c.w*.5*wf),c.h*.5,0,0,TAU);
+      xBu.fillStyle=wf<.34?shade(c.col,-.34):c.col;   // edge on, it darkens
+      xBu.fill();
+      if(wf>.55){                                      // a rim, only face on
+        xBu.strokeStyle="rgba(255,255,255,.55)"; xBu.lineWidth=1;
+        xBu.stroke();
+      }
       xBu.restore();
     } else {
       xBu.save();
@@ -3947,7 +4029,7 @@ function draw(){
   for(const b of balls){
     xGoo.save();
     ballXform(xGoo,b);
-    const gc=b.kind==="golden"?"#FFC93C":(b.kind==="unstable"?"#FF9A3D":pal[b.tier]);
+    const gc=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":pal[b.tier]);
     // a floor on the goo radius: below it the blur spreads a small ball so
     // thin that the alpha threshold drops it, and it flickers
     const gr=Math.max(b.r,11*S);
@@ -3974,11 +4056,11 @@ function draw(){
 
   for(const b of balls){
     const r=b.r;
-    const col=b.kind==="golden"?"#FFC93C":(b.kind==="unstable"?"#FFE9A8":pal[b.tier]);
+    const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FFE9A8":pal[b.tier]);
     xFx.save();
     ballXform(xFx,b);
     membrane(xFx,b,r);
-    xFx.fillStyle=col; xFx.fill();
+    xFx.fillStyle=b.kind==="golden"?rbGrad(xFx,b,r):col; xFx.fill();
     // the design stops short of the rim, leaving a flat band of the ball's own
     // colour — that band is what a neck is made of, so merges read seamlessly.
     // While a pair is locked the design dissolves so they finish as one shape.
@@ -4297,6 +4379,19 @@ function buildRails(){
                  '<span class="pill"></span>';
     b.onclick=it.fn; L.appendChild(b);
   }
+  const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
+  if(adp.length){
+    const sep=document.createElement("i"); sep.className="railSep"; L.appendChild(sep);
+    for(const p of adp){
+      const b=document.createElement("button");
+      b.className="pw adpw"; b.id="ad-"+p.id;
+      b.innerHTML='<span class="g">'+p.g+'</span><span class="l">'+p.nm+'</span>'+
+                  '<span class="cd"></span><span class="adb">▶</span>';
+      b.onclick=()=>watchPower(p);
+      b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d+" Watch an ad to use it.");};
+      L.appendChild(b);
+    }
+  }
   obsChanged();
   const R=$("railR"); R.innerHTML="";
   const pr=document.createElement("div");
@@ -4355,6 +4450,15 @@ function syncRails(){
         toast(p.nm+" ready"); save(); syncRails();
       };
     }
+  }
+  for(const p of POWERS){
+    const b=document.getElementById("ad-"+p.id); if(!b) continue;
+    const k="adpw_"+p.id, ok=adReady(k);
+    const cd=b.querySelector(".cd"), lab=b.querySelector(".l");
+    b.classList.toggle("ready",ok);
+    b.classList.toggle("locked",!ok);
+    if(ok){ cd.style.display="none"; lab.textContent=p.nm; }
+    else  { cd.style.display="grid"; cd.textContent=adWait(k); lab.textContent=p.nm; }
   }
   const pc=document.getElementById("profCard");
   if(pc){
@@ -4446,12 +4550,7 @@ function syncCards(){
    higher each time, until the money runs out or the track maxes. The first
    buy lands on the press so a single tap still feels instant. */
 function holdBuy(b,k){
-  let timer=null, held=0, sx=0, sy=0, live=false;
-  const stop=()=>{
-    if(timer) clearTimeout(timer);
-    timer=null; live=false; held=0; b.classList.remove("held");
-  };
-  const once=()=>{
+  holdRepeat(b,()=>{
     // the ad half takes the level for a watch instead of the cash
     if(b.classList.contains("canAd") && G.bio<cost(k)){
       G.ad["up_"+k]=el+180;
@@ -4463,10 +4562,22 @@ function holdBuy(b,k){
     if(maxed(k)||G.bio<cost(k)){ buy(k); return false; }
     buy(k); syncRails();
     return true;
+  });
+}
+/* Press and it acts once; keep pressing and it keeps going, faster and a
+   note higher each time, until the callback says it cannot any more. */
+function holdRepeat(b,once){
+  let timer=null, held=0, sx=0, sy=0, live=false;
+  const stop=()=>{
+    if(timer) clearTimeout(timer);
+    timer=null; live=false; held=0; holding=false; b.classList.remove("held");
   };
   const repeat=()=>{
     if(!live) return;
-    if(!once()){ stop(); return; }
+    holding=true;
+    const ok=once();
+    holding=false;
+    if(!ok){ stop(); return; }
     held++;
     b.classList.add("held");
     // 340ms down to 70ms over about a second and a half of holding
@@ -5500,28 +5611,6 @@ function actOn(from,to){
 }
 (function wizInput(){
   let down=-1, sx=0, sy=0, moved=false, id=null;
-  const fireEl=document.getElementById("wizUpBtn");
-  const stageEl=document.getElementById("wizStage");
-  const fireHit=(x,y)=>{
-    const b=fireEl.getBoundingClientRect();
-    return Math.hypot(x-(b.left+b.width/2), y-(b.top+b.height/2))<=b.width/2;
-  };
-  let fdown=false;
-  const unpress=()=>{ fdown=false; fireEl.classList.remove("press"); };
-  stageEl.addEventListener("pointerdown",e=>{
-    if(camBusy>0) return;
-    fdown=fireHit(e.clientX,e.clientY);
-    fireEl.classList.toggle("press",fdown);
-  },{capture:true,passive:true});
-  stageEl.addEventListener("pointerup",e=>{
-    const go=fdown && !moved && fireHit(e.clientX,e.clientY);
-    unpress();
-    if(go){ tick(760,.05); haptic(6); sheetWizards(); }
-  },{capture:true,passive:true});
-  stageEl.addEventListener("pointercancel",unpress,{capture:true,passive:true});
-  stageEl.addEventListener("pointermove",e=>{
-    if(fdown&&!fireHit(e.clientX,e.clientY)) unpress();
-  },{capture:true,passive:true});
   wgridEl.addEventListener("pointerdown",e=>{
     if(camBusy>0) return;
     const c=e.target.closest(".wcell"); if(!c) return;
@@ -5677,13 +5766,16 @@ $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
-$("summonTop").onclick=function(){
+$("wizUpBtn").onclick=sheetWizards;
+holdRepeat($("summonTop"),function(){
   const cost=summonCost();
-  if(wizCount()>=SLOTS){ toast("Merge two of a kind to free a slot"); return; }
-  if(G.bio<cost){ toast("Needs $"+fmt(cost)+" to summon"); return; }
+  if(wizCount()>=SLOTS){ toast("Merge two of a kind to free a slot"); return false; }
+  if(G.bio<cost){ toast("Needs $"+fmt(cost)+" to summon"); return false; }
   const e=G.wiz.indexOf(null);
-  if(e>=0) summonAt(e);
-};
+  if(e<0) return false;
+  summonAt(e);
+  return true;
+});
 $("wbGo").onclick=function(){ wbCollect(this); };
 $("begin").onclick=begin;
 document.addEventListener("visibilitychange",()=>{ if(document.hidden){ save(); last=0; } });
