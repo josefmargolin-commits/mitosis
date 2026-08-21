@@ -2397,6 +2397,7 @@ function nearest(x,y,rad,skip){
 }
 
 /* ---- fusion: 2048, played upward ------------------------------------ */
+const TCOUNT=new Array(TIER.length).fill(0);
 function canFuse(a,b){
   return a.tier===b.tier && a.tier>0 && !a.gone && !b.gone
       && a.kind==="plain" && b.kind==="plain"
@@ -2407,7 +2408,8 @@ function canFuse(a,b){
 function fuseCrew(a,b){
   const crew=[a,b];
   if(fuseCost(a,b)<=2) return crew;
-  const R=(a.r+b.r)*3.4, cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+  // near enough to be touching one of the two, not merely in the area
+  const R=(a.r+b.r)*1.6, cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
   const pool=[];
   for(const o of balls){
     if(o===a||o===b||o.gone) continue;
@@ -4051,6 +4053,8 @@ function step(dt){
   // one pass for both jobs: same-colour balls reach for each other and fuse,
   // everything else just bumps
   const seek=190*S, seek2=seek*seek;   // fixed: this was the Seek card
+  TCOUNT.fill(0);
+  for(const b of balls) if(b.kind==="plain") TCOUNT[b.tier]++;
   const dense=dishFill()>.55;
   // sweep and prune on x: with a dish full of small balls the old all-pairs
   // loop was the frame budget. sorted order also means we can stop early.
@@ -4072,7 +4076,8 @@ function step(dt){
       if(d2>=rr*rr||d2===0) continue;
       const d=Math.sqrt(d2), nx=dx/d, ny=dy/d, ov=rr-d;
 
-      if(same && (!a.mate||a.mate===b) && (!b.mate||b.mate===a)){
+      if(same && (!a.mate||a.mate===b) && (!b.mate||b.mate===a)
+         && (a.mate===b || (TCOUNT[a.tier]>=fuseCost(a,b) && fuseCrew(a,b)))){
         // locked together — let them sink into one another instead of bouncing
         a.mate=b; b.mate=a;
         const pull=(120+26*Math.max(0,a.tier-3))*dt;
