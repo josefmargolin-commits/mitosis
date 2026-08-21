@@ -438,6 +438,7 @@ input{font:inherit;color:inherit}
    drains the instant it fires. */
 #vBar{
   position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;
+  transition:bottom .26s cubic-bezier(.3,.8,.3,1), top .26s cubic-bezier(.3,.8,.3,1);
   width:24px;height:3px;border-radius:99px;overflow:hidden;
   background:rgba(15,23,32,.11);
 }
@@ -449,6 +450,7 @@ input{font:inherit;color:inherit}
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
 #dock.min #dockHandle svg{transform:rotate(180deg)}
+#dock.min #vBar{bottom:auto;top:-8px}
 #dockHandle:active{transform:scale(.9)}
 #dock{
   position:absolute;z-index:5;left:0;right:0;bottom:0;
@@ -2841,20 +2843,22 @@ function ventBall(){
   VENT.n++;
   const h=document.getElementById("dockHandle");
   if(h&&h.animate){
+    const dir=document.getElementById("dock").classList.contains("min")?-1:1;
     h.animate([
       {transform:"translateY(0) scale(1,1)"},
-      {transform:"translateY(3px) scale(1.16,.80)",offset:.22},   // the squeeze
-      {transform:"translateY(-5px) scale(.86,1.20)",offset:.52},  // the release
-      {transform:"translateY(1px) scale(1.05,.95)",offset:.78},
+      {transform:"translateY("+(3*dir)+"px) scale(1.16,.80)",offset:.22},   // squeeze
+      {transform:"translateY("+(-5*dir)+"px) scale(.86,1.20)",offset:.52},  // release
+      {transform:"translateY("+(1*dir)+"px) scale(1.05,.95)",offset:.78},
       {transform:"translateY(0) scale(1,1)"}
     ],{duration:520,easing:"cubic-bezier(.3,1.2,.4,1)"});
     const ah=h.querySelector(".ah");
+    const d=document.getElementById("dock").classList.contains("min")?-1:1;
     if(ah&&ah.animate) ah.animate([
-      {transform:"translateY(0) scale(1)",   opacity:1},
-      {transform:"translateY(3px) scale(.86,1.14)",opacity:1,   offset:.16},  // loads
-      {transform:"translateY(-9px) scale(1.1,.8)", opacity:0,   offset:.42},  // fires
-      {transform:"translateY(7px) scale(1)", opacity:0,   offset:.44},  // back from below
-      {transform:"translateY(0) scale(1)",   opacity:1}
+      {transform:"translateY(0) scale(1)",             opacity:1},
+      {transform:"translateY("+(3*d)+"px) scale(.86,1.14)",opacity:1,offset:.16}, // loads
+      {transform:"translateY("+(-9*d)+"px) scale(1.1,.8)",opacity:0, offset:.42}, // fires
+      {transform:"translateY("+(7*d)+"px) scale(1)",   opacity:0,    offset:.44}, // returns
+      {transform:"translateY(0) scale(1)",             opacity:1}
     ],{duration:540,easing:"cubic-bezier(.3,1.15,.4,1)"});
   }
   return true;
