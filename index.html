@@ -101,15 +101,15 @@ input{font:inherit;color:inherit}
 /* back to the dish is the way out of the tower, so it earns its size */
 #goDown{
   position:relative;left:auto;transform:none;margin:0 auto;
-  width:auto;flex:1 1 auto;max-width:262px;
+  width:auto;flex:1 1 auto;max-width:220px;
   padding:11px 16px;border-radius:13px;border:0;justify-content:center;
-  background:linear-gradient(180deg,#FFFFFF,#EDF2F8);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 6px 14px rgba(16,22,37,.16);
+  background:linear-gradient(180deg,#4C8DFF,#2563EB);color:#fff;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.34),0 3px 0 #1A47A8,0 6px 14px rgba(37,99,235,.34);
   font-size:11px;letter-spacing:.12em;font-weight:600;
 }
-#goDown svg{width:15px!important;height:15px!important}
+#goDown svg{width:15px!important;height:15px!important;stroke:#fff!important}
 #goDown:active{transform:translateY(3px);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 6px rgba(16,22,37,.16)}
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.34),0 0 0 #1A47A8,0 2px 6px rgba(37,99,235,.34)}
 #goUp svg,#goDown svg{width:14px;height:14px;flex:none;stroke:var(--ink);fill:none;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #goUp:active{transform:scale(.94)}
@@ -1238,21 +1238,21 @@ input{font:inherit;color:inherit}
    already is. A lava orb read as something dropped in from another game, so
    it keeps the shape language of every other control here — pale face, hard
    shadow underneath — and carries the fire in the glyph instead. */
-#wizRow{display:flex;align-items:center;gap:10px;justify-content:center}
+#wizRow{display:flex;align-items:stretch;gap:10px}
 #wizUpBtn{
-  flex:none;width:50px;height:50px;border-radius:50%;border:0;padding:0;
-  display:grid;place-items:center;
-  background:linear-gradient(180deg,#FFFDF6,#FFF0D4);
-  box-shadow:inset 0 1.5px 0 #fff,0 0 0 1px rgba(224,164,32,.34),
-             0 3px 0 #EBCC92,0 6px 14px rgba(140,95,10,.2);
+  flex:0 1 auto;min-width:0;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 14px;border-radius:13px;border:0;white-space:nowrap;
+  background:linear-gradient(180deg,#FFFFFF,#EDF2F8);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 6px 14px rgba(16,22,37,.16);
+  font-size:11px;letter-spacing:.08em;font-weight:600;text-transform:uppercase;
+  color:var(--ink-2);
   transition:transform .1s ease, box-shadow .1s ease;
 }
-#wizUpBtn svg{width:26px;height:26px;display:block;overflow:visible}
-#wizUpBtn .fl{transform-origin:12px 15px;animation:flameBreathe 2.6s ease-in-out infinite}
-@keyframes flameBreathe{50%{transform:scale(.96,1.06)}}
+#wizUpBtn svg{width:15px;height:15px;flex:none;display:block;
+  stroke:var(--ink-2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #wizUpBtn:active{transform:translateY(3px);
-  box-shadow:inset 0 1.5px 0 #fff,0 0 0 1px rgba(224,164,32,.34),
-             0 0 0 #EBCC92,0 2px 6px rgba(140,95,10,.2)}
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 0 0 #C9D4E2,0 2px 6px rgba(16,22,37,.16)}
 
 /* the tower's footer is one button tall now */
 #wizChrome{height:calc(96px + env(safe-area-inset-bottom))}
@@ -1301,11 +1301,14 @@ input{font:inherit;color:inherit}
           <span class="v" id="apN">0/0</span>
         </div>
         <div id="wizRow">
+        <button id="wizUpBtn" aria-label="All wizard upgrades">
+          <svg viewBox="0 0 24 24"><path d="M12 5v6M12 11l5 3M12 11l-5 3"/><circle cx="12" cy="4" r="2.4"/><circle cx="18" cy="15.5" r="2.4"/><circle cx="6" cy="15.5" r="2.4"/></svg>
+          <span>Upgrades</span>
+        </button>
         <button id="goDown" aria-label="Back to the arena">
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
           <span>Arena</span>
         </button>
-        <button id="wizUpBtn" aria-label="All wizard upgrades"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="flG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC94F"/><stop offset=".52" stop-color="#FB7C1C"/><stop offset="1" stop-color="#E23C09"/></linearGradient></defs><g class="fl"><path fill="url(#flG)" d="M12 2.1c4 4.4 6.4 7.6 6.4 11.4a6.4 6.4 0 0 1-12.8 0C5.6 9.7 8 6.5 12 2.1Z"/><path fill="#FFE9A6" d="M12 10.4c1.9 2.3 3.1 3.9 3.1 5.6a3.1 3.1 0 0 1-6.2 0c0-1.7 1.2-3.3 3.1-5.6Z"/></g></svg></button>
         </div>
       </div>
     </section>
