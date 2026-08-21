@@ -1741,7 +1741,7 @@ function adReady(k){ return !G.ad || !G.ad[k] || G.ad[k]<=el; }
 function adWait(k){ return Math.ceil((G.ad[k]-el)/60)+"m"; }
 const x2On=()=>x2Until>el;
 const luckOn=()=>luckUntil>el;
-const LUCK_SECS=120;
+const LUCK_SECS=30;
 const yieldMul=()=>val("yield")*curScale().mult*(x2On()?2:1);
 /* a hundred breaks to double your money — and inside a rainbow window the
    same hundred take you to five, because the step goes up with the ceiling */
@@ -4674,7 +4674,11 @@ function buildTabs(){
     b.className="tab"+(G.tab===t.id?" on":"");
     b.style.setProperty("--accent",t.accent);
     b.innerHTML='<span class="g">'+t.g+'</span>'+t.lbl;
-    b.onclick=()=>{ G.tab=t.id; buildTabs(); save(); };
+    b.onclick=()=>{
+      // asking for a tab is asking to see what is in it
+      if(G.opt.dockMin) setDockMin(false);
+      G.tab=t.id; buildTabs(); save();
+    };
     n.appendChild(b);
   }
   buildCards();
@@ -4728,6 +4732,7 @@ function syncCards(){
 /* Press and it buys; keep pressing and it keeps buying, faster and a note
    higher each time, until the money runs out or the track maxes. The first
    buy lands on the press so a single tap still feels instant. */
+let buyRun=0;
 function holdBuy(b,k){
   holdRepeat(b,()=>{
     // the ad half takes the level for a watch instead of the cash
@@ -4749,7 +4754,7 @@ function holdRepeat(b,once){
   let timer=null, held=0, sx=0, sy=0, live=false;
   const stop=()=>{
     if(timer) clearTimeout(timer);
-    timer=null; live=false; holding=false;
+    timer=null; live=false; holding=false; buyRun=0;
     b.classList.remove("held"); b.style.removeProperty("--sh");
     // a run that got going lands on the octave rather than just stopping
     if(held>3) chime(330*semi(LADDER[Math.min(held,LADDER.length-1)])*2,
@@ -4762,7 +4767,7 @@ function holdRepeat(b,once){
     const ok=once();
     holding=false;
     if(!ok){ stop(); return; }
-    held++;
+    held++; buyRun=held;
     b.classList.add("held");
     b.style.setProperty("--sh", Math.min(1, held/8).toFixed(2));
     // a run walks up the same ladder the combo does, so a long hold resolves
@@ -4790,6 +4795,27 @@ function holdRepeat(b,once){
   for(const ev of ["pointerup","pointercancel","pointerleave"])
     b.addEventListener(ev,stop,{passive:true});
 }
+function coinBurst(srcEl,n){
+  if(!srcEl||!app) return;
+  const p=appPt(srcEl);
+  for(let i=0;i<n;i++){
+    const a=-Math.PI/2+rnd(-1.15,1.15), sp=rnd(210,450), d=rnd(5,8);
+    cele.push({kind:"coin", x:p.x+rnd(-9,9), y:p.y+rnd(-5,5),
+      vx:Math.cos(a)*sp*1.25, vy:Math.sin(a)*sp,
+      w:d, h:d, t:0, life:rnd(.5,.82),
+      col:CONF[(Math.random()*CONF.length)|0],
+      ang:rnd(0,TAU), spin:rnd(-8,8), flip:rnd(0,TAU), flipV:rnd(10,18),
+      drag:rnd(.90,.95)});
+  }
+}
+/* a click, the coin's own note a step up the ladder, a shimmer over it and
+   a little body underneath — a till rather than a switch */
+function buySound(l){
+  tick(520+l*9,.085);
+  chime(660*semi(LADDER[Math.min(l,LADDER.length-1)]),{vol:.075,len:.3,wet:.34});
+  chime(1320,{vol:.035,len:.24,delay:.05,wet:.45});
+  thud(124,{vol:.09,len:.15});
+}
 function buyFx(b){
   if(!b||!b.animate) return;
   const lv=b.querySelector(".lv"), ring=b.querySelector(".rfg");
@@ -4810,10 +4836,11 @@ function buy(k){
   const c=cost(k);
   if(G.bio<c){ toast("Needs "+fmt(c)+" cash"); return; }
   G.bio-=c; G.up[k]++;
-  tick(520+lv(k)*9,.1);
+  buySound(lv(k));
   haptic(9); save(); syncCards();
   const card=document.querySelector('#cards .card[data-k="'+k+'"]');
   buyFx(card);
+  coinBurst(card, buyRun>0 ? (buyRun%3===0?4:0) : 7);
   if(k==="pulse"&&lv(k)===1) toast("Idle hits are on — they keep going while you are away");
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
@@ -5891,28 +5918,30 @@ function slingshot(){
   haptic(16);
 }
 
-(function dockToggle(){
-  const dock=$("dock"), h=$("dockHandle");
-  const apply=()=>dock.classList.toggle("min",!!G.opt.dockMin);
-  apply();
-  let tracking=false;
-  h.onclick=()=>{
-    G.opt.dockMin=!G.opt.dockMin;
-    apply(); save(); obsChanged(); tick(G.opt.dockMin?420:560,.07);
-    slingshot();
-    // Only the dish floor moves. resize() would reallocate and clear every
-    // canvas on each frame, which is what made this stutter and made the
-    // balls look like they were being reset.
-    if(tracking) return;
-    tracking=true;
-    const t0=now();
-    const track=()=>{
-      AR.y1=H-dock.offsetHeight;
-      if(now()-t0<430) requestAnimationFrame(track);
-      else { tracking=false; AR.y1=H-dock.offsetHeight; }
-    };
-    requestAnimationFrame(track);
+let dockTracking=false;
+function setDockMin(min,quiet){
+  const dock=$("dock");
+  if(!!G.opt.dockMin===!!min && !quiet) return;
+  G.opt.dockMin=!!min;
+  dock.classList.toggle("min",!!min);
+  save(); obsChanged();
+  if(!quiet){ tick(min?420:560,.07); slingshot(); }
+  // Only the dish floor moves. resize() would reallocate and clear every
+  // canvas on each frame, which is what made this stutter and made the
+  // balls look like they were being reset.
+  if(dockTracking) return;
+  dockTracking=true;
+  const t0=now();
+  const track=()=>{
+    AR.y1=H-dock.offsetHeight;
+    if(now()-t0<430) requestAnimationFrame(track);
+    else { dockTracking=false; AR.y1=H-dock.offsetHeight; }
   };
+  requestAnimationFrame(track);
+}
+(function dockToggle(){
+  $("dock").classList.toggle("min",!!G.opt.dockMin);
+  $("dockHandle").onclick=()=>setDockMin(!G.opt.dockMin);
 })();
 document.getElementById("goUp").onclick=()=>goRoom("wiz");
 document.getElementById("goDown").onclick=()=>goRoom("arena");
