@@ -1060,6 +1060,9 @@ input{font:inherit;color:inherit}
 .cosHead .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;
   background:#2563EB;color:#fff}
 .cosHead .ic svg{width:17px;height:17px;display:block}
+/* the mark beside the name is the currency it is priced in, so it is the dot */
+.cosHead .ic.mana{border-radius:50%;background:linear-gradient(140deg,#6FC3FF,#2F6BFF)}
+.cosHead .ic.mana svg{width:13px;height:13px;fill:#fff}
 .cosHead .t{flex:1;font-size:13px;font-weight:600}
 .cosHead .cnt{font-size:11px;color:#2563EB;background:#E5EEFF;padding:4px 10px;border-radius:99px;
   display:flex;align-items:center;gap:4px}
@@ -1368,6 +1371,47 @@ input{font:inherit;color:inherit}
   #case .creel{height:80px} #case .ctile{height:68px;width:64px}
   #case .ctile canvas{width:34px;height:34px}
 }
+/* ---- frenzy, which is what a rainbow buys you --------------------------
+   The edge used to catch fire on a long streak, which was noise. This only
+   ever means one thing: the rainbow window is open. */
+#frenzy{
+  position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;
+  transition:opacity .45s ease;will-change:opacity;
+}
+#frenzy::after{
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(150% 118% at 50% 50%,
+      rgba(255,255,255,0) 40%,
+      rgba(124,92,255,.05) 58%,
+      rgba(34,184,255,.10) 70%,
+      rgba(60,208,112,.14) 80%,
+      rgba(255,212,0,.17) 89%,
+      rgba(255,59,87,.21) 100%);
+}
+#frenzy.on{opacity:1}
+#frenzy.on::after{animation:fzSpin 6s linear infinite}
+@keyframes fzSpin{to{transform:rotate(360deg) scale(1.02)}}
+#fzTag{
+  position:absolute;z-index:10;left:50%;transform:translateX(-50%) translateY(-14px);
+  top:calc(var(--top-h) + 30px);
+  display:none;align-items:center;gap:7px;pointer-events:none;
+  padding:6px 14px 6px 11px;border-radius:999px;
+  background:rgba(15,23,32,.86);color:#fff;
+  font-family:var(--font);font-weight:800;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;
+  box-shadow:0 6px 18px rgba(15,23,32,.32);
+  opacity:0;transition:opacity .3s ease, transform .3s cubic-bezier(.2,1.5,.4,1);
+}
+#fzTag.on{display:flex;opacity:1;transform:translateX(-50%) translateY(0)}
+#fzTag .d{width:9px;height:9px;border-radius:50%;flex:none;
+  animation:fzDot 1.1s linear infinite}
+@keyframes fzDot{
+  0%{background:#FF3B57}   17%{background:#FF7A1A} 34%{background:#FFD400}
+  50%{background:#3CD070}  67%{background:#22B8FF} 84%{background:#7A5CFF}
+  100%{background:#FF3B57}
+}
+#fzTag .s{font-variant-numeric:tabular-nums;opacity:.72;letter-spacing:.04em}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1436,7 +1480,7 @@ input{font:inherit;color:inherit}
 
   <div id="top">
     <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
-    <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.8"/><path d="M6.2 8.4a7.2 7.2 0 0 1 6.1-3.4 7.2 7.2 0 0 0-5 4.9 7.2 7.2 0 0 0 .5 5 8.8 8.8 0 0 1-1.6-6.5z" fill="#fff" opacity=".55"/><circle cx="9.4" cy="8.8" r="1.9" fill="#fff" opacity=".8"/><path d="M18.4 4.2l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z" fill="#fff" opacity=".9"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
+    <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
 
   <div id="banner"></div>
@@ -1451,6 +1495,8 @@ input{font:inherit;color:inherit}
   </div></div>
   <div id="rwPill"></div>
   <canvas id="burst"></canvas>
+  <div id="frenzy"></div>
+  <div id="fzTag"><i class="d"></i><span>Frenzy</span><span class="s"></span></div>
   <div id="scrim"></div>
   <div id="case"><div class="cbox">
     <div class="chead"><span class="ct">Mage Case</span><span class="cs">Watch to open</span></div>
@@ -1523,6 +1569,7 @@ const TIER=[
 const LAST=TIER.length-1;
 const DROPT=4;
 const NOTE=[92,118,150,190,240,300,380,470];
+const FUSE_COST=4;
 const fuseTime=(tier)=>{
   const base=val("fusion");
   // small balls move 4.75x faster than big ones, so a flat hold time is a
@@ -1624,7 +1671,7 @@ const TRAILS=[
 const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">' +
   '<rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/>' + '</svg>';
 const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">'+
-  '<circle cx="12" cy="12" r="8.8"/><path d="M6.2 8.4a7.2 7.2 0 0 1 6.1-3.4 7.2 7.2 0 0 0-5 4.9 7.2 7.2 0 0 0 .5 5 8.8 8.8 0 0 1-1.6-6.5z" fill="#fff" opacity=".55"/><circle cx="9.4" cy="8.8" r="1.9" fill="#fff" opacity=".8"/><path d="M18.4 4.2l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z" fill="#fff" opacity=".9"/></svg>';
+  '<circle cx="12" cy="12" r="8.6"/></svg>';
 
 const SCALES=[
   {n:"Atomic",    ball:"a proton",       mult:1,      spd:1.00,
@@ -2350,27 +2397,54 @@ function nearest(x,y,rad,skip){
 function canFuse(a,b){
   return a.tier===b.tier && a.tier>0 && !a.gone && !b.gone
       && a.kind==="plain" && b.kind==="plain"
-      && el-a.born>0.25 && el-b.born>0.25
-      && el>=a.noFuse && el>=b.noFuse;
+      && el-a.born>0.25 && el-b.born>0.25;
 }
-function fuse(a,b){
+/* the pair, plus the two nearest of the same rung that are not already
+   spoken for. Null if there are not four, which is the whole point. */
+function fuseCrew(a,b){
+  const crew=[a,b], want=FUSE_COST-2;
+  if(want<=0) return crew;
+  const R=(a.r+b.r)*3.4, cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+  const pool=[];
+  for(const o of balls){
+    if(o===a||o===b||o.gone) continue;
+    if(o.tier!==a.tier||o.kind!=="plain") continue;
+    // a ball locked to someone else is still fair game: four is four, and
+    // removing it unmates it on the way out
+    if(el-o.born<=0.25) continue;
+    const d=Math.hypot(o.x-cx,o.y-cy);
+    if(d<=R) pool.push({o,d});
+  }
+  if(pool.length<want) return null;
+  pool.sort((p,q)=>p.d-q.d);
+  for(let i=0;i<want;i++) crew.push(pool[i].o);
+  return crew;
+}
+function fuse(crew){
+  const a=crew[0], b=crew[1];
   const nt=a.tier-1;
-  const cls=a.cls.i>=b.cls.i?a.cls:b.cls;
-  const x=(a.x+b.x)/2, y=(a.y+b.y)/2;
+  let cls=a.cls, x=0, y=0, vx=0, vy=0, mass=0;
+  for(const o of crew){
+    if(o.cls.i>cls.i) cls=o.cls;
+    x+=o.x; y+=o.y; vx+=o.vx; vy+=o.vy; mass+=o.mass;
+  }
+  x/=crew.length; y/=crew.length; vx/=crew.length; vy/=crew.length;
   const col=PAL()[nt];
-  remove(a); remove(b);
-  const n=makeBall(nt,x,y,(a.vx+b.vx)*.5,(a.vy+b.vy)*.5,cls,
-    a.mass+b.mass, (a.kind==="golden"||b.kind==="golden")?"golden":"plain");
+  for(const o of crew) remove(o);
+  const n=makeBall(nt,x,y,vx,vy,cls,mass,"plain");
   n.wob=.20; n.sq=.26; n.sqA=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2; n.born=el-0.2; n.skinFade=el;
   clampIn(n);
   balls.push(n);
 
   G.stat.merges++; objProg("merge",1);
-  for(let i=0;i<10;i++){
-    const ang=rnd(0,TAU),s=rnd(30,150)*S;
-    goo(x,y,rnd(2,5)*S,col,rnd(.2,.4),Math.cos(ang)*s,Math.sin(ang)*s);
+  // one puff from each of the four, so you can see what it cost
+  for(const o of crew){
+    for(let i=0;i<5;i++){
+      const ang=Math.atan2(y-o.y,x-o.x)+rnd(-.9,.9), s2=rnd(40,170)*S;
+      goo(o.x,o.y,rnd(2,4.6)*S,col,rnd(.2,.4),Math.cos(ang)*s2,Math.sin(ang)*s2);
+    }
+    for(let i=0;i<3;i++) spark(o.x,o.y,"#fff");
   }
-  for(let i=0;i<8;i++) spark(x,y,"#fff");
   rings.push({x,y,r:n.r*1.5,R:n.r*.6,t:0,life:.34,col:"#fff",w:2.6});
   rings.push({x,y,r:n.r*.5,R:n.r*1.9,t:0,life:.42,col,w:2});
   pushPop(x,y-n.r*.7,"+"+fmt(n.mass));
@@ -2432,7 +2506,6 @@ function divide(b){
       b.vx*.55+Math.cos(a)*kick, b.vy*.55+Math.sin(a)*kick,
       b.cls, b.mass/2, "plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
-    nb.noFuse=el+3;                 // let the cascade finish before it rebuilds
     clampIn(nb);
     balls.push(nb); kids.push(nb);
   }
@@ -2972,7 +3045,8 @@ const VENT_ROLL=[
 function luckWindow(x,y){
   const fresh=!luckOn();
   luckUntil=el+LUCK_SECS;
-  banner(fresh?"RAINBOW ×5":"×5 EXTENDED");
+  setFrenzy(true);
+  banner(fresh?"FRENZY ×5":"FRENZY EXTENDED");
   for(let i=0;i<26;i++){
     const a=rnd(0,TAU), sp=rnd(80,420)*S;
     goo(x,y,rnd(2.5,6)*S,RBOW[i%RBOW.length],rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
@@ -3048,6 +3122,11 @@ function openCase(){
       save(); syncWizGrid(); syncWizPanel(true);
     },5500);
   };
+}
+function setFrenzy(on){
+  const f=$("frenzy"), t=$("fzTag");
+  if(f) f.classList.toggle("on",!!on);
+  if(t){ t.classList.toggle("on",!!on); if(!on) t.dataset.s=""; }
 }
 function ventRoll(){
   let r=Math.random();
@@ -3818,7 +3897,7 @@ function arenaArea(){
    is a frame-rate guard: measured here, 200 balls cost 4.7ms a frame, 500
    cost 10 and 800 cost 16, which is the whole budget. A phone has perhaps a
    third of the speed, so it stops well short. */
-const BALL_SOFT=520;
+const BALL_SOFT=300;
 const ballCeil=()=>app.classList.contains("lowfx")?260:BALL_SOFT;
 const DISH_MAX=0.80;
 /* each icon costs its own rectangle plus a working margin, because the strip
@@ -4028,15 +4107,22 @@ function step(dt){
   for(const b of balls){ bounceChrome(b); clampIn(b); }
 
   // resolve the locks: hold contact long enough and they become one
-  for(let i=balls.length-1;i>=0;i--){
-    const a=balls[i], b=a.mate;
+  const locks=balls.slice();
+  for(let i=locks.length-1;i>=0;i--){
+    const a=locks[i];
+    if(!a||a.gone) continue;
+    const b=a.mate;
     if(!b) continue;
     if(b.gone||b.mate!==a){ unmate(a); continue; }
     const gap=Math.hypot(b.x-a.x,b.y-a.y)-(a.r+b.r);
     if(gap>Math.max(Math.min(a.r,b.r)*0.34, 9*S)){ unmate(a); continue; }
     if(a.id>b.id) continue;             // only one of the pair drives the clock
     a.fuseT+=dt; b.fuseT=a.fuseT;
-    if(a.fuseT>=fuseTime(a.tier)) fuse(a,b);
+    if(a.fuseT>=fuseTime(a.tier)*1.2){
+      const crew=fuseCrew(a,b);
+      if(crew) fuse(crew);
+      else a.fuseT=fuseTime(a.tier);      // hold at the line until two more come
+    }
   }
 
   for(let i=parts.length-1;i>=0;i--){
@@ -4054,7 +4140,13 @@ function step(dt){
   for(let i=trail.length-1;i>=0;i--){ trail[i].t+=dt; if(trail[i].t>.34) trail.splice(i,1); }
 
   if(comboT>0){ comboT-=dt; if(comboT<=0){ combo=0; document.getElementById("combo").classList.remove("on"); } }
-  if(luckUntil && luckUntil<=el){ luckUntil=0; toast("Rainbow window over"); }
+  if(luckUntil && luckUntil<=el){ luckUntil=0; setFrenzy(false); toast("Frenzy over"); }
+  if(luckUntil){
+    const t=$("fzTag");
+    if(t){ const left=Math.ceil(luckUntil-el);
+      if(t.dataset.s!==String(left)){ t.dataset.s=String(left);
+        t.querySelector(".s").textContent=left+"s"; } }
+  }
   shake*=Math.pow(.02,dt); flash*=Math.pow(.004,dt);
 }
 
@@ -4100,7 +4192,7 @@ function celebrate(src,n,col,homeEl,asMana){
   const PAL2 = mana?MANA_COL:CONF;
   const home=homeEl?appPt(homeEl):null;
   // coins: discs spun edge-on, which is what makes a flat circle read as money
-  const notes=Math.max(8,Math.round(n*.42));
+  const notes=Math.max(8,Math.round(n*(mana?.85:.42)));
   for(let i=0;i<notes;i++){
     // a wide flat spray, not a fountain — the reference keeps it near the row
     const a=-Math.PI/2+rnd(-1.35,1.35), sp=rnd(170,470);
@@ -4108,8 +4200,8 @@ function celebrate(src,n,col,homeEl,asMana){
     cele.push({
       kind:mana?"orb":"cash",
       x:p.x+rnd(-10,10), y:p.y+rnd(-4,4),
-      vx:Math.cos(a)*sp*1.5, vy:Math.sin(a)*sp,
-      w:mana?d*.62:d, h:mana?d*.62:d*.6,
+      vx:Math.cos(a)*sp*(mana?2.1:1.5), vy:Math.sin(a)*sp*(mana?1.35:1),
+      w:mana?d*.78:d, h:mana?d*.78:d*.6,
       t:0, life:rnd(.62,1.0),
       col:PAL2[(Math.random()*PAL2.length)|0],
       ang:rnd(0,TAU), spin:rnd(-7,7),
@@ -4118,7 +4210,7 @@ function celebrate(src,n,col,homeEl,asMana){
     });
   }
   // the reward itself: sparkles that arc, then fly home to the counter
-  const homers=home?Math.min(9,Math.max(4,Math.round(n*.3))):0;
+  const homers=(home&&!mana)?Math.min(9,Math.max(4,Math.round(n*.3))):0;
   for(let i=0;i<homers;i++){
     const a=-Math.PI/2+rnd(-.7,.7), sp=rnd(300,560);
     cele.push({
@@ -4466,7 +4558,7 @@ function draw(){
   const pal=PAL();
   const lean=app.classList.contains("lowfx");
   MSEG=lean?22:44;
-  const packed=lean||dishFill()>.72;
+  const packed=lean||balls.length>84||dishFill()>.72;
 
   /* goo layer — the magnetised silhouette */
   xGoo.setTransform(GS,0,0,GS,0,0);
@@ -5620,7 +5712,7 @@ function stPack(p){
 }
 function stCosmetics(b){
   const head=document.createElement("div"); head.className="cosHead";
-  head.innerHTML='<span class="ic"><svg viewBox="0 0 24 24">'+ICONS.brush+'</svg></span>'+
+  head.innerHTML='<span class="ic mana"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/></svg></span>'+
     '<span class="t">Cosmetics</span>'+
     '<span class="chip" style="font-size:11px;color:#2563EB;background:#E5EEFF;padding:4px 11px;border-radius:99px">\u25CF '+fmt(G.spore)+'</span>';
   b.appendChild(head);
