@@ -447,6 +447,8 @@ input{font:inherit;color:inherit}
   transition:transform .1s,border-color .15s,background .15s;text-align:center;
 }
 .card:active{transform:scale(.95)}
+.card.held{transform:scale(.95);border-color:rgba(34,197,94,.6);
+  box-shadow:0 0 0 2px rgba(34,197,94,.16),0 1px 2px rgba(15,23,32,.05)}
 /* the reference keeps a card you can afford plain — white face, black price.
    Green is reserved for the one offering an ad, so it stands out. */
 .card.afford{border-color:var(--edge-2);background:var(--panel)}
@@ -2695,6 +2697,39 @@ function stepWizards(dt){
     else { b.y+=b.v*dt; b.v+=2400*dt; if(b.y>WSH+60) bolts.splice(i,1); }
   }
 }
+/* A fresh save has no balls, no wizards, and no way to earn the 120 the
+   first wizard costs: measured over a simulated minute it made exactly
+   nothing. The vent under the handle coughs one up every five to ten
+   seconds. It is a floor, not a source — its mass is fixed at eight and
+   never follows your rank, so by the time wizards are working it is noise. */
+const VENT={t:3.5, mass:8, n:0};
+function ventBall(){
+  if(!ready||W<10) return false;
+  if(balls.length>=val("cap")) return false;  // never fight the dish's own cap
+  const cls=WRANK[0], t=DROPT, rr=tierRadius(t,cls);
+  const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
+  const y=AR.y1-rr*1.05;
+  const b=makeBall(t, x, y, rnd(-34,34)*S, -rnd(350,440)*S, cls, VENT.mass, dropKind());
+  b.wob=.20; b.sq=.16; b.sqA=Math.PI/2;
+  balls.push(b);
+  const col=b.kind==="golden"?"#FFC93C":(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
+  rings.push({x, y:AR.y1-2, r:8*S, R:46*S, t:0, life:.34, col, w:2.2});
+  for(let k=0;k<8;k++){
+    const a=-Math.PI/2+rnd(-1.0,1.0), sp=rnd(70,210)*S;
+    parts.push({x, y:AR.y1-3, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp*.6,
+      r:rnd(1.4,3.2)*S, col, t:0, life:rnd(.18,.36), goo:false, drag:.85});
+  }
+  pop(NOTE[t]*1.6,{pan:panAt(x),vol:.10,wet:.16});
+  VENT.n++;
+  const h=document.getElementById("dockHandle");
+  if(h&&h.animate) h.animate([
+    {transform:"translateY(0) scale(1)"},
+    {transform:"translateY(5px) scale(.9)",offset:.3},
+    {transform:"translateY(-2px) scale(1.06)",offset:.68},
+    {transform:"translateY(0) scale(1)"}
+  ],{duration:430,easing:"cubic-bezier(.25,1.5,.4,1)"});
+  return true;
+}
 function castBall(i){
   const cls=WRANK[wiz(i).rank], t=cls.tier;
   const kind=dropKind();
@@ -3408,7 +3443,9 @@ function bounceChrome(b){
   }
 }
 function step(dt){
-  el+=dt; G.stat.play+=dt;
+  el+=dt;
+  VENT.t-=dt;
+  if(VENT.t<=0) VENT.t = ventBall() ? rnd(5,10) : rnd(2,4); G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
 
@@ -4373,17 +4410,7 @@ function buildCards(){
       '<span class="ct"></span>'+
       '<span class="ad">\u25B6 Ad</span>'+
       '<span class="alt"></span>';
-    b.onclick=()=>{
-      // tapping the ad half takes the level for a watch instead of the cash
-      if(b.classList.contains("canAd") && G.bio<cost(k)){
-        G.ad["up_"+k]=el+180;
-        G.up[k]=(G.up[k]|0)+1;
-        toast(UP[k].nm+" +1");
-        rewardPill(b,"+1"); save(); buildCards(); syncCards(); syncRails();
-        return;
-      }
-      buy(k);
-    };
+    holdBuy(b,k);
     b.oncontextmenu=e=>{ e.preventDefault(); toast(u.nm+" — "+u.d); };
     c.appendChild(b);
   }
@@ -4409,6 +4436,52 @@ function syncCards(){
       if(ring) ring.style.strokeDashoffset=(RINGC*(1-(u.max?clamp(lv(k)/u.max,0,1):0))).toFixed(2);
     }
   }
+}
+/* Press and it buys; keep pressing and it keeps buying, faster and a note
+   higher each time, until the money runs out or the track maxes. The first
+   buy lands on the press so a single tap still feels instant. */
+function holdBuy(b,k){
+  let timer=null, held=0, sx=0, sy=0, live=false;
+  const stop=()=>{
+    if(timer) clearTimeout(timer);
+    timer=null; live=false; held=0; b.classList.remove("held");
+  };
+  const once=()=>{
+    // the ad half takes the level for a watch instead of the cash
+    if(b.classList.contains("canAd") && G.bio<cost(k)){
+      G.ad["up_"+k]=el+180;
+      G.up[k]=(G.up[k]|0)+1;
+      toast(UP[k].nm+" +1");
+      rewardPill(b,"+1"); save(); buildCards(); syncCards(); syncRails();
+      return false;                       // one level per watch, never a run
+    }
+    if(maxed(k)||G.bio<cost(k)){ buy(k); return false; }
+    buy(k); syncRails();
+    return true;
+  };
+  const repeat=()=>{
+    if(!live) return;
+    if(!once()){ stop(); return; }
+    held++;
+    b.classList.add("held");
+    // 340ms down to 70ms over about a second and a half of holding
+    const gap=Math.max(70, 340*Math.pow(.86,held));
+    timer=setTimeout(repeat,gap);
+  };
+  b.addEventListener("pointerdown",e=>{
+    if(e.button) return;
+    e.preventDefault();
+    sx=e.clientX; sy=e.clientY; live=true; held=0;
+    if(!once()){ stop(); return; }
+    timer=setTimeout(repeat,380);
+    try{ b.setPointerCapture(e.pointerId); }catch(err){}
+  },{passive:false});
+  // a drag is someone scrolling the shelf, not someone buying
+  b.addEventListener("pointermove",e=>{
+    if(live&&Math.hypot(e.clientX-sx,e.clientY-sy)>10) stop();
+  },{passive:true});
+  for(const ev of ["pointerup","pointercancel","pointerleave"])
+    b.addEventListener(ev,stop,{passive:true});
 }
 function buy(k){
   if(maxed(k)){ toast(UP[k].nm+" is fully developed"); return; }
