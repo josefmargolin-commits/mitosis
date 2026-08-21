@@ -361,24 +361,24 @@ input{font:inherit;color:inherit}
 .adpw.locked{opacity:.5}
 .adpw.locked .adb{opacity:.35}
 .adpw .cd{background:rgba(238,243,249,.94)}
-/* the left rail is nine buttons deep now, and on a short screen that ran it
-   into the dock. It gives up size before it gives up a button. */
+/* the right rail is six deep now, and on a short screen that ran it into
+   the dock. It gives up size before it gives up a button. */
 @media (max-height:700px){
   .rail{gap:5px}
   .orb{width:38px;height:38px}
   .orb svg{width:18px;height:18px}
-  #railL .pw{width:38px;height:38px;border-radius:12px}
-  #railL .pw .g{font-size:13px}
-  #railL .pw .l{font-size:6px}
-  #railL .pw .cd{border-radius:12px;font-size:11px}
+  #railR .pw{width:38px;height:38px;border-radius:12px}
+  #railR .pw .g{font-size:13px}
+  #railR .pw .l{font-size:6px}
+  #railR .pw .cd{border-radius:12px;font-size:11px}
 }
 @media (max-height:610px){
   .rail{gap:4px}
   .orb{width:35px;height:35px}
   .orb svg{width:17px;height:17px}
-  #railL .pw{width:35px;height:35px;border-radius:11px}
-  #railL .pw .l{display:none}
-  #railL .pw .cd{border-radius:11px;font-size:10px}
+  #railR .pw{width:35px;height:35px;border-radius:11px}
+  #railR .pw .l{display:none}
+  #railR .pw .cd{border-radius:11px;font-size:10px}
 }
 
 /* ============ hud text ============ */
@@ -4379,19 +4379,6 @@ function buildRails(){
                  '<span class="pill"></span>';
     b.onclick=it.fn; L.appendChild(b);
   }
-  const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
-  if(adp.length){
-    const sep=document.createElement("i"); sep.className="railSep"; L.appendChild(sep);
-    for(const p of adp){
-      const b=document.createElement("button");
-      b.className="pw adpw"; b.id="ad-"+p.id;
-      b.innerHTML='<span class="g">'+p.g+'</span><span class="l">'+p.nm+'</span>'+
-                  '<span class="cd"></span><span class="adb">▶</span>';
-      b.onclick=()=>watchPower(p);
-      b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d+" Watch an ad to use it.");};
-      L.appendChild(b);
-    }
-  }
   obsChanged();
   const R=$("railR"); R.innerHTML="";
   const pr=document.createElement("div");
@@ -4413,10 +4400,22 @@ function buildRails(){
   add(POWERS[0],false);
   const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned)
     .concat(BOOSTS.filter(b2=>boState(b2).owned));
-  if(bought.length){
+  const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
+  if(bought.length||adp.length){
     const sep=document.createElement("i"); sep.className="railSep"; R.appendChild(sep);
-    for(const p of bought) add(p,!("cost" in p && p.dur!==undefined) && !POWERS.includes(p));
   }
+  for(const p of bought) add(p,!("cost" in p && p.dur!==undefined) && !POWERS.includes(p));
+  // the ones you have not bought sit below, playable for a watch
+  for(const p of adp){
+    const b=document.createElement("button");
+    b.className="pw adpw"; b.id="ad-"+p.id;
+    b.innerHTML='<span class="g">'+p.g+'</span><span class="l">'+p.nm+'</span>'+
+                '<span class="cd"></span><span class="adb">▶</span>';
+    b.onclick=()=>watchPower(p);
+    b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d+" Watch an ad to use it.");};
+    R.appendChild(b);
+  }
+  obsChanged();
 }
 /* The shop badge alternates between the two rarities actually on the shelf,
    so both get seen rather than one sitting there forever. */
