@@ -3830,7 +3830,16 @@ function step(dt){
    button, arcs, then a handful of it flies up and lands in the counter,
    which pops when each piece arrives.                                     */
 let cele=[], pipPop=0;
-const CONF=["#FFD24D","#F5B301","#FFE58A","#E39A05","#FFC93C"];
+const CONF=["#3DDC84","#22C55E","#16A34A","#5BE59B","#12924A"];
+function rrect(x,l,t,w,h,r){
+  r=Math.min(r,Math.abs(w)/2,Math.abs(h)/2);
+  x.beginPath();
+  x.moveTo(l+r,t); x.lineTo(l+w-r,t); x.quadraticCurveTo(l+w,t,l+w,t+r);
+  x.lineTo(l+w,t+h-r); x.quadraticCurveTo(l+w,t+h,l+w-r,t+h);
+  x.lineTo(l+r,t+h); x.quadraticCurveTo(l,t+h,l,t+h-r);
+  x.lineTo(l,t+r); x.quadraticCurveTo(l,t,l+r,t);
+  x.closePath();
+}
 function appPt(el){
   const a=app.getBoundingClientRect(), r=el.getBoundingClientRect();
   return {x:r.left-a.left+r.width/2, y:r.top-a.top+r.height/2};
@@ -3853,16 +3862,16 @@ function celebrate(src,n,col,homeEl){
   const p=appPt(src);
   const home=homeEl?appPt(homeEl):null;
   // coins: discs spun edge-on, which is what makes a flat circle read as money
-  const coins=Math.max(8,Math.round(n*.42));
-  for(let i=0;i<coins;i++){
+  const notes=Math.max(8,Math.round(n*.42));
+  for(let i=0;i<notes;i++){
     // a wide flat spray, not a fountain — the reference keeps it near the row
     const a=-Math.PI/2+rnd(-1.35,1.35), sp=rnd(170,470);
-    const d=rnd(5.5,9);
+    const d=rnd(9,13.5);
     cele.push({
-      kind:"coin",
+      kind:"cash",
       x:p.x+rnd(-10,10), y:p.y+rnd(-4,4),
       vx:Math.cos(a)*sp*1.5, vy:Math.sin(a)*sp,
-      w:d, h:d,
+      w:d, h:d*.6,
       t:0, life:rnd(.62,1.0),
       col:CONF[(Math.random()*CONF.length)|0],
       ang:rnd(0,TAU), spin:rnd(-7,7),
@@ -3878,23 +3887,24 @@ function celebrate(src,n,col,homeEl){
       kind:"spark",
       x:p.x, y:p.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
       r:rnd(7,10), t:0, life:2.4,
-      col:col||"#F5B301",
+      col:col||"#22C55E",
       ang:rnd(0,TAU), spin:rnd(-4,4),
       home, hop:0, wait:.16+i*.055, trail:[],
     });
   }
-  rings.push({x:p.x,y:p.y,r:6,R:62,t:0,life:.34,col:col||"#F5B301",w:2.2});
+  rings.push({x:p.x,y:p.y,r:6,R:62,t:0,life:.34,col:col||"#22C55E",w:2.2});
 }
 function stepCele(dt){
   for(let i=cele.length-1;i>=0;i--){
     const c=cele[i];
     c.t+=dt; c.ang+=c.spin*dt;
     if(c.t>=c.life){ cele.splice(i,1); continue; }
-    if(c.kind==="coin"){
+    if(c.kind==="cash"){
       c.flip+=c.flipV*dt;
       c.x+=c.vx*dt; c.y+=c.vy*dt;
-      c.vy+=1150*dt;
+      c.vy+=900*dt;                       // paper falls slower than metal
       const k=Math.pow(c.drag,dt*60); c.vx*=k; c.vy*=k;
+      c.vx+=Math.sin(c.t*5.4+c.flip)*52*dt;   // and it sways on the way
       continue;
     }
     // spark
@@ -3929,19 +3939,22 @@ function drawCele(){
   if(!cele.length) return;
   for(const c of cele){
     const k=1-c.t/c.life, fade=Math.min(1,k*3.2);
-    if(c.kind==="coin"){
-      // the face narrows as it turns, so a flat disc reads as a spinning coin
+    if(c.kind==="cash"){
+      // the note narrows as it turns edge-on, which is what sells the tumble
       const wf=Math.abs(Math.cos(c.flip));
+      const w=Math.max(1.1,c.w*wf), h=c.h;
       xBu.save();
       xBu.globalAlpha=fade;
       xBu.translate(c.x,c.y); xBu.rotate(c.ang);
-      xBu.beginPath();
-      xBu.ellipse(0,0,Math.max(.8,c.w*.5*wf),c.h*.5,0,0,TAU);
-      xBu.fillStyle=wf<.34?shade(c.col,-.34):c.col;   // edge on, it darkens
-      xBu.fill();
-      if(wf>.55){                                      // a rim, only face on
-        xBu.strokeStyle="rgba(255,255,255,.55)"; xBu.lineWidth=1;
-        xBu.stroke();
+      xBu.fillStyle=wf<.36?shade(c.col,-.32):c.col;    // edge on, it darkens
+      rrect(xBu,-w*.5,-h*.5,w,h,Math.min(2.2,h*.34)); xBu.fill();
+      if(wf>.52){                                      // the face, front on
+        xBu.strokeStyle="rgba(255,255,255,.42)"; xBu.lineWidth=.9;
+        rrect(xBu,-w*.5+1.3,-h*.5+1.3,w-2.6,h-2.6,1.2); xBu.stroke();
+        xBu.fillStyle="rgba(255,255,255,.8)";
+        xBu.beginPath();
+        xBu.ellipse(0,0,Math.min(w*.19,h*.3),h*.3,0,0,TAU);
+        xBu.fill();
       }
       xBu.restore();
     } else {
@@ -4795,14 +4808,14 @@ function holdRepeat(b,once){
   for(const ev of ["pointerup","pointercancel","pointerleave"])
     b.addEventListener(ev,stop,{passive:true});
 }
-function coinBurst(srcEl,n){
+function cashBurst(srcEl,n){
   if(!srcEl||!app) return;
   const p=appPt(srcEl);
   for(let i=0;i<n;i++){
-    const a=-Math.PI/2+rnd(-1.15,1.15), sp=rnd(210,450), d=rnd(5,8);
-    cele.push({kind:"coin", x:p.x+rnd(-9,9), y:p.y+rnd(-5,5),
+    const a=-Math.PI/2+rnd(-1.15,1.15), sp=rnd(210,450), d=rnd(9,13);
+    cele.push({kind:"cash", x:p.x+rnd(-9,9), y:p.y+rnd(-5,5),
       vx:Math.cos(a)*sp*1.25, vy:Math.sin(a)*sp,
-      w:d, h:d, t:0, life:rnd(.5,.82),
+      w:d, h:d*.6, t:0, life:rnd(.5,.82),
       col:CONF[(Math.random()*CONF.length)|0],
       ang:rnd(0,TAU), spin:rnd(-8,8), flip:rnd(0,TAU), flipV:rnd(10,18),
       drag:rnd(.90,.95)});
@@ -4840,7 +4853,7 @@ function buy(k){
   haptic(9); save(); syncCards();
   const card=document.querySelector('#cards .card[data-k="'+k+'"]');
   buyFx(card);
-  coinBurst(card, buyRun>0 ? (buyRun%3===0?4:0) : 7);
+  cashBurst(card, buyRun>0 ? (buyRun%3===0?4:0) : 7);
   if(k==="pulse"&&lv(k)===1) toast("Idle hits are on — they keep going while you are away");
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
