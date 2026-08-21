@@ -3874,7 +3874,11 @@ function drawBH(x){
   x.setLineDash([5*S,7*S]); x.lineDashOffset=-((BH.ph*14*S)%dashLen);
   x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
   x.setLineDash([]); x.globalAlpha=1;
-  const glow=Math.max(r*2.9*k,15*S);
+  // a soft shadow under him, so he does not vanish into a busy dish
+  x.globalAlpha=.20; x.fillStyle="#0B1020";
+  x.beginPath(); x.arc(BH.x,BH.y,r*2.5*k,0,TAU); x.fill();
+  x.globalAlpha=1;
+  const glow=Math.max(r*3.1*k,17*S);
   const g=x.createRadialGradient(BH.x,BH.y,r*.6,BH.x,BH.y,glow);
   g.addColorStop(0,"rgba("+GLOW+",.44)");
   g.addColorStop(.45,"rgba("+(rb?RBOW_RGB[rbBand(2)]:P.glow)+",.20)");
@@ -4827,14 +4831,22 @@ function draw(){
 }
 
 /* ---------------------------------------------------------------- loop */
-let last=0,slowN=0;
+let last=0,slowN=0,fastN=0;
 function frame(t){
   requestAnimationFrame(frame);
   if(!last){ last=t; return; }
   let dt=(t-last)/1000; last=t;
   if(dt>.05) dt=.05;
-  if(dt>.028){ if(++slowN>60&&G.opt.goo){ app.classList.add("lowfx"); slowN=-1e9; } }
-  else if(slowN>0) slowN--;
+  if(G.opt.goo){
+    const lean=app.classList.contains("lowfx");
+    if(dt>.034){                      // worse than about thirty a second
+      fastN=0;
+      if(!lean && ++slowN>60){ app.classList.add("lowfx"); slowN=0; }
+    } else {
+      if(slowN>0) slowN--;
+      if(lean && ++fastN>180){ app.classList.remove("lowfx"); fastN=0; }
+    }
+  }
   stepCele(dt); drawCele();
   const showArena = room==="arena" || camBusy>0;
   if(freeze>0){ freeze-=dt; if(showArena) draw(); drawWizards(); return; }
