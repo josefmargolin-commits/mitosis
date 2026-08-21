@@ -1736,7 +1736,12 @@ function resize(){
   W=Math.round(r.width); H=Math.round(r.height);
   DPR=Math.min(devicePixelRatio||1,2);
   GS=Math.min(devicePixelRatio||1,1.5)*0.55;
-  S=clamp(Math.min(W,H)/720,0.44,1.2);
+  // Sizing off the dish's narrow side made a 375-wide phone render the drop
+  // ball 32px across and the smallest 9 — barely half what the same dish
+  // shows on a desktop, and under the 44px Apple asks of anything you have
+  // to hit. Only the floor moves: a small screen is lifted to the size the
+  // game was drawn at, and every larger one is left exactly where it was.
+  S=clamp(Math.min(W,H)/720,0.72,1.2);
   for(const [c,x,s] of [[cBg,xBg,DPR],[cFx,xFx,DPR],[cBu,xBu,DPR],[cGoo,xGoo,GS]]){
     c.width=Math.round(W*s); c.height=Math.round(H*s);
     x.setTransform(s,0,0,s,0,0);
