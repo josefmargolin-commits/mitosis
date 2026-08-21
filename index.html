@@ -81,7 +81,7 @@ input{font:inherit;color:inherit}
 /* ============ the camera ============ */
 #world{
   position:absolute;left:0;right:0;top:0;height:200%;
-  transform:translateY(var(--cam,-50%));
+  transform:translateY(-50%);
 }
 #world.slide{transition:transform .38s cubic-bezier(.32,.72,.24,1)}
 #world.moving{will-change:transform}
@@ -283,7 +283,7 @@ input{font:inherit;color:inherit}
 #sporeWrap .pip svg{width:12px;height:12px}
 
 /* ============ rails ============ */
-.rail{position:absolute;z-index:5;display:flex;flex-direction:column;gap:9px}
+.rail{position:absolute;z-index:5;display:flex;flex-direction:column;gap:12px}
 #railL{left:calc(10px + env(safe-area-inset-left));top:calc(var(--top-h) + 8px)}
 #railR{right:calc(10px + env(safe-area-inset-right));top:calc(var(--top-h) + 8px);align-items:flex-end}
 /* each button carries its own colour in --c and its glyph colour in --ic; the
@@ -317,7 +317,7 @@ input{font:inherit;color:inherit}
 .orb .dot{position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:50%;
   background:#FF3B47;box-shadow:0 1px 2px rgba(16,22,37,.3);display:none}
 /* the shop shouts about whatever is on the shelf, the way the reference does */
-.orb .pill{position:absolute;top:-8px;right:-7px;display:none;
+.orb .pill{position:absolute;top:-9px;right:-8px;display:none;border:1.5px solid var(--panel);
   font-family:var(--font);font-weight:700;
   font-size:7px;letter-spacing:.1em;padding:2.5px 6px;border-radius:99px;color:#fff;
   box-shadow:0 1.5px 4px rgba(16,22,37,.35)}
@@ -364,16 +364,18 @@ input{font:inherit;color:inherit}
 /* the right rail is six deep now, and on a short screen that ran it into
    the dock. It gives up size before it gives up a button. */
 @media (max-height:700px){
-  .rail{gap:5px}
+  .rail{gap:7px}
   .orb{width:38px;height:38px}
   .orb svg{width:18px;height:18px}
   #railR .pw{width:38px;height:38px;border-radius:12px}
+  .prof{width:58px;padding:6px 5px 7px}
+  .prof .lv{font-size:14px}
   #railR .pw .g{font-size:13px}
   #railR .pw .l{font-size:6px}
   #railR .pw .cd{border-radius:12px;font-size:11px}
 }
 @media (max-height:610px){
-  .rail{gap:4px}
+  .rail{gap:5px}
   .orb{width:35px;height:35px}
   .orb svg{width:17px;height:17px}
   #railR .pw{width:35px;height:35px;border-radius:11px}
@@ -481,6 +483,7 @@ input{font:inherit;color:inherit}
 .card .lv{position:absolute;top:5px;right:7px;font-size:9.5px;color:var(--ink-3);
   font-variant-numeric:tabular-nums;font-weight:500}
 .card .g{font-size:15px;line-height:1;color:var(--ink)}
+.card .g svg,.pw .g svg,.tab .g svg{width:1.15em;height:1.15em;display:block}
 /* the level ring: progressive, so a card shows how far along it is at a glance */
 .card .gw{position:relative;width:30px;height:30px;display:grid;place-items:center;
   margin-top:1px;flex:none}
@@ -1078,21 +1081,24 @@ input{font:inherit;color:inherit}
 .card.locked .ct{color:var(--ink-3);font-size:9px;font-weight:500}
 
 /* the profile card at the head of the power rail */
-.prof{width:58px;border-radius:13px;background:var(--panel);border:1px solid var(--edge);
+.prof{width:68px;border-radius:14px;background:var(--panel);border:1px solid var(--edge);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 5px 11px rgba(16,22,37,.18);
-  padding:7px 6px 8px;text-align:center;flex:none}
-.prof .hi{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
-.prof .lv{font-family:var(--font);font-weight:700;
-  font-size:14px;line-height:1.05;margin-top:1px}
-.prof .rk{font-size:6.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:1px}
-.prof .bar{height:4px;border-radius:99px;background:#E4E9F1;overflow:hidden;margin-top:5px}
+  padding:8px 7px 9px;text-align:center;flex:none}
+.prof .hi{font-size:7.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.prof .lv{font-family:var(--font);font-weight:800;
+  font-size:16px;line-height:1.05;margin-top:2px;letter-spacing:-.02em}
+.prof .rk{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prof .bar{height:4px;border-radius:99px;background:#E4E9F1;overflow:hidden;margin-top:6px}
 .prof .bar i{display:block;height:100%;border-radius:99px;background:#2F6BFF;transition:width .3s}
 
 /* a power you can watch an ad to fire early */
-.pw .adb{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;
+.pw .adb{position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;
   background:linear-gradient(180deg,#A78BFA,#7C3AED);color:#fff;display:none;
-  align-items:center;justify-content:center;font-size:9px;
-  box-shadow:0 2px 5px rgba(16,22,37,.3)}
+  align-items:center;justify-content:center;font-size:7.5px;
+  border:1.5px solid var(--panel);
+  box-shadow:0 1.5px 4px rgba(16,22,37,.28)}
 .pw.adReady .adb{display:flex}
 /* ---- achievements, from the shot: a level banner then a list you open ---- */
 .lvlCard{
@@ -1545,7 +1551,13 @@ const UP={
   reach:  {tab:"touch",g:"◜",nm:"Size", base:10, gr:1.16, max:60,
            d:"How wide your swipe cuts.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
-  cascade:{tab:"touch",g:"✳",nm:"Multiply",base:90,gr:1.24, max:50,
+  cascade:{tab:"touch",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="12" cy="4.6" r="3.1" fill="currentColor"/>'+
+             '<path d="M12 8.2v2.4M12 10.6 6.6 14.4M12 10.6l5.4 3.8" fill="none" '+
+               'stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'+
+             '<circle cx="5.6" cy="18" r="2.9" fill="currentColor"/>'+
+             '<circle cx="18.4" cy="18" r="2.9" fill="currentColor"/></svg>',
+           nm:"Multiply",base:90,gr:1.24, max:50,
            d:"Chance a split splits its halves again, all the way down.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
   cap:    {tab:"arena",g:"⬢",nm:"Space",base:46,gr:1.20,max:46,
@@ -1581,13 +1593,19 @@ const UP={
 const UPK=Object.keys(UP);
 
 const POWERS=[
-  {id:"scatter",g:"✳",nm:"Scatter",cd:120,dur:0, cost:0,  d:"Hits every ball in the dish at once. Free, every two minutes."},
+  {id:"scatter",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+     '<circle cx="12" cy="12" r="3.4" fill="currentColor"/>'+
+     '<circle cx="12" cy="2.9" r="1.8" fill="currentColor"/><circle cx="12" cy="21.1" r="1.8" fill="currentColor"/>'+
+     '<circle cx="2.9" cy="12" r="1.8" fill="currentColor"/><circle cx="21.1" cy="12" r="1.8" fill="currentColor"/>'+
+     '<circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/><circle cx="18.5" cy="18.5" r="1.5" fill="currentColor"/>'+
+     '<circle cx="18.5" cy="5.5" r="1.5" fill="currentColor"/><circle cx="5.5" cy="18.5" r="1.5" fill="currentColor"/></svg>',
+   nm:"Scatter",cd:120,dur:0, cost:0,  d:"Hits every ball in the dish at once. Free, every two minutes."},
   {id:"crush",  g:"⬤",nm:"Crush",  cd:55, dur:0, cost:4,  d:"Bursts the four largest balls completely.", ad:1},
   {id:"chain",  g:"⌁",nm:"Chain",  cd:80, dur:10,cost:9,  d:"For ten seconds every split jumps to two neighbours.", ad:1},
-  {id:"storm",  g:"❋",nm:"Storm",  cd:110,dur:9, cost:16, d:"For nine seconds the dish tears itself apart.", ad:1},
+  {id:"storm",  g:"❋︎",nm:"Storm",  cd:110,dur:9, cost:16, d:"For nine seconds the dish tears itself apart.", ad:1},
 ];
 const BOOSTS=[
-  {id:"rain",g:"❉",nm:"Rain",cd:45, cost:6, d:"Empties the hopper into the dish at once."},
+  {id:"rain",g:"❉︎",nm:"Rain",cd:45, cost:6, d:"Empties the hopper into the dish at once."},
   {id:"lucky",g:"✦",nm:"Lucky Ball",cd:60, cost:10, d:"Drops a rainbow ball, worth twenty-five times as much."},
 ];
 
@@ -3381,7 +3399,7 @@ function bhStep(dt){
     const a=rnd(0,TAU); BH.vx=Math.cos(a); BH.vy=Math.sin(a);
     BH.init=true;
   }
-  BH.ph+=dt;
+  BH.ph=(BH.ph+dt)%3600;
   // it travels like a ball: constant speed, reflecting off the dish
   const spd=(70+val("pulse")*14)*S;
   BH.x+=BH.vx*spd*dt; BH.y+=BH.vy*spd*dt;
@@ -3429,7 +3447,8 @@ function drawBH(x){
   // its reach, stated faintly — everything inside is fair game
   const P=pet();
   x.globalAlpha=.14; x.strokeStyle=P.arc; x.lineWidth=1.4;
-  x.setLineDash([5*S,7*S]); x.lineDashOffset=-BH.ph*14*S;
+  const dashLen=12*S;                       // 5 + 7, one full pattern
+  x.setLineDash([5*S,7*S]); x.lineDashOffset=-((BH.ph*14*S)%dashLen);
   x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
   x.setLineDash([]); x.globalAlpha=1;
   const glow=Math.max(r*2.9*k,15*S);
@@ -3442,7 +3461,7 @@ function drawBH(x){
   // accretion: two arcs, opposite sides, spinning
   x.strokeStyle=P.arc; x.globalAlpha=.9; x.lineWidth=Math.max(1.1,r*.22);
   x.lineCap="round";
-  const a=BH.ph*3.1;
+  const a=(BH.ph*3.1)%TAU;
   const ar=Math.max(r*1.42*k,6*S);
   x.beginPath(); x.arc(BH.x,BH.y,ar,a,a+2.2); x.stroke();
   x.beginPath(); x.arc(BH.x,BH.y,ar,a+Math.PI,a+Math.PI+1.4); x.stroke();
@@ -3458,10 +3477,11 @@ function goRoom(to){
   if(room===to) return;
   room=to; camBusy=1; obsChanged();
   app.classList.toggle("wizRoom",to==="wiz");
-  setTimeout(()=>{ camBusy=0; world.classList.remove("moving");
+  setTimeout(()=>{ camBusy=0;
     if(to==="wiz"){ layoutWizards(); syncWizGrid(); } },440);
+  setTimeout(()=>world.classList.remove("moving"),560);
   world.classList.add("slide"); world.classList.add("moving");
-  world.style.setProperty("--cam", to==="wiz"?"0%":"-50%");
+  world.style.transform = to==="wiz" ? "translateY(0%)" : "translateY(-50%)";
   document.documentElement.style.setProperty("--chrome-b",
     to==="wiz" ? (document.getElementById("wizChrome").offsetHeight+"px") : "var(--dock-h)");
   lastChromeH=0;
