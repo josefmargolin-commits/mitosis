@@ -779,27 +779,7 @@ input{font:inherit;color:inherit}
   font-size:10px;letter-spacing:.15em;text-transform:uppercase;
   color:var(--ink-3);text-decoration:underline;text-underline-offset:4px;
 }
-/* the screen edge catches fire on a long combo — intensity is set inline from
-   the combo count, the breathing is the animation */
-#frenzy{
-  position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;
-  transition:opacity .42s ease;will-change:opacity;
-}
-/* the gradient lives on a child so the breathing can be pure opacity */
-#frenzy::after{
-  content:"";position:absolute;inset:0;
-  background:
-    radial-gradient(150% 118% at 50% 50%,
-      rgba(255,146,48,0)    38%,
-      rgba(255,143,44,.030) 54%,
-      rgba(255,138,40,.065) 66%,
-      rgba(253,128,34,.110) 76%,
-      rgba(249,116,29,.163) 85%,
-      rgba(243,104,24,.220) 93%,
-      rgba(238,95,20,.270)  100%);
-}
-#frenzy.on::after{animation:fzBreathe 2.6s ease-in-out infinite}
-@keyframes fzBreathe{0%,100%{opacity:.74} 50%{opacity:1}}
+/* the screen edge used to catch fire on a long combo. The number says it. */
 /* ---- daily missions, laid out like the reference ---- */
 .msTop{display:flex;align-items:center;gap:9px;margin:2px 2px -2px}
 .msTop .k{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
@@ -1376,7 +1356,6 @@ input{font:inherit;color:inherit}
 
   <div id="banner"></div>
   <div id="toast"></div>
-  <div id="frenzy"></div>
   <div id="wb"><div class="panel">
     <span class="tile"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3.6"/><path d="M12 1.4v3.2M12 19.4v3.2M1.4 12h3.2M19.4 12h3.2"/></svg></span>
     <h2>Welcome back</h2>
@@ -1756,19 +1735,22 @@ const maxed=k=>lv(k)>=UP[k].max;
 const curScale=()=>SCALES[Math.min(G.strain,SCALES.length-1)];
 /* a rewarded-ad window. The multiplier and the countdown are real; only the
    ad call itself is stubbed, since no ad SDK can load inside one HTML file. */
-let x2Until=0;
+let x2Until=0, luckUntil=0;
 /* one cooldown per reward so a watch is worth something */
 function adReady(k){ return !G.ad || !G.ad[k] || G.ad[k]<=el; }
 function adWait(k){ return Math.ceil((G.ad[k]-el)/60)+"m"; }
 const x2On=()=>x2Until>el;
+const luckOn=()=>luckUntil>el;
+const LUCK_SECS=120;
 const yieldMul=()=>val("yield")*curScale().mult*(x2On()?2:1);
+/* a hundred breaks to double your money — and inside a rainbow window the
+   same hundred take you to five, because the step goes up with the ceiling */
 const COMBO_STEP=0.01;
-/* a hundred breaks to double your money, and the ad window lifts the ceiling
-   rather than stacking beside it, so the number on screen is the whole story */
-const comboCap=()=>2;
-const comboMul=()=>Math.min(comboCap(), 1+combo*COMBO_STEP);
-/* what the player actually earns, and what the popup shows: the streak caps at
-   2x, the ad doubles on top of it, so the ceiling is 4x */
+const comboStep=()=>luckOn()?COMBO_STEP*4:COMBO_STEP;
+const comboCap=()=>luckOn()?5:2;
+const comboMul=()=>Math.min(comboCap(), 1+combo*comboStep());
+/* what the player actually earns, and what the popup shows: the streak caps
+   at 2x, 5x inside a rainbow window, and the ad doubles on top of either */
 const totalMul=()=>comboMul()*(x2On()?2:1);
 const nextScaleCost=()=>SCALE_INCOME*SCALE_MINUTES*scaleMul();
 const PAL=()=>(PALETTES.find(p=>p.id===G.pal)||PALETTES[0]).c;
@@ -2132,6 +2114,9 @@ const timers={chain:0,storm:0,stormT:0};
 
 
 const RBOW=["#FF3B57","#FF7A1A","#FFD400","#3CD070","#22B8FF","#7A5CFF","#FF4FD0"];
+/* the same seven as components, because a canvas gradient wants numbers */
+const RBOW_RGB=["255,59,87","255,122,26","255,212,0","60,208,112","34,184,255","122,92,255","255,79,208"];
+const rbBand=(off)=>{ const i=Math.floor(el*6+(off||0)); return ((i%RBOW.length)+RBOW.length)%RBOW.length; };
 /* the band each ball sits in walks forward about six a second, and each ball
    starts somewhere else in the ring, so a dishful never marches in step */
 function rbIdx(b,off){
@@ -2150,37 +2135,28 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
   return {id:++seq,tier,cls,kind:kind||"plain",
     x,y,vx,vy,r:tierRadius(tier,cls),
     mass:mass===undefined?cls.mass:mass,
-    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,rot:rnd(0,TAU),
+    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,luck:false,rot:rnd(0,TAU),
     wob:.019,wp:rnd(0,TAU),ws:rnd(.5,.9),sq:0,sqA:0,hit:0,pulse:rnd(0,TAU),lastHit:0};
 }
-function dropKind(){
+function dropKind(bonus){
+  const p=val("purity")+(bonus||0);
   const r=Math.random();
-  if(r<val("purity")) return "golden";
-  if(r<val("purity")+0.06) return "unstable";
+  if(r<p) return "golden";
+  if(r<p+0.06) return "unstable";
   return "plain";
 }
+const VENT_LUCKY=0.035;
 function bumpCombo(){
   combo++; comboT=1.55;   // Streak used to stretch this
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
   objProg("combo",0,combo);
-  const c=document.getElementById("combo"), m=totalMul(), cap=2*(x2On()?2:1);
+  const c=document.getElementById("combo"), m=totalMul(), cap=comboCap()*(x2On()?2:1);
   const k=(m-1)/(cap-1);
   c.textContent="×"+m.toFixed(2);
   c.classList.toggle("max", m>=cap-1e-9);
   // it warms as it climbs, so the number is not the only thing telling you
   c.style.setProperty("--cg", k<.34?"#E8A200":k<.68?"#FF6B2C":"#FF3B57");
   c.classList.remove("on"); void c.offsetWidth; c.classList.add("on");
-  setFrenzy(combo);
-}
-/* nothing below five, then it climbs to full by twenty — a long combo should
-   feel like it is running away with you without drowning the dish */
-function setFrenzy(n){
-  const f=document.getElementById("frenzy"); if(!f) return;
-  const on=n>=5;
-  f.classList.toggle("on",on);
-  // .30 at the fifth break up to .68 at the twentieth: against a .27 peak in
-  // the gradient that is at most a fifth of an alpha in the corners
-  f.style.opacity=on?(.30+Math.min(.38,(n-5)*.026)).toFixed(2):0;
 }
 function earn(base,x,y,col){
   const v=base*yieldMul()*comboMul();
@@ -2242,6 +2218,8 @@ function fuse(a,b){
   const n=makeBall(nt,x,y,(a.vx+b.vx)*.5,(a.vy+b.vy)*.5,cls,
     a.mass+b.mass, (a.kind==="golden"||b.kind==="golden")?"golden":"plain");
   n.wob=.20; n.sq=.26; n.sqA=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2; n.born=el-0.2; n.skinFade=el;
+  n.luck=a.luck||b.luck;
+  clampIn(n);
   balls.push(n);
 
   G.stat.merges++; objProg("merge",1);
@@ -2291,6 +2269,7 @@ function strike(b,dmg,src,forced){
 }
 
 function divide(b){
+  if(b.luck){ b.luck=false; luckWindow(b.x,b.y); }
   remove(b);
   const col=PAL()[b.tier];
   const base=NOTE[b.tier];
@@ -2298,7 +2277,7 @@ function divide(b){
 
   if(b.tier>=LAST){ finish(b,col); return; }
 
-  const hard=BALL_LIMIT;
+  const hard=ballCeil();
   const ct=b.tier+1, cr=tierRadius(ct,b.cls);
   const ax=rnd(0,TAU), kick=52+b.r*2.0;
   const kids=[];
@@ -2309,6 +2288,7 @@ function divide(b){
       b.vx*.55+Math.cos(a)*kick, b.vy*.55+Math.sin(a)*kick,
       b.cls, b.mass/2, b.kind==="golden"?"golden":"plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
+    clampIn(nb);
     balls.push(nb); kids.push(nb);
   }
 
@@ -2345,6 +2325,7 @@ function divide(b){
 function finish(b,col){
   G.stat.pops++; objProg("pop",1);
   if(b.kind==="golden"){ G.stat.gold++; objProg("gold",1); }
+  if(b.luck){ b.luck=false; luckWindow(b.x,b.y); }
   for(let i=0;i<11;i++){
     const a=rnd(0,TAU),s=rnd(35,180)*S;
     goo(b.x,b.y,rnd(2.4,6)*S,col,rnd(.26,.48),Math.cos(a)*s,Math.sin(a)*s);
@@ -2362,6 +2343,7 @@ function finish(b,col){
 
 /* rupture: take the whole lineage in one hit */
 function burstWhole(b){
+  if(b.luck){ b.luck=false; luckWindow(b.x,b.y); }
   remove(b);
   const col=PAL()[b.tier];
   const n=Math.pow(2,LAST-b.tier);
@@ -2535,7 +2517,8 @@ function fireBoost(bo){
     for(let i=0;i<SLOTS;i++) if(wiz(i)&&(best<0||wiz(i).rank>wiz(best).rank)) best=i;
     if(best>=0){
       const cls=WRANK[wiz(best).rank], t=Math.min(cls.tier,DROPT), rr=tierRadius(t,cls);
-      balls.push(makeBall(t, clamp(castX(best),rr+2,W-rr-2), AR.y0+rr, rnd(-20,20)*S, 230*S, cls, undefined, "golden"));
+      const lb=makeBall(t, clamp(castX(best),rr+2,W-rr-2), AR.y0+rr, rnd(-20,20)*S, 230*S, cls, undefined, "golden");
+      lb.luck=true; balls.push(lb);
       banner("LUCKY BALL");
     } else toast("No wizards to draw from");
   }
@@ -2824,6 +2807,22 @@ const VENT_ROLL=[
   {tier:1, p:.10},   // orange
   {tier:0, p:.05},   // yellow
 ];
+/* refreshes rather than stacks: a second rainbow inside the window buys you
+   two more minutes, not ten times the money */
+function luckWindow(x,y){
+  const fresh=!luckOn();
+  luckUntil=el+LUCK_SECS;
+  banner(fresh?"RAINBOW ×5":"×5 EXTENDED");
+  for(let i=0;i<26;i++){
+    const a=rnd(0,TAU), sp=rnd(80,420)*S;
+    goo(x,y,rnd(2.5,6)*S,RBOW[i%RBOW.length],rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
+  }
+  for(let i=0;i<7;i++)
+    rings.push({x,y,r:8*S,R:(70+i*26)*S,t:-0,life:.5+i*.05,col:RBOW[i%RBOW.length],w:2.4});
+  shake=Math.max(shake,7); flash=Math.max(flash,.22);
+  for(let i=0;i<5;i++) chime(392*semi(LADDER[i*2]),{vol:.13,len:1.5,delay:i*.07,wet:.6});
+  haptic([14,40,14,40,22]);
+}
 function ventRoll(){
   let r=Math.random();
   for(const v of VENT_ROLL){ r-=v.p; if(r<=0) return v.tier; }
@@ -2832,7 +2831,7 @@ function ventRoll(){
 function ventBall(){
   if(!ready||W<10) return false;
   if(dishFull()) return false;                // never fight a full dish
-  const cls=WRANK[0], kind=dropKind();
+  const cls=WRANK[0], kind=dropKind(VENT_LUCKY);
   // a lucky one is never smaller than the drop size, whatever it rolled
   const t=kind==="golden" ? Math.min(ventRoll(),DROPT) : ventRoll();
   const up=DROPT-t;                                   // rungs above the drop
@@ -2843,7 +2842,7 @@ function ventBall(){
   const kick=clamp(1-up*.075,.66,1.12);
   const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S*kick, cls,
                    VENT.mass*Math.pow(1.6,up), kind);
-  b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el;
+  b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el; b.luck=kind==="golden";
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   // the nozzle: a tight ring at the lip, and a wider one a beat later as the
@@ -2902,6 +2901,7 @@ function castBall(i){
   const rr=tierRadius(t,cls);
   const x=clamp(castX(i)+rnd(-9,9), rr+2, Math.max(rr+3,W-rr-2));
   const b=makeBall(t, x, AR.y0+rr*0.9, rnd(-22,22)*S, rnd(190,260)*S, cls, undefined, kind);
+  b.luck=kind==="golden";
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   for(let k=0;k<6;k++){
@@ -3525,25 +3525,28 @@ function drawBH(x){
   const r=bhR()*grow, R=bhPull()*born, k=1+BH.fed*.16;
   x.save();
   // its reach, stated faintly — everything inside is fair game
-  const P=pet();
-  x.globalAlpha=.14; x.strokeStyle=P.arc; x.lineWidth=1.4;
+  // inside a rainbow window he runs the same colours the ball did
+  const P=pet(), rb=luckOn(), i0=rbBand(0);
+  const ARC=rb?RBOW[i0]:P.arc, GLOW=rb?RBOW_RGB[i0]:P.glow;
+  x.globalAlpha=.14; x.strokeStyle=ARC; x.lineWidth=1.4;
   const dashLen=12*S;                       // 5 + 7, one full pattern
   x.setLineDash([5*S,7*S]); x.lineDashOffset=-((BH.ph*14*S)%dashLen);
   x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
   x.setLineDash([]); x.globalAlpha=1;
   const glow=Math.max(r*2.9*k,15*S);
   const g=x.createRadialGradient(BH.x,BH.y,r*.6,BH.x,BH.y,glow);
-  g.addColorStop(0,"rgba("+P.glow+",.44)");
-  g.addColorStop(.45,"rgba("+P.glow+",.20)");
-  g.addColorStop(1,"rgba("+P.glow+",0)");
+  g.addColorStop(0,"rgba("+GLOW+",.44)");
+  g.addColorStop(.45,"rgba("+(rb?RBOW_RGB[rbBand(2)]:P.glow)+",.20)");
+  g.addColorStop(1,"rgba("+GLOW+",0)");
   x.fillStyle=g;
   x.beginPath(); x.arc(BH.x,BH.y,glow,0,TAU); x.fill();
   // accretion: two arcs, opposite sides, spinning
-  x.strokeStyle=P.arc; x.globalAlpha=.9; x.lineWidth=Math.max(1.1,r*.22);
+  x.strokeStyle=ARC; x.globalAlpha=.9; x.lineWidth=Math.max(1.1,r*.22);
   x.lineCap="round";
   const a=(BH.ph*3.1)%TAU;
   const ar=Math.max(r*1.42*k,6*S);
   x.beginPath(); x.arc(BH.x,BH.y,ar,a,a+2.2); x.stroke();
+  if(rb) x.strokeStyle=RBOW[rbBand(3)];
   x.beginPath(); x.arc(BH.x,BH.y,ar,a+Math.PI,a+Math.PI+1.4); x.stroke();
   // and the hole
   x.globalAlpha=1; x.fillStyle=P.core;
@@ -3575,14 +3578,20 @@ function goRoom(to){
 }
 
 /* ---------------------------------------------------------------- sim */
+function clampIn(b){
+  if(b.r*2>=W) b.x=W/2;
+  else b.x=clamp(b.x,b.r,W-b.r);
+  b.y=clamp(b.y,AR.y0+b.r,Math.max(AR.y0+b.r,AR.y1-b.r));
+}
 function areaSum(){ let a=0; for(const b of balls) a+=b.r*b.r*Math.PI; return a; }
 function arenaArea(){ return W*Math.max(1,AR.y1-AR.y0); }
 /* The dish is full at just under half covered. BALL_LIMIT is not a rule, it
    is a frame-rate guard: measured here, 200 balls cost 4.7ms a frame, 500
    cost 10 and 800 cost 16, which is the whole budget. A phone has perhaps a
    third of the speed, so it stops well short. */
-const BALL_LIMIT=220;
-const dishFill=()=>Math.max(areaSum()/(arenaArea()*0.46), balls.length/BALL_LIMIT);
+const BALL_SOFT=520;
+const ballCeil=()=>app.classList.contains("lowfx")?260:BALL_SOFT;
+const dishFill=()=>Math.max(areaSum()/(arenaArea()*0.85), balls.length/ballCeil());
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
@@ -3693,6 +3702,7 @@ function step(dt){
   // one pass for both jobs: same-colour balls reach for each other and fuse,
   // everything else just bumps
   const seek=190*S, seek2=seek*seek;   // fixed: this was the Seek card
+  const dense=dishFill()>.55;
   // sweep and prune on x: with a dish full of small balls the old all-pairs
   // loop was the frame budget. sorted order also means we can stop early.
   balls.sort((p,q)=>(p.x-p.r)-(q.x-q.r));
@@ -3742,6 +3752,25 @@ function step(dt){
     }
   }
 
+  // the dish is squeezed, so settle it again and then put the walls back
+  if(dense){
+    for(let i=0;i<balls.length;i++){
+      const a=balls[i], reach=a.x+a.r;
+      for(let j=i+1;j<balls.length;j++){
+        const b=balls[j];
+        if(b.x-b.r>reach) break;
+        const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy, rr=a.r+b.r;
+        if(d2>=rr*rr||d2===0) continue;
+        if(a.mate===b) continue;                 // a locked pair wants to sink
+        const d=Math.sqrt(d2), ov=(rr-d)*.5;     // half, so the pass is gentle
+        const nx=dx/d, ny=dy/d, ma=a.r*a.r, mb=b.r*b.r, mt=ma+mb;
+        a.x-=nx*ov*(mb/mt); a.y-=ny*ov*(mb/mt);
+        b.x+=nx*ov*(ma/mt); b.y+=ny*ov*(ma/mt);
+      }
+    }
+  }
+  for(const b of balls) clampIn(b);
+
   // resolve the locks: hold contact long enough and they become one
   for(let i=balls.length-1;i>=0;i--){
     const a=balls[i], b=a.mate;
@@ -3768,7 +3797,8 @@ function step(dt){
   }
   for(let i=trail.length-1;i>=0;i--){ trail[i].t+=dt; if(trail[i].t>.34) trail.splice(i,1); }
 
-  if(comboT>0){ comboT-=dt; if(comboT<=0){ combo=0; document.getElementById("combo").classList.remove("on"); setFrenzy(0); } }
+  if(comboT>0){ comboT-=dt; if(comboT<=0){ combo=0; document.getElementById("combo").classList.remove("on"); } }
+  if(luckUntil && luckUntil<=el){ luckUntil=0; toast("Rainbow window over"); }
   shake*=Math.pow(.02,dt); flash*=Math.pow(.004,dt);
 }
 
@@ -3939,10 +3969,14 @@ function ballXform(x,b){
 }
 
 /* the agar membrane: many points, a slow low-amplitude undulation */
+let MSEG=44;
 function membrane(x,b,r){
   x.beginPath();
-  const N=44, L=FORM.lobes;
-  const amp=(b.wob+FORM.rough)*clamp(r/(26*S),.25,1);
+  const L=FORM.lobes;
+  const amp0=(b.wob+FORM.rough)*clamp(r/(26*S),.25,1);
+  // a nearly round ball reads the same at half the segments
+  const N=Math.max(14, Math.round(MSEG*(amp0<.05?.45:amp0<.12?.7:1)));
+  const amp=amp0;
   for(let i=0;i<=N;i++){
     const a=i/N*TAU;
     const w=1+amp*(Math.sin(a*L+b.wp)*.46+Math.sin(a*(L*2+1)-b.wp*1.3)*.27+Math.sin(a*(L*3+2)+b.wp*.6)*.15);
@@ -4138,6 +4172,9 @@ function draw(){
   const sh=(G.opt.shake&&!REDUCED)?shake:0;
   const ox=sh?rnd(-sh,sh):0, oy=sh?rnd(-sh,sh):0;
   const pal=PAL();
+  const lean=app.classList.contains("lowfx");
+  MSEG=lean?22:44;
+  const packed=lean||dishFill()>.72;
 
   /* goo layer — the magnetised silhouette */
   xGoo.setTransform(GS,0,0,GS,0,0);
@@ -4151,8 +4188,10 @@ function draw(){
     // a floor on the goo radius: below it the blur spreads a small ball so
     // thin that the alpha threshold drops it, and it flickers
     const gr=Math.max(b.r,11*S);
-    membrane(xGoo,b,gr*1.02);
-    xGoo.fillStyle=RIM(gc); xGoo.fill();
+    if(!lean){
+      membrane(xGoo,b,gr*1.02);
+      xGoo.fillStyle=RIM(gc); xGoo.fill();
+    }
     membrane(xGoo,b,gr*.90);
     xGoo.fillStyle=gc; xGoo.fill();
     xGoo.restore();
@@ -4185,7 +4224,7 @@ function draw(){
     const lock=b.mate?clamp(b.fuseT/fuseTime(b.tier),0,1):0;
     const grow=b.skinFade===undefined?1:clamp((el-b.skinFade)/.34,0,1);
     const skinA=(1-lock)*grow;
-    if(skinA>.01){
+    if(skinA>.01 && !packed){
       xFx.save();
       xFx.beginPath(); xFx.arc(0,0,r*.87,0,TAU); xFx.clip();
       xFx.globalAlpha=skinA;
@@ -4728,6 +4767,21 @@ function holdRepeat(b,once){
   for(const ev of ["pointerup","pointercancel","pointerleave"])
     b.addEventListener(ev,stop,{passive:true});
 }
+function buyFx(b){
+  if(!b||!b.animate) return;
+  const lv=b.querySelector(".lv"), ring=b.querySelector(".rfg");
+  if(lv&&lv.animate) lv.animate([
+    {transform:"scale(1)"},{transform:"scale(1.55)",offset:.28},{transform:"scale(1)"}
+  ],{duration:260,easing:"cubic-bezier(.2,1.7,.35,1)"});
+  if(ring&&ring.animate) ring.animate([
+    {strokeWidth:3,opacity:1},{strokeWidth:6,opacity:.55,offset:.24},{strokeWidth:3,opacity:1}
+  ],{duration:300,easing:"ease-out"});
+  b.animate([
+    {boxShadow:"0 0 0 0 rgba(34,197,94,0), 0 1px 2px rgba(15,23,32,.05)"},
+    {boxShadow:"0 0 0 5px rgba(34,197,94,.24), 0 1px 2px rgba(15,23,32,.05)",offset:.2},
+    {boxShadow:"0 0 0 0 rgba(34,197,94,0), 0 1px 2px rgba(15,23,32,.05)"}
+  ],{duration:360,easing:"ease-out"});
+}
 function buy(k){
   if(maxed(k)){ toast(UP[k].nm+" is fully developed"); return; }
   const c=cost(k);
@@ -4735,6 +4789,8 @@ function buy(k){
   G.bio-=c; G.up[k]++;
   tick(520+lv(k)*9,.1);
   haptic(9); save(); syncCards();
+  const card=document.querySelector('#cards .card[data-k="'+k+'"]');
+  buyFx(card);
   if(k==="pulse"&&lv(k)===1) toast("Idle hits are on — they keep going while you are away");
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
