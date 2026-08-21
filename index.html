@@ -1587,9 +1587,6 @@ const UP={
            nm:"Multiply",base:90,gr:1.24, max:50,
            d:"Chance a split splits its halves again, all the way down.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
-  cap:    {tab:"arena",g:"⬢",nm:"Space",base:46,gr:1.20,max:46,
-           d:"How many balls the dish will hold.",
-           v:l=>16+l*3, fmt:l=>(16+l*3)+" max"},
   purity: {tab:"arena",g:"✦",nm:"Income",base:130,gr:1.24, max:40,
            d:"Chance a new ball comes in lucky — rainbow, drop sized, and worth twenty-five times over.",
            v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
@@ -2301,7 +2298,7 @@ function divide(b){
 
   if(b.tier>=LAST){ finish(b,col); return; }
 
-  const hard=val("cap")+22;
+  const hard=BALL_LIMIT;
   const ct=b.tier+1, cr=tierRadius(ct,b.cls);
   const ax=rnd(0,TAU), kick=52+b.r*2.0;
   const kids=[];
@@ -2778,16 +2775,16 @@ function syncWizGrid(){
   const up=document.getElementById("goUp");
   if(up) up.classList.toggle("alert",(can&&hasRoom)||anyMerge());
   layoutWizards();
-  const fill=clamp(Math.max(balls.length/val("cap"), areaSum()/(arenaArea()*0.42)),0,1);
+  const fill=clamp(dishFill(),0,1);
   const bar=document.getElementById("apBar");
   if(bar){ bar.firstElementChild.style.width=(fill*100).toFixed(0)+"%"; bar.classList.toggle("hot",fill>0.85); }
   const apn=document.getElementById("apN");
-  if(apn) apn.textContent=balls.length+"/"+val("cap");
+  if(apn) apn.textContent=balls.length+(balls.length===1?" ball":" balls");
 }
 
 /* ---- the loop: every wizard runs whether or not you are watching ---- */
 function stepWizards(dt){
-  const full=balls.length>=val("cap")||areaSum()>arenaArea()*0.42;
+  const full=dishFull();
   for(let i=0;i<SLOTS;i++){
     const z=WZ[i]; if(!z) continue;
     z.bob+=dt*1.6;
@@ -2815,7 +2812,7 @@ function stepWizards(dt){
 const VENT={t:3.5, max:3.5, mass:8, n:0};
 function ventBall(){
   if(!ready||W<10) return false;
-  if(balls.length>=val("cap")) return false;  // never fight the dish's own cap
+  if(dishFull()) return false;                // never fight a full dish
   const cls=WRANK[0], t=DROPT, rr=tierRadius(t,cls);
   const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
   const y=AR.y1-rr*1.05;
@@ -3547,6 +3544,13 @@ function goRoom(to){
 /* ---------------------------------------------------------------- sim */
 function areaSum(){ let a=0; for(const b of balls) a+=b.r*b.r*Math.PI; return a; }
 function arenaArea(){ return W*Math.max(1,AR.y1-AR.y0); }
+/* The dish is full at just under half covered. BALL_LIMIT is not a rule, it
+   is a frame-rate guard: measured here, 200 balls cost 4.7ms a frame, 500
+   cost 10 and 800 cost 16, which is the whole budget. A phone has perhaps a
+   third of the speed, so it stops well short. */
+const BALL_LIMIT=220;
+const dishFill=()=>Math.max(areaSum()/(arenaArea()*0.46), balls.length/BALL_LIMIT);
+const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
    Balls used to drift in behind the rails and sit there, out of reach and out
@@ -4313,7 +4317,7 @@ function draw(){
     g.addColorStop(1,"rgba(255,196,64,0)");
     xFx.save(); xFx.fillStyle=g; xFx.fillRect(0,0,W,H); xFx.restore();
   }
-  const fill=Math.max(balls.length/val("cap"), areaSum()/(arenaArea()*0.44));
+  const fill=dishFill();
   if(fill>.88){
     // a two-stop ramp over 90px banded badly and left a seam where the rect
     // began. Taller, and eased across eight stops so it dies out long before
