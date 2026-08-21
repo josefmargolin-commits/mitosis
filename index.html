@@ -1233,20 +1233,29 @@ input{font:inherit;color:inherit}
    The bottom used to carry a hint, an upgrade button, summon and the way
    out, four deep. Summon sits in the top bar between the two currencies,
    upgrades are a dot beside the board, and the bottom is the way out. */
-#summonTop{
-  display:none;align-items:center;gap:7px;pointer-events:auto;flex:none;
-  padding:8px 14px;border-radius:999px;border:0;
-  background:linear-gradient(180deg,#FFDE7A,#F5B301 46%,#DC9A05);color:#3D2B02;
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 2.5px 0 #A9760A,0 5px 12px rgba(180,120,0,.28);
-  font-family:var(--font);font-weight:600;font-size:12px;
+#summonBtn{
+  position:absolute;left:50%;top:-38px;transform:translateX(-50%);z-index:7;
+  width:78px;height:78px;border-radius:50%;border:0;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  background:linear-gradient(180deg,#FFE283,#F5B301 46%,#DC9A05);color:#3D2B02;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.62),inset 0 -3px 0 rgba(120,84,6,.3),
+             0 4px 0 #A9760A,0 8px 18px rgba(180,120,0,.34);
   transition:transform .1s ease, box-shadow .1s ease;
 }
-#app.wizRoom #summonTop{display:flex}
-#summonTop:active{transform:translateY(2.5px);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 0 0 #A9760A,0 2px 5px rgba(180,120,0,.28)}
-#summonTop .c{display:flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums;opacity:.85}
-#summonTop.no{background:linear-gradient(180deg,#F4F7FA,#E6ECF3);color:var(--ink-3);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8),0 2.5px 0 #CBD5E1}
+#summonBtn .hat{display:block;line-height:0;margin-top:-1px}
+#summonBtn .hat svg{width:26px;height:26px;display:block;fill:#3D2B02;opacity:.86}
+#summonBtn .t{font-family:var(--font);font-weight:800;font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+#summonBtn .c{display:flex;align-items:center;gap:3px;font-weight:700;font-size:11px;
+  font-variant-numeric:tabular-nums;opacity:.9;line-height:1.1}
+#summonBtn .c .cico{width:.85em;height:.85em}
+#summonBtn:active{transform:translateX(-50%) translateY(4px);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.62),0 0 0 #A9760A,0 3px 8px rgba(180,120,0,.34)}
+#summonBtn.no{background:linear-gradient(180deg,#F7FAFD,#E6ECF3);color:var(--ink-3);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.85),0 4px 0 #CBD5E1,0 8px 16px rgba(16,22,37,.16)}
+#summonBtn.no .hat svg{fill:var(--ink-3);opacity:.75}
+/* the button hangs over the lip, so the strip beneath it gets out of the way */
+#arenaStrip{padding-top:2px}
 
 /* the way into the upgrades sits in the middle of the board, where the eye
    already is, and looks like something the wizards would cast */
@@ -1288,9 +1297,76 @@ input{font:inherit;color:inherit}
   #bioWrap.l6 .n{font-size:20px}
   .pip.bio{width:27px;height:22px}
   .pip.bio svg{width:17px;height:17px}
-  #summonTop{padding:7px 10px;font-size:11px;gap:5px;min-width:0}
-  #summonTop .c{overflow:hidden;white-space:nowrap}
+  #summonBtn{width:66px;height:66px;top:-32px}
+  #summonBtn .hat svg{width:22px;height:22px}
+  #summonBtn .t{font-size:8.5px}
+  #summonBtn .c{font-size:10px}
   .tab{font-size:11px}
+}
+/* ---- the chest, and the case it opens ---------------------------------- */
+.wcell.chest{display:grid;place-items:center}
+.chestArt{display:block;line-height:0;width:64%;max-width:52px}
+.chestArt svg{width:100%;height:auto;display:block}
+.chestArt .lid{fill:#C88A2E}
+.chestArt .box{fill:#A9701F}
+.chestArt .lock{fill:#FFE08A;stroke:#7A4E08;stroke-width:.8}
+.wcell.chest .adb{
+  position:absolute;top:2px;right:2px;width:17px;height:17px;border-radius:50%;
+  background:linear-gradient(180deg,#A78BFA,#7C3AED);color:#fff;
+  display:grid;place-items:center;font-size:8px;
+  border:1.5px solid var(--panel);box-shadow:0 1.5px 4px rgba(16,22,37,.28);
+}
+.wcell.chest .cd{
+  position:absolute;inset:14%;border-radius:12px;display:none;place-items:center;
+  background:rgba(238,243,249,.93);font-weight:600;font-size:11px;color:var(--ink-2);
+}
+.wcell.chest.ready .chestArt{animation:chestBob 2.4s ease-in-out infinite}
+@keyframes chestBob{50%{transform:translateY(-3px) rotate(-2deg)}}
+.wcell.chest:not(.ready) .chestArt{filter:grayscale(.7) opacity(.6)}
+
+#case{position:absolute;inset:0;z-index:28;display:none;align-items:center;justify-content:center;
+  background:rgba(9,13,22,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);padding:18px}
+#case.on{display:flex}
+#case .cbox{width:100%;max-width:340px;background:var(--panel);border-radius:20px;
+  padding:16px 14px 14px;box-shadow:0 20px 50px rgba(9,13,22,.4);text-align:center}
+#case .chead .ct{display:block;font-family:var(--font);font-weight:800;font-size:20px}
+#case .chead .cs{display:block;font-size:10.5px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:2px}
+#case .creel{position:relative;height:96px;margin:13px 0 0;border-radius:14px;
+  background:var(--surface);overflow:hidden;border:1px solid var(--edge)}
+#case .creel::before,#case .creel::after{content:"";position:absolute;top:0;bottom:0;width:44px;z-index:2;
+  pointer-events:none}
+#case .creel::before{left:0;background:linear-gradient(90deg,var(--surface),rgba(244,247,250,0))}
+#case .creel::after{right:0;background:linear-gradient(270deg,var(--surface),rgba(244,247,250,0))}
+#case .marker{position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;z-index:3;
+  background:linear-gradient(180deg,#FF3B57,#B4122A);border-radius:2px;
+  box-shadow:0 0 10px rgba(255,59,87,.7)}
+#case .cstrip{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:center;gap:6px;
+  padding:0 6px;will-change:transform}
+#case .ctile{width:74px;height:82px;flex:none;border-radius:11px;background:var(--panel);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;
+  padding-bottom:7px;position:relative;overflow:hidden;border:1px solid var(--edge)}
+#case .ctile::before{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--rc)}
+#case .ctile .g{position:absolute;inset:0;background:
+  radial-gradient(120% 80% at 50% 108%, var(--rc), rgba(255,255,255,0) 68%);opacity:.30}
+#case .ctile canvas{position:static;display:block;width:42px;height:42px;margin-top:8px}
+#case .ctile .n{font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-2);position:relative}
+#case .cwon{min-height:40px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;margin-top:10px}
+#case .cwon .r{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--rc)}
+#case .cwon .n{font-family:var(--font);font-weight:800;font-size:19px;line-height:1.1}
+#case .cwon .s{font-size:10.5px;color:var(--ink-3)}
+#case .cgo{width:100%;margin-top:10px;padding:14px;border-radius:14px;border:0;
+  background:linear-gradient(180deg,#9B6BFF,#7C3AED);color:#fff;
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 3px 0 #5B23BE;
+  font-family:var(--font);font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+#case .cgo:active{transform:translateY(3px);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 0 0 #5B23BE}
+#case .cgo.done{background:linear-gradient(180deg,#3B4657,#1B2431);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.18),0 3px 0 #0E1620}
+@media (max-height:640px){
+  #case .creel{height:80px} #case .ctile{height:68px;width:64px}
+  #case .ctile canvas{width:34px;height:34px}
 }
 </style>
 
@@ -1311,6 +1387,11 @@ input{font:inherit;color:inherit}
         <canvas id="wfx"></canvas>
       </div>
       <div id="wizChrome">
+        <button id="summonBtn" aria-label="Summon a wizard">
+          <span class="hat"><svg viewBox="0 0 24 24"><path d="M12 2.2 18.6 15H5.4z"/><ellipse cx="12" cy="16.4" rx="9.2" ry="2.6"/><circle cx="12" cy="9.4" r="1.35" fill="#3D2B02" opacity=".55"/></svg></span>
+          <span class="t">Summon</span>
+          <span class="c"></span>
+        </button>
         <div id="arenaStrip">
           <span class="k">Arena</span>
           <div id="apBar"><i></i></div>
@@ -1355,7 +1436,6 @@ input{font:inherit;color:inherit}
 
   <div id="top">
     <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
-    <button id="summonTop"><span class="t">Summon</span><span class="c"></span></button>
     <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.8"/><path d="M6.2 8.4a7.2 7.2 0 0 1 6.1-3.4 7.2 7.2 0 0 0-5 4.9 7.2 7.2 0 0 0 .5 5 8.8 8.8 0 0 1-1.6-6.5z" fill="#fff" opacity=".55"/><circle cx="9.4" cy="8.8" r="1.9" fill="#fff" opacity=".8"/><path d="M18.4 4.2l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z" fill="#fff" opacity=".9"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
 
@@ -1372,6 +1452,12 @@ input{font:inherit;color:inherit}
   <div id="rwPill"></div>
   <canvas id="burst"></canvas>
   <div id="scrim"></div>
+  <div id="case"><div class="cbox">
+    <div class="chead"><span class="ct">Mage Case</span><span class="cs">Watch to open</span></div>
+    <div class="creel"><i class="marker"></i><div class="cstrip"></div></div>
+    <div class="cwon"></div>
+    <button class="cgo">Open</button>
+  </div></div>
   <div id="sheet">
     <div id="sheetHead">
       <div class="ic" id="sheetIcon">◆</div>
@@ -1460,6 +1546,22 @@ const WRANK=[
 ];
 WRANK.forEach((w,i)=>w.i=i);
 const SLOTS=16, WCOLS=4, TOPRANK=WRANK.length-1;
+const CHEST=SLOTS-1;                 // the bottom right corner
+const PLAY=SLOTS-1;                  // slots a wizard may actually stand in
+/* rarity, and what it is worth: the last two are the reason to open one */
+const CASE=[
+  {rank:0, p:.600, rar:"common",    c:"#4B7BE8", nm:"Common"},
+  {rank:1, p:.240, rar:"uncommon",  c:"#7C4DE8", nm:"Uncommon"},
+  {rank:2, p:.110, rar:"rare",      c:"#C247D8", nm:"Rare"},
+  {rank:3, p:.040, rar:"epic",      c:"#E8434F", nm:"Epic"},
+  {rank:4, p:.009, rar:"legendary", c:"#E8A200", nm:"Legendary"},
+  {rank:5, p:.001, rar:"mythic",    c:"#18C7A6", nm:"Mythic"},
+];
+function caseRoll(){
+  let r=Math.random();
+  for(const c of CASE){ r-=c.p; if(r<=0) return c; }
+  return CASE[0];
+}
 
 /* one colour per rung, biggest first — so "two of the same colour" is
    something you read instantly across the dish */
@@ -2712,7 +2814,7 @@ const wDelay=i=>rDelay(wiz(i).rank);
 const wUpCost=i=>rUpCost(wiz(i).rank);
 const summonCost=()=>Math.ceil(120*Math.pow(1.66,G.summons|0)*scaleMul());
 const castX=i=>((i%WCOLS)+0.5)/WCOLS*W;
-const wizCount=()=>G.wiz.reduce((n,w)=>n+(w?1:0),0);
+const wizCount=()=>{ let n=0; for(let i=0;i<PLAY;i++) if(G.wiz[i]) n++; return n; };
 
 function throughput(){
   let t=0;
@@ -2740,8 +2842,14 @@ function buildWizGrid(){
   wgridEl.innerHTML="";
   for(let i=0;i<SLOTS;i++){
     const c=document.createElement("button");
-    c.className="wcell"; c.dataset.i=i;
-    c.innerHTML='<span class="plus">+</span><span class="pips"></span><span class="lv"></span>';
+    c.className="wcell"+(i===CHEST?" chest":""); c.dataset.i=i;
+    c.innerHTML = i===CHEST
+      ? '<span class="chestArt"><svg viewBox="0 0 24 24">'+
+          '<path class="lid" d="M3.4 10.4V8.2A3.2 3.2 0 0 1 6.6 5h10.8a3.2 3.2 0 0 1 3.2 3.2v2.2z"/>'+
+          '<rect class="box" x="3.4" y="10.9" width="17.2" height="8.1" rx="1.6"/>'+
+          '<rect class="lock" x="10.4" y="9" width="3.2" height="4.4" rx="1.1"/>'+
+        '</svg></span><span class="adb">▶</span><span class="cd"></span>'
+      : '<span class="plus">+</span><span class="pips"></span><span class="lv"></span>';
     wgridEl.appendChild(c);
   }
   layoutWizards();
@@ -2776,8 +2884,17 @@ function layoutWizards(){
 function syncWizGrid(){
   if(!wgridEl.children.length) return;
   if(wizDrag>=0){ paintDragHint(wizDrag); return; }
-  const hasRoom=wizCount()<SLOTS, can=G.bio>=summonCost();
-  for(let i=0;i<SLOTS;i++){
+  const hasRoom=wizCount()<PLAY, can=G.bio>=summonCost();
+  {
+    const ch=wgridEl.children[CHEST];
+    if(ch){
+      const ok=adReady("chest");
+      ch.classList.toggle("ready",ok);
+      const cd=ch.querySelector(".cd");
+      if(cd){ cd.style.display=ok?"none":"grid"; if(!ok) cd.textContent=adWait("chest"); }
+    }
+  }
+  for(let i=0;i<PLAY;i++){
     const el=wgridEl.children[i]; if(!el) continue;
     const w=wiz(i);
     el.classList.toggle("filled",!!w);
@@ -2865,6 +2982,72 @@ function luckWindow(x,y){
   shake=Math.max(shake,7); flash=Math.max(flash,.22);
   for(let i=0;i<5;i++) chime(392*semi(LADDER[i*2]),{vol:.13,len:1.5,delay:i*.07,wet:.6});
   haptic([14,40,14,40,22]);
+}
+/* ---- opening a case ------------------------------------------------------
+   Forty tiles roll past a marker and slow into the one that was already
+   decided: the roll happens first, the animation only shows it. */
+let caseBusy=false;
+function caseTile(c){
+  const e=document.createElement("div");
+  e.className="ctile"; e.style.setProperty("--rc",c.c);
+  e.innerHTML='<span class="g"></span>';
+  e.appendChild(wizPortrait(c.rank,42));
+  const n=document.createElement("span"); n.className="n";
+  n.textContent=WRANK[c.rank].nm; e.appendChild(n);
+  return e;
+}
+function openCase(){
+  if(caseBusy) return;
+  if(!adReady("chest")){ toast("Another case in "+adWait("chest")); return; }
+  const box=$("case"); box.classList.add("on");
+  const strip=box.querySelector(".cstrip"), won=box.querySelector(".cwon"),
+        go=box.querySelector(".cgo");
+  won.innerHTML=""; go.innerHTML="Watch \u25B6 Open"; go.className="cgo";
+  strip.style.transition="none"; strip.style.transform="translateX(0)";
+  strip.innerHTML="";
+  for(let i=0;i<14;i++) strip.appendChild(caseTile(caseRoll()));
+  go.onclick=()=>{
+    if(caseBusy) return;
+    if(go.classList.contains("done")){ box.classList.remove("on"); return; }
+    caseBusy=true; G.ad.chest=el+180; save();
+    const prize=caseRoll(), N=40, LAND=N-9, TILE=80;
+    strip.innerHTML="";
+    for(let i=0;i<N;i++) strip.appendChild(caseTile(i===LAND?prize:caseRoll()));
+    const mid=box.querySelector(".creel").clientWidth/2;
+    const target=-(LAND*TILE + TILE/2 + 6 - mid) + rnd(-16,16);
+    strip.style.transition="none"; strip.style.transform="translateX(0)";
+    void strip.offsetWidth;
+    strip.style.transition="transform 5.4s cubic-bezier(.11,.72,.12,1)";
+    strip.style.transform="translateX("+target+"px)";
+    go.textContent="Opening\u2026";
+    // the ticks thin out as it slows, which is the whole sound of a case
+    let t=0;
+    for(let k=26;k<540;k=Math.round(k*1.17)){ t+=k;
+      setTimeout(()=>{ tick(1500-Math.min(700,t*0.13),.05); haptic(3); },t); }
+    setTimeout(()=>{
+      caseBusy=false;
+      const slot=G.wiz.findIndex((w,i)=>i<PLAY&&!w);
+      let msg;
+      if(slot>=0){
+        G.wiz[slot]={id:++G.wizSeq,rank:prize.rank};
+        if(WZ[slot]){ WZ[slot].ph=Math.random(); WZ[slot].t=wDelay(slot)*.4; WZ[slot].popT=el; }
+        msg="Placed on the board";
+      } else {
+        const c2=Math.ceil(WRANK[prize.rank].mass*40*scaleMul());
+        G.bio+=c2; G.earned+=c2; G.totalEarned+=c2;
+        msg="Board full \u2014 sold for $"+fmt(c2);
+      }
+      won.innerHTML='<span class="r" style="--rc:'+prize.c+'">'+prize.nm+'</span>'+
+        '<span class="n">'+WRANK[prize.rank].nm+'</span><span class="s">'+msg+'</span>';
+      go.textContent="Take it"; go.className="cgo done";
+      celebrate(box.querySelector(".marker"), prize.rank>=3?70:40, prize.c, null, false);
+      chime(392,{vol:.16,len:1.1,wet:.55});
+      chime(588,{vol:.11,len:1,delay:.07,wet:.55});
+      if(prize.rank>=3){ chime(784,{vol:.12,len:1.4,delay:.15,wet:.6}); haptic([18,40,18,40,26]); }
+      else haptic(16);
+      save(); syncWizGrid(); syncWizPanel(true);
+    },5500);
+  };
 }
 function ventRoll(){
   let r=Math.random();
@@ -2966,7 +3149,7 @@ const actGate=()=>{
   lastAct=t; return true;
 };
 function summonAt(i){
-  if(wiz(i)||!actGate()) return;
+  if(i>=PLAY||wiz(i)||!actGate()) return;
   const c=summonCost();
   if(G.bio<c){ toast("Needs "+fmt(c)+" cash"); return; }
   G.bio-=c; G.summons=(G.summons|0)+1;
@@ -3066,12 +3249,12 @@ function sheetWizards(){
 }
 function syncWizPanel(force){
   // the panel is gone; summon lives in the top bar now
-  const st=document.getElementById("summonTop");
+  const st=document.getElementById("summonBtn");
   if(st){
-    const cost=summonCost(), can=G.bio>=cost, full=wizCount()>=SLOTS;
+    const cost=summonCost(), can=G.bio>=cost, full=wizCount()>=PLAY;
     st.className=(can&&!full)?"":"no";
-    st.querySelector(".t").textContent=full?"Board full":"Summon";
-    st.querySelector(".c").innerHTML=full?"":(ICO_MASS+" "+fmt(cost));
+    st.querySelector(".t").textContent=full?"Full":"Summon";
+    st.querySelector(".c").innerHTML=full?"—":(ICO_MASS+fmt(cost));
   }
   const p=document.getElementById("wizPanel"); if(!p) return;
   const i=wizSel, w=wiz(i);
@@ -3118,7 +3301,7 @@ function syncWizPanel(force){
   p.appendChild(opn);
 
   // always buyable: this is how you get a second of something to merge
-  const cost=summonCost(), can=G.bio>=cost, full=wizCount()>=SLOTS;
+  const cost=summonCost(), can=G.bio>=cost, full=wizCount()>=PLAY;
   const sb=document.createElement("button");
   sb.className="wpSummon"+(can&&!full?"":" no");
   sb.innerHTML=full ? "Board full — merge to make room"
@@ -3623,7 +3806,14 @@ function clampIn(b){
   b.y=clamp(b.y,AR.y0+b.r,Math.max(AR.y0+b.r,AR.y1-b.r));
 }
 function areaSum(){ let a=0; for(const b of balls) a+=b.r*b.r*Math.PI; return a; }
-function arenaArea(){ return W*Math.max(1,AR.y1-AR.y0); }
+function dockFull(){
+  const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dock-h"));
+  return isFinite(v)&&v>0?v:152;
+}
+function arenaArea(){
+  const floor=Math.min(AR.y1, H-dockFull());   // the shelf-open floor
+  return W*Math.max(1, floor-AR.y0);
+}
 /* The dish is full at just under half covered. BALL_LIMIT is not a rule, it
    is a frame-rate guard: measured here, 200 balls cost 4.7ms a frame, 500
    cost 10 and 800 cost 16, which is the whole budget. A phone has perhaps a
@@ -5831,7 +6021,7 @@ function tickUI(dt){
       vb.classList.toggle("full",k>=.999);
     }
     if(room==="wiz"){ syncWizGrid(); syncWizPanel(); }
-    else { const up=$("goUp"); if(up) up.classList.toggle("alert",(G.bio>=summonCost()&&wizCount()<SLOTS)||anyMerge()); }
+    else { const up=$("goUp"); if(up) up.classList.toggle("alert",(G.bio>=summonCost()&&wizCount()<PLAY)||anyMerge()); }
     if(G.tab==="strain"){
       if(!PC||!PC.card.isConnected){ const cc=$("cards"); cc.innerHTML=""; buildStrainCard(cc); }
       else syncStrainCard();
@@ -5952,6 +6142,7 @@ function actOn(from,to){
       else { syncWizGrid(); syncWizPanel(); }
       return;
     }
+    if(from===CHEST){ openCase(); return; }
     // a plain tap only ever selects — merging is a drag, so the two never fight
     if(wiz(from)){
       if(wizSel===from){                     // tap your selection again to force a cast
@@ -6081,11 +6272,12 @@ $("howto").onclick=tutStart;
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
 $("wizUpBtn").onclick=sheetWizards;
-holdRepeat($("summonTop"),function(){
+$("case").onclick=e=>{ if(e.target.id==="case"&&!caseBusy) $("case").classList.remove("on"); };
+holdRepeat($("summonBtn"),function(){
   const cost=summonCost();
-  if(wizCount()>=SLOTS){ toast("Merge two of a kind to free a slot"); return false; }
+  if(wizCount()>=PLAY){ toast("Merge two of a kind to free a slot"); return false; }
   if(G.bio<cost){ toast("Needs $"+fmt(cost)+" to summon"); return false; }
-  const e=G.wiz.indexOf(null);
+  const e=G.wiz.findIndex((w,i)=>i<PLAY&&!w);
   if(e<0) return false;
   summonAt(e);
   return true;
