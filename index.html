@@ -1248,7 +1248,7 @@ input{font:inherit;color:inherit}
    out, four deep. Summon sits in the top bar between the two currencies,
    upgrades are a dot beside the board, and the bottom is the way out. */
 #summonBtn{
-  position:absolute;left:50%;top:-38px;transform:translateX(-50%);z-index:7;
+  position:absolute;left:50%;top:-62px;transform:translateX(-50%);z-index:7;
   width:78px;height:78px;border-radius:50%;border:0;padding:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
   background:linear-gradient(180deg,#FFE283,#F5B301 46%,#DC9A05);color:#3D2B02;
@@ -1311,7 +1311,7 @@ input{font:inherit;color:inherit}
   #bioWrap.l6 .n{font-size:20px}
   .pip.bio{width:27px;height:22px}
   .pip.bio svg{width:17px;height:17px}
-  #summonBtn{width:66px;height:66px;top:-32px}
+  #summonBtn{width:66px;height:66px;top:-52px}
   #summonBtn .hat svg{width:22px;height:22px}
   #summonBtn .t{font-size:8.5px}
   #summonBtn .c{font-size:10px}
@@ -1319,7 +1319,7 @@ input{font:inherit;color:inherit}
 }
 /* ---- the chest, and the case it opens ---------------------------------- */
 .wcell.chest{display:grid;place-items:center}
-.chestArt{display:block;line-height:0;width:64%;max-width:52px}
+.chestArt{display:block;line-height:0;width:92%;max-width:78px}
 .chestArt svg{width:100%;height:auto;display:block}
 .chestArt svg{overflow:visible}
 .chestArt .seam,.chestArt .band{fill:none;stroke-linecap:round}
@@ -1441,7 +1441,7 @@ input{font:inherit;color:inherit}
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
   <filter id="gooF" x="-14%" y="-14%" width="128%" height="128%" color-interpolation-filters="sRGB">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/>
+    <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="b"/>
     <feColorMatrix in="b" type="matrix"
       values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/>
   </filter>
@@ -3863,7 +3863,7 @@ function bhStep(dt){
     }
     if(best){
       BH.eatT=1/Math.max(.6,val("pulse"));
-      BH.fed=1.4;
+      BH.fed=1.4; G.stat.pellets=(G.stat.pellets|0)+1;
       fuses.push({b:best,t:0,d:best.maxHp*4});   // swallowed whole
     }
   }
@@ -4616,7 +4616,7 @@ function draw(){
   const pal=PAL();
   const lean=app.classList.contains("lowfx");
   MSEG=lean?22:44;
-  const packed=lean||balls.length>84||dishFill()>.72;
+  const packed=lean||balls.length>135;
 
   /* goo layer — the magnetised silhouette */
   xGoo.setTransform(GS,0,0,GS,0,0);
@@ -5549,18 +5549,20 @@ function sheetStats(){
       statCard("Detonations",   fmt(s2.bursts),    "#F3E8FF","#7C3AED","\u2738");
     b.appendChild(g);
 
-    const finger=Math.max(0,(s2.splits||0)+(s2.pops||0));
-    const auto=Math.max(0,Math.round(passiveRate()*(s2.play||0)*0.02)+(s2.merges||0));
-    const tot=Math.max(1,finger+auto);
+    // a wizard casts, it does not break: the only two things that take a
+    // ball off the dish are your finger and Chompy
+    const finger=Math.max(0,(s2.splits||0)+(s2.pops||0)-(s2.pellets||0));
+    const chompy=Math.max(0,s2.pellets||0);
+    const tot=Math.max(1,finger+chompy);
     const dd=document.createElement("div");
     dd.className="ddCard";
-    dd.innerHTML='<div class="h"><span style="color:#EA580C">\u25D4</span> Damage distribution</div>'+
+    dd.innerHTML='<div class="h"><span style="color:#EA580C">\u25D4</span> Balls broken</div>'+
       '<div class="dd"><div class="r"><span class="n">Finger</span>'+
         '<span class="p">'+(finger/tot*100).toFixed(1)+'%</span></div>'+
         '<div class="b"><i style="width:'+(finger/tot*100).toFixed(1)+'%;background:#F59E0B"></i></div></div>'+
-      '<div class="dd"><div class="r"><span class="n">Wizards & Chompy</span>'+
-        '<span class="p">'+(auto/tot*100).toFixed(1)+'%</span></div>'+
-        '<div class="b"><i style="width:'+(auto/tot*100).toFixed(1)+'%;background:#1F2937"></i></div></div>';
+      '<div class="dd"><div class="r"><span class="n">Chompy</span>'+
+        '<span class="p">'+(chompy/tot*100).toFixed(1)+'%</span></div>'+
+        '<div class="b"><i style="width:'+(chompy/tot*100).toFixed(1)+'%;background:#1F2937"></i></div></div>';
     b.appendChild(dd);
 
     const f=document.createElement("div");
