@@ -2767,7 +2767,6 @@ function syncWizGrid(){
 
 /* ---- the loop: every wizard runs whether or not you are watching ---- */
 function stepWizards(dt){
-  const full=dishFull();
   for(let i=0;i<SLOTS;i++){
     const z=WZ[i]; if(!z) continue;
     z.bob+=dt*1.6;
@@ -2775,7 +2774,8 @@ function stepWizards(dt){
     if(!wiz(i)){ z.t=0; z.held=false; continue; }
     if(z.t>0) z.t-=dt;
     if(z.t<=0){
-      if(full){ z.held=true; continue; }
+      // it holds the cast until the ball it is about to throw actually fits
+      if(!roomFor(tierRadius(wrank(i).tier,wrank(i)))){ z.held=true; continue; }
       z.held=false; z.t=wDelay(i); z.cast=1;
       castBall(i);
     }
@@ -2830,12 +2830,11 @@ function ventRoll(){
 }
 function ventBall(){
   if(!ready||W<10) return false;
-  if(dishFull()) return false;                // never fight a full dish
   const cls=WRANK[0], kind=dropKind(VENT_LUCKY);
-  // a lucky one is never smaller than the drop size, whatever it rolled
   const t=ventRoll();
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
+  if(!roomFor(rr)) return false;               // it has to fit, not just fit in
   const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
   const y=AR.y1-rr*1.05;
   // the heavy ones leave slower, or a yellow would be off the top of the dish
@@ -3588,7 +3587,22 @@ function arenaArea(){ return W*Math.max(1,AR.y1-AR.y0); }
    third of the speed, so it stops well short. */
 const BALL_SOFT=520;
 const ballCeil=()=>app.classList.contains("lowfx")?260:BALL_SOFT;
-const dishFill=()=>Math.max(areaSum()/(arenaArea()*0.85), balls.length/ballCeil());
+const DISH_MAX=0.80;
+/* each icon costs its own rectangle plus a working margin, because the strip
+   right beside one is ground no ball of any size can settle in */
+let blockedA=0, blockedFor=-1;
+function blockedArea(){
+  if(blockedFor===OBS.length && blockedA) return blockedA;
+  let a=0;
+  for(const o of OBS) a+=(o.w+20)*(o.h+20);
+  blockedFor=OBS.length;
+  return blockedA=Math.min(a, arenaArea()*0.34);
+}
+const usableArea=()=>Math.max(1, arenaArea()-blockedArea());
+const dishFill=()=>Math.max(areaSum()/(usableArea()*DISH_MAX), balls.length/ballCeil());
+/* room for one more of this size, not merely room for one more */
+const roomFor=r=>balls.length<ballCeil() &&
+  areaSum()+Math.PI*r*r <= usableArea()*DISH_MAX;
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
@@ -3599,7 +3613,7 @@ const dishFull=()=>dishFill()>=1;
 let OBS=[], obsDirty=true;
 function obsChanged(){ obsDirty=true; }
 function measureObstacles(){
-  obsDirty=false;
+  obsDirty=false; blockedA=0; blockedFor=-1;
   OBS.length=0;
   const a=roomArena.getBoundingClientRect();
   if(!a.width) return;
@@ -3634,6 +3648,18 @@ function bounceChrome(b){
       const vn=b.vx*nx+b.vy*ny;
       if(vn<0){ b.vx-=2*vn*nx*.9; b.vy-=2*vn*ny*.9; }
     }
+    // The rails are pressed against the walls, so beside an icon there is a
+    // strip only a few pixels wide. A ball wider than that strip was pushed
+    // out sideways and then clamped straight back in by the wall, and it sat
+    // there. If the resolution leaves it outside the dish it goes round the
+    // icon on the inward side instead, which is the only side with room.
+    if(b.x<b.r-.01||b.x>W-b.r+.01){
+      const inward=(o.x+o.w*.5)<W*.5 ? 1 : -1;
+      b.x = inward>0 ? o.x+o.w+b.r : o.x-b.r;
+      b.vx = Math.abs(b.vx)*inward*.9;
+    }
+    if(b.y<AR.y0+b.r-.01){ b.y=o.y+o.h+b.r; b.vy=Math.abs(b.vy)*.9; }
+    else if(b.y>AR.y1-b.r+.01){ b.y=o.y-b.r; b.vy=-Math.abs(b.vy)*.9; }
     b.wob=Math.max(b.wob,.12);
   }
 }
@@ -3766,7 +3792,7 @@ function step(dt){
       }
     }
   }
-  for(const b of balls) clampIn(b);
+  for(const b of balls){ bounceChrome(b); clampIn(b); }
 
   // resolve the locks: hold contact long enough and they become one
   for(let i=balls.length-1;i>=0;i--){
