@@ -2810,23 +2810,50 @@ function stepWizards(dt){
    seconds. It is a floor, not a source — its mass is fixed at eight and
    never follows your rank, so by the time wizards are working it is noise. */
 const VENT={t:3.5, max:3.5, mass:8, n:0};
+/* What the vent rolls: cyan is the floor and yellow is the prize, four rungs
+   up the ladder. Rarer has to be worth more or the colour is just a colour,
+   so the mass climbs 1.6x a rung — a yellow one carries eight times a cyan
+   one and takes three taps to open rather than one. Across the whole table
+   that is 14.9 mass a drop against the flat 8 it used to be, which matters
+   for about the first minute and is noise next to a wizard after that. */
+const VENT_ROLL=[
+  {tier:5, p:.20},   // cyan
+  {tier:4, p:.30},   // blue
+  {tier:3, p:.20},   // purple
+  {tier:2, p:.15},   // red
+  {tier:1, p:.10},   // orange
+  {tier:0, p:.05},   // yellow
+];
+function ventRoll(){
+  let r=Math.random();
+  for(const v of VENT_ROLL){ r-=v.p; if(r<=0) return v.tier; }
+  return VENT_ROLL[0].tier;
+}
 function ventBall(){
   if(!ready||W<10) return false;
   if(dishFull()) return false;                // never fight a full dish
-  const cls=WRANK[0], t=DROPT, rr=tierRadius(t,cls);
+  const cls=WRANK[0], kind=dropKind();
+  // a lucky one is never smaller than the drop size, whatever it rolled
+  const t=kind==="golden" ? Math.min(ventRoll(),DROPT) : ventRoll();
+  const up=DROPT-t;                                   // rungs above the drop
+  const rr=tierRadius(t,cls);
   const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
   const y=AR.y1-rr*1.05;
-  const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S, cls, VENT.mass, dropKind());
+  // the heavy ones leave slower, or a yellow would be off the top of the dish
+  const kick=clamp(1-up*.075,.66,1.12);
+  const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S*kick, cls,
+                   VENT.mass*Math.pow(1.6,up), kind);
   b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el;
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   // the nozzle: a tight ring at the lip, and a wider one a beat later as the
   // bead clears it — two rings read as something letting go, one reads as a hit
-  rings.push({x, y:AR.y1-1, r:3*S,  R:17*S, t:0,    life:.20, col, w:2.6});
-  rings.push({x, y:AR.y1-1, r:11*S, R:42*S, t:0,    life:.36, col, w:1.5});
+  const big=1+up*.34;
+  rings.push({x, y:AR.y1-1, r:3*S,  R:17*S*big, t:0, life:.20+up*.02, col, w:2.6});
+  rings.push({x, y:AR.y1-1, r:11*S, R:42*S*big, t:0, life:.36+up*.03, col, w:1.5});
   // the squeeze throws a little of itself sideways along the floor
-  for(let k=0;k<10;k++){
-    const a=-Math.PI/2+rnd(-1.25,1.25), sp=rnd(90,250)*S;
+  for(let k=0;k<10+up*3;k++){
+    const a=-Math.PI/2+rnd(-1.25,1.25), sp=rnd(90,250)*S*big;
     parts.push({x, y:AR.y1-3, vx:Math.cos(a)*sp*1.3, vy:Math.sin(a)*sp*.42,
       r:rnd(1.2,2.8)*S, col, t:0, life:rnd(.16,.34), goo:false, drag:.83});
   }
@@ -2837,6 +2864,12 @@ function ventBall(){
   pop(NOTE[t]*1.35,{pan:panAt(x),vol:.11,wet:.18});
   pop(NOTE[t]*2.02,{pan:panAt(x),vol:.06,wet:.26,delay:.05});
   noiseHit(.07,{pan:panAt(x),vol:.05,cut:2600,q:3});
+  if(up>=2){                                   // red, orange, yellow
+    chime(196*semi(LADDER[Math.min(up+1,LADDER.length-1)]),
+          {vol:.08+up*.015,len:.5+up*.12,wet:.5,delay:.06});
+    shake=Math.max(shake,1.4+up*.9);
+    haptic(6+up*4);
+  }
   VENT.n++;
   const h=document.getElementById("dockHandle");
   if(h&&h.animate){
