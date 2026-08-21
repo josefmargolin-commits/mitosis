@@ -474,8 +474,20 @@ input{font:inherit;color:inherit}
   transition:transform .1s,border-color .15s,background .15s;text-align:center;
 }
 .card:active{transform:scale(.95)}
-.card.held{transform:scale(.95);border-color:rgba(34,197,94,.6);
+.card.held{border-color:rgba(34,197,94,.6);
   box-shadow:0 0 0 2px rgba(34,197,94,.16),0 1px 2px rgba(15,23,32,.05)}
+/* --sh climbs from 0 to 1 over the first eight buys, so the shake builds
+   with the run instead of arriving at full strength */
+.held{animation:buyShake .15s linear infinite}
+@keyframes buyShake{
+  0%  {transform:translate(0,0) scale(.955) rotate(0deg)}
+  25% {transform:translate(calc(var(--sh,0) * -1.7px), calc(var(--sh,0) * .5px))
+                scale(.955) rotate(calc(var(--sh,0) * -.75deg))}
+  50% {transform:translate(0, calc(var(--sh,0) * 1.3px)) scale(.95) rotate(0deg)}
+  75% {transform:translate(calc(var(--sh,0) * 1.7px), calc(var(--sh,0) * .5px))
+                scale(.955) rotate(calc(var(--sh,0) * .75deg))}
+  100%{transform:translate(0,0) scale(.955) rotate(0deg)}
+}
 /* the reference keeps a card you can afford plain — white face, black price.
    Green is reserved for the one offering an ad, so it stands out. */
 .card.afford{border-color:var(--edge-2);background:var(--panel)}
@@ -2126,7 +2138,7 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
   return {id:++seq,tier,cls,kind:kind||"plain",
     x,y,vx,vy,r:tierRadius(tier,cls),
     mass:mass===undefined?cls.mass:mass,
-    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,rot:rnd(0,TAU),
+    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,rot:rnd(0,TAU),
     wob:.019,wp:rnd(0,TAU),ws:rnd(.5,.9),sq:0,sqA:0,hit:0,pulse:rnd(0,TAU),lastHit:0};
 }
 function dropKind(){
@@ -2792,25 +2804,42 @@ function ventBall(){
   const cls=WRANK[0], t=DROPT, rr=tierRadius(t,cls);
   const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
   const y=AR.y1-rr*1.05;
-  const b=makeBall(t, x, y, rnd(-34,34)*S, -rnd(350,440)*S, cls, VENT.mass, dropKind());
-  b.wob=.20; b.sq=.16; b.sqA=Math.PI/2;
+  const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S, cls, VENT.mass, dropKind());
+  b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el;
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
-  rings.push({x, y:AR.y1-2, r:8*S, R:46*S, t:0, life:.34, col, w:2.2});
-  for(let k=0;k<8;k++){
-    const a=-Math.PI/2+rnd(-1.0,1.0), sp=rnd(70,210)*S;
-    parts.push({x, y:AR.y1-3, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp*.6,
-      r:rnd(1.4,3.2)*S, col, t:0, life:rnd(.18,.36), goo:false, drag:.85});
+  // the nozzle: a tight ring at the lip, and a wider one a beat later as the
+  // bead clears it — two rings read as something letting go, one reads as a hit
+  rings.push({x, y:AR.y1-1, r:3*S,  R:17*S, t:0,    life:.20, col, w:2.6});
+  rings.push({x, y:AR.y1-1, r:11*S, R:42*S, t:0,    life:.36, col, w:1.5});
+  // the squeeze throws a little of itself sideways along the floor
+  for(let k=0;k<10;k++){
+    const a=-Math.PI/2+rnd(-1.25,1.25), sp=rnd(90,250)*S;
+    parts.push({x, y:AR.y1-3, vx:Math.cos(a)*sp*1.3, vy:Math.sin(a)*sp*.42,
+      r:rnd(1.2,2.8)*S, col, t:0, life:rnd(.16,.34), goo:false, drag:.83});
   }
-  pop(NOTE[t]*1.6,{pan:panAt(x),vol:.10,wet:.16});
+  // and a thread of goo still attached, which snaps as the ball climbs
+  for(let k=0;k<4;k++)
+    goo(x+rnd(-2,2)*S, AR.y1-2-k*3*S, (2.6-k*.45)*S, col, .20+k*.04,
+        rnd(-16,16)*S, -rnd(40,120)*S);
+  pop(NOTE[t]*1.35,{pan:panAt(x),vol:.11,wet:.18});
+  pop(NOTE[t]*2.02,{pan:panAt(x),vol:.06,wet:.26,delay:.05});
+  noiseHit(.07,{pan:panAt(x),vol:.05,cut:2600,q:3});
   VENT.n++;
   const h=document.getElementById("dockHandle");
-  if(h&&h.animate) h.animate([
-    {transform:"translateY(0) scale(1)"},
-    {transform:"translateY(5px) scale(.9)",offset:.3},
-    {transform:"translateY(-2px) scale(1.06)",offset:.68},
-    {transform:"translateY(0) scale(1)"}
-  ],{duration:430,easing:"cubic-bezier(.25,1.5,.4,1)"});
+  if(h&&h.animate){
+    h.animate([
+      {transform:"translateY(0) scale(1,1)"},
+      {transform:"translateY(3px) scale(1.16,.80)",offset:.22},   // the squeeze
+      {transform:"translateY(-5px) scale(.86,1.20)",offset:.52},  // the release
+      {transform:"translateY(1px) scale(1.05,.95)",offset:.78},
+      {transform:"translateY(0) scale(1,1)"}
+    ],{duration:520,easing:"cubic-bezier(.3,1.2,.4,1)"});
+    const sv=h.querySelector("svg");
+    if(sv&&sv.animate) sv.animate([
+      {transform:"translateY(0)"},{transform:"translateY(-3px)",offset:.5},{transform:"translateY(0)"}
+    ],{duration:520,easing:"cubic-bezier(.3,1.2,.4,1)"});
+  }
   return true;
 }
 function castBall(i){
@@ -3513,7 +3542,7 @@ function measureObstacles(){
   // anything the player can press is something a ball must not hide behind,
   // so both rails are measured whole rather than by a list of class names
   for(const e2 of document.querySelectorAll(
-      "#railL > .orb, #railL > .pw, #railR > .pw, #railR > .prof, #goUp, #dockHandle")){
+      "#railL > .orb, #railL > .pw, #railR > .pw, #railR > .prof")){
     const r=e2.getBoundingClientRect();
     if(!r.width||!r.height) continue;
     OBS.push({x:r.left-a.left, y:r.top-a.top, w:r.width, h:r.height});
@@ -3840,6 +3869,13 @@ function shade(hex,amt){
 const easeOut=k=>1-Math.pow(1-k,2.6);
 function ballXform(x,b){
   x.translate(b.x,b.y);
+  // a vented ball leaves the nozzle as a bead: small and drawn out along the
+  // way it is travelling, filling to round over the first fifth of a second
+  if(b.bead){
+    const k=clamp((el-b.bead)/0.22,0,1);
+    if(k>=1) b.bead=0;
+    else { const e=easeOut(k); x.scale(.34+.66*e, .34+1.02*(1-e)*.5+.66*e); }
+  }
   x.rotate(b.sqA); x.scale(1-b.sq*.5,1+b.sq*.45); x.rotate(-b.sqA);
   if(FORM.oval!==1){ x.rotate(b.rot); x.scale(1,1/FORM.oval); }
 }
@@ -4593,7 +4629,12 @@ function holdRepeat(b,once){
   let timer=null, held=0, sx=0, sy=0, live=false;
   const stop=()=>{
     if(timer) clearTimeout(timer);
-    timer=null; live=false; held=0; holding=false; b.classList.remove("held");
+    timer=null; live=false; holding=false;
+    b.classList.remove("held"); b.style.removeProperty("--sh");
+    // a run that got going lands on the octave rather than just stopping
+    if(held>3) chime(330*semi(LADDER[Math.min(held,LADDER.length-1)])*2,
+                     {vol:.06,len:.5,wet:.5});
+    held=0;
   };
   const repeat=()=>{
     if(!live) return;
@@ -4603,6 +4644,13 @@ function holdRepeat(b,once){
     if(!ok){ stop(); return; }
     held++;
     b.classList.add("held");
+    b.style.setProperty("--sh", Math.min(1, held/8).toFixed(2));
+    // a run walks up the same ladder the combo does, so a long hold resolves
+    // instead of hammering one note, and settles once it runs out of rungs
+    const n=LADDER[Math.min(held,LADDER.length-1)];
+    chime(330*semi(n),{vol:.05,len:.20,wet:.34});
+    if(held%4===0) pop(150,{vol:.045,wet:.22});
+    haptic(4);
     // 340ms down to 70ms over about a second and a half of holding
     const gap=Math.max(70, 340*Math.pow(.86,held));
     timer=setTimeout(repeat,gap);
