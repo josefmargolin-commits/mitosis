@@ -2206,7 +2206,7 @@ function nearest(x,y,rad,skip){
 /* ---- fusion: 2048, played upward ------------------------------------ */
 function canFuse(a,b){
   return a.tier===b.tier && a.tier>0 && !a.gone && !b.gone
-      && a.kind!=="unstable" && b.kind!=="unstable"
+      && a.kind==="plain" && b.kind==="plain"
       && el-a.born>0.25 && el-b.born>0.25;
 }
 function fuse(a,b){
@@ -2218,7 +2218,6 @@ function fuse(a,b){
   const n=makeBall(nt,x,y,(a.vx+b.vx)*.5,(a.vy+b.vy)*.5,cls,
     a.mass+b.mass, (a.kind==="golden"||b.kind==="golden")?"golden":"plain");
   n.wob=.20; n.sq=.26; n.sqA=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2; n.born=el-0.2; n.skinFade=el;
-  n.luck=a.luck||b.luck;
   clampIn(n);
   balls.push(n);
 
@@ -2286,7 +2285,7 @@ function divide(b){
     const a=ax+i*Math.PI+rnd(-.14,.14), off=(b.r-cr)*.55;
     const nb=makeBall(ct,b.x+Math.cos(a)*off,b.y+Math.sin(a)*off,
       b.vx*.55+Math.cos(a)*kick, b.vy*.55+Math.sin(a)*kick,
-      b.cls, b.mass/2, b.kind==="golden"?"golden":"plain");
+      b.cls, b.mass/2, "plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
     clampIn(nb);
     balls.push(nb); kids.push(nb);
