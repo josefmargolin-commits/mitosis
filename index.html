@@ -394,7 +394,7 @@ input{font:inherit;color:inherit}
   font-family:var(--font);font-weight:700;
   font-size:34px;letter-spacing:-.01em;
   color:var(--cg,#E8A200);opacity:0;pointer-events:none;
-  transition:opacity .34s ease .12s;
+  transition:opacity 1.5s ease;
   font-variant-numeric:tabular-nums;
   -webkit-text-stroke:2.5px rgba(255,255,255,.92);paint-order:stroke fill;
   text-shadow:0 3px 0 rgba(255,255,255,.75), 0 0 22px var(--cg,#E8A200);
@@ -1569,7 +1569,10 @@ const TIER=[
 const LAST=TIER.length-1;
 const DROPT=4;
 const NOTE=[92,118,150,190,240,300,380,470];
-const FUSE_COST=4;
+const GEN_MAX=6;
+const gen=b=>Math.min(GEN_MAX,b.gen|0);
+/* two for a ball nobody has touched, one more for every time it has been */
+const fuseCost=(a,b)=>2+Math.max(gen(a),gen(b));
 const fuseTime=(tier)=>{
   const base=val("fusion");
   // small balls move 4.75x faster than big ones, so a flat hold time is a
@@ -2325,7 +2328,7 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
   return {id:++seq,tier,cls,kind:kind||"plain",
     x,y,vx,vy,r:tierRadius(tier,cls),
     mass:mass===undefined?cls.mass:mass,
-    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,luck:false,noFuse:0,rot:rnd(0,TAU),
+    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,luck:false,gen:0,rot:rnd(0,TAU),
     wob:.019,wp:rnd(0,TAU),ws:rnd(.5,.9),sq:0,sqA:0,hit:0,pulse:rnd(0,TAU),lastHit:0};
 }
 function dropKind(bonus){
@@ -2402,22 +2405,30 @@ function canFuse(a,b){
 /* the pair, plus the two nearest of the same rung that are not already
    spoken for. Null if there are not four, which is the whole point. */
 function fuseCrew(a,b){
-  const crew=[a,b], want=FUSE_COST-2;
-  if(want<=0) return crew;
+  const crew=[a,b];
+  if(fuseCost(a,b)<=2) return crew;
   const R=(a.r+b.r)*3.4, cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
   const pool=[];
   for(const o of balls){
     if(o===a||o===b||o.gone) continue;
     if(o.tier!==a.tier||o.kind!=="plain") continue;
-    // a ball locked to someone else is still fair game: four is four, and
-    // removing it unmates it on the way out
+    // a ball locked to someone else is still fair game: the price is the
+    // price, and removing it unmates it on the way out
     if(el-o.born<=0.25) continue;
     const d=Math.hypot(o.x-cx,o.y-cy);
     if(d<=R) pool.push({o,d});
   }
-  if(pool.length<want) return null;
-  pool.sort((p,q)=>p.d-q.d);
-  for(let i=0;i<want;i++) crew.push(pool[i].o);
+  // the cheapest ones first, since a scruffier ball raises what the whole
+  // group has to pay
+  pool.sort((p,q)=>(gen(p.o)-gen(q.o))||(p.d-q.d));
+  let need=fuseCost(a,b), i=0;
+  while(crew.length<need){
+    if(i>=pool.length) return null;
+    const o=pool[i++].o;
+    crew.push(o);
+    need=Math.max(need, 2+gen(o));      // it may have just got dearer
+    if(need>2+GEN_MAX) return null;
+  }
   return crew;
 }
 function fuse(crew){
@@ -2432,6 +2443,8 @@ function fuse(crew){
   const col=PAL()[nt];
   for(const o of crew) remove(o);
   const n=makeBall(nt,x,y,vx,vy,cls,mass,"plain");
+  let g=0; for(const o of crew) g=Math.max(g,gen(o));
+  n.gen=g;
   n.wob=.20; n.sq=.26; n.sqA=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2; n.born=el-0.2; n.skinFade=el;
   clampIn(n);
   balls.push(n);
@@ -2506,6 +2519,7 @@ function divide(b){
       b.vx*.55+Math.cos(a)*kick, b.vy*.55+Math.sin(a)*kick,
       b.cls, b.mass/2, "plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
+    nb.gen=gen(b)+1;                // its halves are one break further down
     clampIn(nb);
     balls.push(nb); kids.push(nb);
   }
@@ -3978,7 +3992,7 @@ function bounceChrome(b){
 function step(dt){
   el+=dt;
   VENT.t-=dt;
-  if(VENT.t<=0){ VENT.t = ventBall() ? rnd(27,33) : rnd(4,7); VENT.max=VENT.t; } G.stat.play+=dt;
+  if(VENT.t<=0){ VENT.t = ventBall() ? rnd(18,22) : rnd(4,7); VENT.max=VENT.t; } G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
 
