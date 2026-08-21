@@ -1567,8 +1567,8 @@ const UP={
            d:"Chance a split splits its halves again, all the way down.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
   purity: {tab:"arena",g:"✦",nm:"Income",base:130,gr:1.24, max:40,
-           d:"Chance a new ball comes in lucky — rainbow, drop sized, and worth twenty-five times over.",
-           v:l=>Math.min(.14,l*.0035), fmt:l=>(Math.min(14,l*.35)).toFixed(1)+"%"},
+           d:"Chance the arrow sends up a rainbow ball. It pops for twenty-five times its worth and opens a two minute ×5 window.",
+           v:l=>Math.min(.09,l*.00225), fmt:l=>(1.2+Math.min(9,l*.225)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
            d:"How fast Chompy moves and how quickly he can swallow the next one. Buy the first level and he appears.",
@@ -2145,7 +2145,7 @@ function dropKind(bonus){
   if(r<p+0.06) return "unstable";
   return "plain";
 }
-const VENT_LUCKY=0.035;
+const VENT_LUCKY=0.012;
 function bumpCombo(){
   combo++; comboT=1.55;   // Streak used to stretch this
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
@@ -2270,11 +2270,12 @@ function strike(b,dmg,src,forced){
 function divide(b){
   if(b.luck){ b.luck=false; luckWindow(b.x,b.y); }
   remove(b);
-  const col=PAL()[b.tier];
+  const col=b.kind==="golden"?rbIdx(b,0):PAL()[b.tier];
   const base=NOTE[b.tier];
   G.stat.splits++; objProg("split",1);
 
-  if(b.tier>=LAST){ finish(b,col); return; }
+  // a rainbow does not have halves. It goes all at once.
+  if(b.tier>=LAST||b.kind==="golden"){ finish(b,col); return; }
 
   const hard=ballCeil();
   const ct=b.tier+1, cr=tierRadius(ct,b.cls);
@@ -2515,7 +2516,7 @@ function fireBoost(bo){
     let best=-1;
     for(let i=0;i<SLOTS;i++) if(wiz(i)&&(best<0||wiz(i).rank>wiz(best).rank)) best=i;
     if(best>=0){
-      const cls=WRANK[wiz(best).rank], t=Math.min(cls.tier,DROPT), rr=tierRadius(t,cls);
+      const cls=WRANK[wiz(best).rank], t=cls.tier, rr=tierRadius(t,cls);
       const lb=makeBall(t, clamp(castX(best),rr+2,W-rr-2), AR.y0+rr, rnd(-20,20)*S, 230*S, cls, undefined, "golden");
       lb.luck=true; balls.push(lb);
       banner("LUCKY BALL");
@@ -2832,7 +2833,7 @@ function ventBall(){
   if(dishFull()) return false;                // never fight a full dish
   const cls=WRANK[0], kind=dropKind(VENT_LUCKY);
   // a lucky one is never smaller than the drop size, whatever it rolled
-  const t=kind==="golden" ? Math.min(ventRoll(),DROPT) : ventRoll();
+  const t=ventRoll();
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
   const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
@@ -2892,17 +2893,14 @@ function ventBall(){
   return true;
 }
 function castBall(i){
-  const cls=WRANK[wiz(i).rank];
-  const kind=dropKind();
-  // a lucky ball comes in at least drop-sized, so the one that pays
-  // twenty-five times over is never the smallest thing on the dish
-  const t=kind==="golden"?Math.min(cls.tier,DROPT):cls.tier;
+  const cls=WRANK[wiz(i).rank], t=cls.tier;
+  // rainbows are the arrow's business; a wizard casts plain and unstable
+  const kind=dropKind()==="unstable"?"unstable":"plain";
   const rr=tierRadius(t,cls);
   const x=clamp(castX(i)+rnd(-9,9), rr+2, Math.max(rr+3,W-rr-2));
   const b=makeBall(t, x, AR.y0+rr*0.9, rnd(-22,22)*S, rnd(190,260)*S, cls, undefined, kind);
-  b.luck=kind==="golden";
   balls.push(b);
-  const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
+  const col=b.kind==="unstable"?"#FF9A3D":PAL()[t];
   for(let k=0;k<6;k++){
     const a=Math.PI/2+rnd(-1.1,1.1), sp=rnd(60,190)*S;
     parts.push({x:b.x,y:AR.y0+4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*.5,
