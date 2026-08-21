@@ -1393,8 +1393,8 @@ input{font:inherit;color:inherit}
 #frenzy.on::after{animation:fzSpin 6s linear infinite}
 @keyframes fzSpin{to{transform:rotate(360deg) scale(1.02)}}
 #fzTag{
-  position:absolute;z-index:10;left:50%;transform:translateX(-50%) translateY(-14px);
-  top:calc(var(--top-h) + 30px);
+  position:absolute;z-index:10;left:50%;transform:translateX(-50%) translateY(10px);
+  bottom:calc(var(--chrome-b,152px) + 62px);
   display:none;align-items:center;gap:7px;pointer-events:none;
   padding:6px 14px 6px 11px;border-radius:999px;
   background:rgba(15,23,32,.86);color:#fff;
@@ -1404,6 +1404,7 @@ input{font:inherit;color:inherit}
   opacity:0;transition:opacity .3s ease, transform .3s cubic-bezier(.2,1.5,.4,1);
 }
 #fzTag.on{display:flex;opacity:1;transform:translateX(-50%) translateY(0)}
+#fzTag{transition:opacity .3s ease, transform .3s cubic-bezier(.2,1.5,.4,1), bottom .26s cubic-bezier(.3,.8,.3,1)}
 #fzTag .d{width:9px;height:9px;border-radius:50%;flex:none;
   animation:fzDot 1.1s linear infinite}
 @keyframes fzDot{
@@ -1569,7 +1570,7 @@ const TIER=[
 const LAST=TIER.length-1;
 const DROPT=4;
 const NOTE=[92,118,150,190,240,300,380,470];
-const GEN_MAX=6;
+const GEN_MAX=6, GEN_FORGET=6;   // seconds to shed one break
 const gen=b=>Math.min(GEN_MAX,b.gen|0);
 /* two for a ball nobody has touched, one more for every time it has been */
 const fuseCost=(a,b)=>2+Math.max(gen(a),gen(b));
@@ -2328,7 +2329,7 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
   return {id:++seq,tier,cls,kind:kind||"plain",
     x,y,vx,vy,r:tierRadius(tier,cls),
     mass:mass===undefined?cls.mass:mass,
-    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,luck:false,gen:0,rot:rnd(0,TAU),
+    hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,luck:false,gen:0,genT:el,rot:rnd(0,TAU),
     wob:.019,wp:rnd(0,TAU),ws:rnd(.5,.9),sq:0,sqA:0,hit:0,pulse:rnd(0,TAU),lastHit:0};
 }
 function dropKind(bonus){
@@ -2445,8 +2446,8 @@ function fuse(crew){
   const col=PAL()[nt];
   for(const o of crew) remove(o);
   const n=makeBall(nt,x,y,vx,vy,cls,mass,"plain");
-  let g=0; for(const o of crew) g=Math.max(g,gen(o));
-  n.gen=g;
+  let g=0, gt=el; for(const o of crew){ if(gen(o)>g){ g=gen(o); gt=o.genT; } }
+  n.gen=g; n.genT=gt;                 // it carries the clock as well as the count
   n.wob=.20; n.sq=.26; n.sqA=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2; n.born=el-0.2; n.skinFade=el;
   clampIn(n);
   balls.push(n);
@@ -2521,7 +2522,7 @@ function divide(b){
       b.vx*.55+Math.cos(a)*kick, b.vy*.55+Math.sin(a)*kick,
       b.cls, b.mass/2, "plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
-    nb.gen=gen(b)+1;                // its halves are one break further down
+    nb.gen=gen(b)+1; nb.genT=el;    // its halves are one break further down
     clampIn(nb);
     balls.push(nb); kids.push(nb);
   }
@@ -4045,6 +4046,7 @@ function step(dt){
       if(into){ b.vy=-Math.abs(b.vy)*.92; b.wob=Math.max(b.wob,.1); }
       else b.vy=Math.min(b.vy,0);
     }
+    if(b.gen>0 && el-b.genT>GEN_FORGET){ b.gen--; b.genT=el; }
     b.wob=.019+(b.wob-.019)*Math.pow(.02,dt);
     b.sq*=Math.pow(.0009,dt); b.hit*=Math.pow(.004,dt);
     b.wp+=dt*b.ws*(1+b.wob*10); b.pulse+=dt*3.2;
