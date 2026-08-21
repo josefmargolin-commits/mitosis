@@ -254,7 +254,7 @@ input{font:inherit;color:inherit}
 #bioWrap.l5 .n{font-size:30px}
 #bioWrap.l6 .n{font-size:26px}
 #bioWrap .n .u{opacity:.62;font-size:.5em}
-.pip.spore{background:linear-gradient(140deg,var(--blue),var(--purple))}
+.pip.spore{background:linear-gradient(140deg,#6FC3FF,#2F6BFF)}
 .cur .n{font-family:var(--font);font-weight:800;font-size:23px;line-height:1;
   letter-spacing:-.032em;font-variant-numeric:tabular-nums lining-nums;
   font-feature-settings:"tnum" 1,"lnum" 1;
@@ -262,16 +262,16 @@ input{font:inherit;color:inherit}
 /* the magnitude is not part of the number — set it down a step */
 .cur .n .u{font-size:.56em;font-weight:700;letter-spacing:.03em;opacity:.48;
   margin-left:.13em;font-variant-numeric:normal}
-/* the gems chip: pressable, and it says where it goes */
+/* the mana chip: pressable, and it says where it goes */
 .gemBtn{
   border:0;padding:4px 5px 4px 4px;border-radius:999px;
-  background:linear-gradient(180deg,#9B6BFF,#7C3AED);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 2.5px 0 #5B23BE,0 4px 10px rgba(16,22,37,.22);
+  background:linear-gradient(180deg,#5AA8FF,#2563EB);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 2.5px 0 #1A47A8,0 4px 10px rgba(16,22,37,.22);
   display:flex;align-items:center;gap:6px;
   transition:transform .1s ease, box-shadow .1s ease;
 }
 .gemBtn:active{transform:translateY(2.5px);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 0 0 #5B23BE,0 2px 5px rgba(16,22,37,.22)}
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3),0 0 0 #1A47A8,0 2px 5px rgba(16,22,37,.22)}
 .gemBtn .pip.spore{background:transparent;width:20px;height:20px}
 .gemBtn .pip.spore svg{fill:#fff;width:15px;height:15px}
 #sporeWrap .n{font-size:16px;letter-spacing:-.01em;color:#fff}
@@ -355,7 +355,7 @@ input{font:inherit;color:inherit}
 .pw.locked .l{color:var(--yellow);font-size:8px;letter-spacing:.02em}
 .pw.locked .g{opacity:.4}
 .railSep{display:block;width:22px;height:1px;background:var(--edge-2);margin:1px auto;flex:none}
-/* the left rail's powers cost a watch rather than gems, so the badge is not
+/* the left rail's powers cost a watch rather than mana, so the badge is not
    a hint that appears on a cooldown — it is the price, and it always shows */
 .adpw .adb{display:grid!important;opacity:1}
 .adpw.locked{opacity:.5}
@@ -849,12 +849,12 @@ input{font:inherit;color:inherit}
   display:flex;align-items:center;justify-content:center;gap:6px}
 .stTab svg{width:15px;height:15px;display:block;fill:currentColor}
 .stTab.on{color:#16A34A;border-bottom-color:#16A34A}
-.stTab.on.gem{color:#7C3AED;border-bottom-color:#7C3AED}
+.stTab.on.gem{color:#2563EB;border-bottom-color:#2563EB}
 
 /* section headings are real headings here, not small caps labels */
 .stH{display:flex;align-items:center;gap:9px;margin:6px 2px 0}
 .stH .t{font-size:15px;font-weight:700;flex:1}
-.stH .chip{font-size:11px;color:#7C3AED;background:#F3E8FF;padding:4px 11px;border-radius:99px;
+.stH .chip{font-size:11px;color:#2563EB;background:#E5EEFF;padding:4px 11px;border-radius:99px;
   display:flex;align-items:center;gap:5px}
 .stH .sq{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:none;color:#fff}
 .pillLbl{display:inline-flex;align-items:center;font-size:10px;font-weight:600;letter-spacing:.09em;
@@ -927,7 +927,7 @@ input{font:inherit;color:inherit}
 .pk .rar.epic{background:#D946EF}
 .pk .rar.deal{background:#F97316}
 
-/* cash and gem grids */
+/* cash and mana grids */
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .tiles.g3{grid-template-columns:repeat(3,1fr);gap:9px}
 .tile{border-radius:13px;border:1.5px solid var(--edge);background:var(--panel);
@@ -940,13 +940,13 @@ input{font:inherit;color:inherit}
   font-size:8px;font-weight:700;letter-spacing:.05em;padding:2.5px 8px;border-radius:99px;
   background:#F59E0B;color:#fff}
 .tile.gem{padding:13px 6px 11px}
-.tile.gem .dia{color:#7C3AED;font-size:17px;line-height:1}
-.tile.gem .v{color:#7C3AED;margin-top:4px}
+.tile.gem .dia{color:#2563EB;font-size:17px;line-height:1}
+.tile.gem .v{color:#2563EB;margin-top:4px}
 .tile.gem .n{font-size:9.5px;color:var(--ink-3);margin-top:1px}
 .tile.gem .buy{margin-top:8px;display:block;width:100%;padding:7px;border-radius:9px;border:0;
   background:#7C3AED;color:#fff;font-weight:700;font-size:12px;
   font-family:var(--font)}
-.tile.gem.best{border-color:#7C3AED;background:#F8F5FF}
+.tile.gem.best{border-color:#2563EB;background:#F1F6FF}
 .tile.gem .bb2{position:absolute;top:0;right:0;font-size:8px;font-weight:700;padding:3px 8px;
   border-bottom-left-radius:9px;background:#7C3AED;color:#fff}
 
@@ -980,12 +980,12 @@ input{font:inherit;color:inherit}
 .cosGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .cos{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);
   padding:13px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left}
-.cos.sel{border-color:#7C3AED;background:#FBF9FF}
+.cos.sel{border-color:#2563EB;background:#F2F7FF}
 .cos .csw{width:44px;height:44px;border-radius:13px;display:block;margin-bottom:6px;
   box-shadow:0 2px 5px rgba(16,22,37,.13)}
 .cos .nm{font-size:13.5px;font-weight:700}
 .cos .d{font-size:10.5px;color:var(--ink-3);line-height:1.4;flex:1}
-.cos .c{font-size:12px;color:#7C3AED;font-weight:600;display:flex;align-items:center;gap:5px;margin-top:5px}
+.cos .c{font-size:12px;color:#2563EB;font-weight:600;display:flex;align-items:center;gap:5px;margin-top:5px}
 /* ---- settings, as the reference draws it: a toggle that is on tints its
         whole card in the hue of its own icon ---- */
 .stg{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:15px;
@@ -1053,10 +1053,10 @@ input{font:inherit;color:inherit}
   font-size:10.5px;color:var(--ink-3)}
 .cosHead{display:flex;align-items:center;gap:9px;padding:2px 0 2px}
 .cosHead .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;
-  background:#7C3AED;color:#fff}
+  background:#2563EB;color:#fff}
 .cosHead .ic svg{width:17px;height:17px;display:block}
 .cosHead .t{flex:1;font-size:13px;font-weight:600}
-.cosHead .cnt{font-size:11px;color:#7C3AED;background:#F3E8FF;padding:4px 10px;border-radius:99px;
+.cosHead .cnt{font-size:11px;color:#2563EB;background:#E5EEFF;padding:4px 10px;border-radius:99px;
   display:flex;align-items:center;gap:4px}
 .cosSubs{display:flex;gap:5px;background:var(--surface);padding:4px;border-radius:12px}
 .cosSub{flex:1;padding:8px 4px;border:0;border-radius:9px;background:transparent;
@@ -1066,12 +1066,12 @@ input{font:inherit;color:inherit}
 .cosGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .cos{border-radius:14px;border:1.5px solid var(--edge);background:var(--panel);
   padding:11px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
-.cos.sel{border-color:#7C3AED;background:#FAF7FF}
+.cos.sel{border-color:#2563EB;background:#F2F7FF}
 .cos .csw{width:38px;height:38px;border-radius:11px;display:block;margin-bottom:3px;
   box-shadow:0 2px 5px rgba(16,22,37,.13)}
 .cos .nm{font-size:12.5px;font-weight:600}
 .cos .d{font-size:9.5px;color:var(--ink-3);line-height:1.4;flex:1}
-.cos .c{font-size:10.5px;color:#7C3AED;display:flex;align-items:center;gap:4px;margin-top:3px}
+.cos .c{font-size:10.5px;color:#2563EB;display:flex;align-items:center;gap:4px;margin-top:3px}
 .dchip{position:relative}
 .dchip .tk{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);
   font-size:8px;color:#16A34A;line-height:1}
@@ -1272,8 +1272,8 @@ input{font:inherit;color:inherit}
   #wizChrome{height:calc(84px + env(safe-area-inset-bottom))}
   #wizStage{bottom:calc(84px + env(safe-area-inset-bottom))}
 }
-/* On a 320 phone the tower's top bar carries money, summon and gems, and at
-   full size the gems fall off the right edge. Everything gives a little. */
+/* On a 320 phone the tower's top bar carries money, summon and mana, and at
+   full size the mana falls off the right edge. Everything gives a little. */
 @media (max-width:360px){
   #top{gap:6px;padding:0 8px}
   #bioWrap{gap:5px}
@@ -1351,7 +1351,7 @@ input{font:inherit;color:inherit}
   <div id="top">
     <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
     <button id="summonTop"><span class="t">Summon</span><span class="c"></span></button>
-    <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2 21.8 12 12 21.8 2.2 12z"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
+    <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.8"/><circle cx="9.2" cy="9" r="2.6" fill="#fff" opacity=".5"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
 
   <div id="banner"></div>
@@ -1516,7 +1516,8 @@ const TRAILS=[
    you are looking at when the camera settles at the next scale up. */
 const ICO_MASS='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">' +
   '<rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/>' + '</svg>';
-const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.4c1 5.6 3 7.6 8.6 8.6-5.6 1-7.6 3-8.6 8.6-1-5.6-3-7.6-8.6-8.6 5.6-1 7.6-3 8.6-8.6z"/></svg>';
+const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">'+
+  '<circle cx="12" cy="12" r="8.6"/><circle cx="9.2" cy="9" r="2.5" fill="#fff" opacity=".55"/></svg>';
 
 const SCALES=[
   {n:"Atomic",    ball:"a proton",       mult:1,      spd:1.00,
@@ -1623,8 +1624,8 @@ const OBJPOOL=[
 ];
 
 /* ---- achievements ------------------------------------------------------
-   Objectives rotate and pay gems. These are fixed, permanent, and pay in
-   things you keep — cash, gems, and every cosmetic in the game, so the
+   Objectives rotate and pay mana. These are fixed, permanent, and pay in
+   things you keep — cash, mana, and every cosmetic in the game, so the
    whole wardrobe is reachable by playing rather than only by spending. */
 const ACHV=[
   {k:"splits", ic:"\u2725", nm:"Splitter", t:n=>"Split "+fmt(n)+" balls",
@@ -1664,7 +1665,7 @@ function achAny(){ return ACHV.some(achClaimable); }
 function achGive(r){
   const bits=[];
   if(r.g){ G.bio+=r.g; G.earned+=r.g; G.totalEarned+=r.g; bits.push(fmt(r.g)+" cash"); }
-  if(r.sp){ G.spore+=r.sp; bits.push(r.sp+" gems"); }
+  if(r.sp){ G.spore+=r.sp; bits.push(r.sp+" mana"); }
   if(r.skin&&!G.ownSkin.includes(r.skin)){
     G.ownSkin.push(r.skin); bits.push((SKINS.find(x=>x.id===r.skin)||{}).nm+" skin"); }
   if(r.trail&&!G.ownTrail.includes(r.trail)){
@@ -2475,7 +2476,7 @@ function firePower(p){
   const s=pwState(p);
   if(!s.owned){
     if(G.spore>=p.cost){ G.spore-=p.cost; s.owned=true; toast(p.nm+" unlocked"); save(); }
-    else toast("Needs "+p.cost+" gems");
+    else toast("Needs "+p.cost+" mana");
     return;
   }
   if(s.cd>0){ toast(p.nm+" recharging — "+Math.ceil(s.cd)+"s"); return; }
@@ -2502,7 +2503,7 @@ function fireBoost(bo){
   const s=boState(bo);
   if(bo.cost && !s.owned){
     if(G.spore>=bo.cost){ G.spore-=bo.cost; s.owned=true; toast(bo.nm+" unlocked"); save(); syncTop(); syncRails(); }
-    else toast("Needs "+bo.cost+" gems");
+    else toast("Needs "+bo.cost+" mana");
     return;
   }
   if(s.cd>0){ toast(bo.nm+" recharging — "+Math.ceil(s.cd)+"s"); return; }
@@ -3858,8 +3859,13 @@ function rewardPill(srcEl,txt){
     {opacity:0,transform:"translate(-50%,-108%) scale(.98)"}
   ],{duration:1600,easing:"cubic-bezier(.2,.9,.3,1)"});
 }
-function celebrate(src,n,col,homeEl){
+const MANA_COL=["#8FD3FF","#5AA8FF","#2F6BFF","#B6E4FF","#1F4FD8"];
+function celebrate(src,n,col,homeEl,asMana){
   const p=appPt(src);
+  // paying into the mana counter means the reward is mana
+  const mana = asMana!==undefined ? !!asMana
+             : !!(homeEl && homeEl.closest && homeEl.closest("#sporeWrap"));
+  const PAL2 = mana?MANA_COL:CONF;
   const home=homeEl?appPt(homeEl):null;
   // coins: discs spun edge-on, which is what makes a flat circle read as money
   const notes=Math.max(8,Math.round(n*.42));
@@ -3868,12 +3874,12 @@ function celebrate(src,n,col,homeEl){
     const a=-Math.PI/2+rnd(-1.35,1.35), sp=rnd(170,470);
     const d=rnd(9,13.5);
     cele.push({
-      kind:"cash",
+      kind:mana?"orb":"cash",
       x:p.x+rnd(-10,10), y:p.y+rnd(-4,4),
       vx:Math.cos(a)*sp*1.5, vy:Math.sin(a)*sp,
-      w:d, h:d*.6,
+      w:mana?d*.62:d, h:mana?d*.62:d*.6,
       t:0, life:rnd(.62,1.0),
-      col:CONF[(Math.random()*CONF.length)|0],
+      col:PAL2[(Math.random()*PAL2.length)|0],
       ang:rnd(0,TAU), spin:rnd(-7,7),
       flip:rnd(0,TAU), flipV:rnd(9,17),
       drag:rnd(.90,.95),
@@ -3887,18 +3893,24 @@ function celebrate(src,n,col,homeEl){
       kind:"spark",
       x:p.x, y:p.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
       r:rnd(7,10), t:0, life:2.4,
-      col:col||"#22C55E",
+      col:col||(mana?"#2F6BFF":"#22C55E"),
       ang:rnd(0,TAU), spin:rnd(-4,4),
       home, hop:0, wait:.16+i*.055, trail:[],
     });
   }
-  rings.push({x:p.x,y:p.y,r:6,R:62,t:0,life:.34,col:col||"#22C55E",w:2.2});
+  rings.push({x:p.x,y:p.y,r:6,R:62,t:0,life:.34,col:col||(mana?"#2F6BFF":"#22C55E"),w:2.2});
 }
 function stepCele(dt){
   for(let i=cele.length-1;i>=0;i--){
     const c=cele[i];
     c.t+=dt; c.ang+=c.spin*dt;
     if(c.t>=c.life){ cele.splice(i,1); continue; }
+    if(c.kind==="orb"){
+      c.x+=c.vx*dt; c.y+=c.vy*dt;
+      c.vy+=1100*dt;
+      const k=Math.pow(c.drag,dt*60); c.vx*=k; c.vy*=k;
+      continue;
+    }
     if(c.kind==="cash"){
       c.flip+=c.flipV*dt;
       c.x+=c.vx*dt; c.y+=c.vy*dt;
@@ -3939,6 +3951,18 @@ function drawCele(){
   if(!cele.length) return;
   for(const c of cele){
     const k=1-c.t/c.life, fade=Math.min(1,k*3.2);
+    if(c.kind==="orb"){
+      xBu.save();
+      xBu.globalAlpha=fade;
+      const r2=c.w*.5;
+      const g2=xBu.createRadialGradient(c.x-r2*.34,c.y-r2*.34,r2*.15,c.x,c.y,r2);
+      g2.addColorStop(0,"#FFFFFF"); g2.addColorStop(.42,c.col);
+      g2.addColorStop(1,shade(c.col,-.28));
+      xBu.fillStyle=g2;
+      xBu.beginPath(); xBu.arc(c.x,c.y,r2,0,TAU); xBu.fill();
+      xBu.restore();
+      continue;
+    }
     if(c.kind==="cash"){
       // the note narrows as it turns edge-on, which is what sells the tumble
       const wf=Math.abs(Math.cos(c.flip));
@@ -5172,11 +5196,11 @@ const CASH_PACKS=[
   {v:13.5e9,p:"$79.99"},{v:135e9,p:"$99.99",best:1},
 ];
 const GEM_PACKS=[
-  {v:50,n:"Handful of Gems",p:"$0.99"},
-  {v:150,n:"Pouch of Gems",p:"$2.99"},
-  {v:400,n:"Chest of Gems",p:"$4.99",best:1},
-  {v:1000,n:"Vault of Gems",p:"$9.99"},
-  {v:2500,n:"Treasury of Gems",p:"$19.99",best:1},
+  {v:50,n:"Handful of Mana",p:"$0.99"},
+  {v:150,n:"Pouch of Mana",p:"$2.99"},
+  {v:400,n:"Chest of Mana",p:"$4.99",best:1},
+  {v:1000,n:"Vault of Mana",p:"$9.99"},
+  {v:2500,n:"Treasury of Mana",p:"$19.99",best:1},
 ];
 const PACKS=[
   {id:"pocket", t:"Pocket Cash", s:"Enough for your next upgrades!", p:"$0.99", tone:"blue"},
@@ -5211,7 +5235,7 @@ const soon=()=>toast("Paid items need a store build");
 function stHeading(t,chip){
   const d=document.createElement("div"); d.className="stH";
   d.innerHTML='<span class="t">'+t+'</span>'+
-    (chip?'<span class="chip">\u25C7 '+chip+'</span>':'');
+    (chip?'<span class="chip">\u25CF '+chip+'</span>':'');
   return d;
 }
 function sheetShop(){
@@ -5240,7 +5264,7 @@ function sheetShop(){
               :'<span class="s">Next free gift in</span><div class="s" style="font-weight:600;color:var(--ink-2);margin-top:2px">\u25F7 '+adWait("gift")+'</div>')+
       '</span>'+
       (ready?'<span class="tag ok">New</span>':'')+'</div>'+
-      (ready?'<div class="stSub" style="text-align:left">+20 gems, on the house.</div>':'');
+      (ready?'<div class="stSub" style="text-align:left">+20 mana, on the house.</div>':'');
     if(ready){
       const r=document.createElement("div"); r.className="stRow";
       const mk=(cls,txt,mult)=>{ const x=document.createElement("button");
@@ -5269,7 +5293,7 @@ function sheetShop(){
         '<span class="m">'+m+'x</span>'+
         (i+1<=day?'<span class="tk">\u2713</span>':'')+'</span>').join("")+'</div>'+
       '<div class="stSub">'+(sReady
-        ? "Today: +"+(3*STREAK[day-1])+" gems \u00B7 $"+fmt(4000*STREAK[day-1])
+        ? "Today: +"+(3*STREAK[day-1])+" mana \u00B7 $"+fmt(4000*STREAK[day-1])
         : "Claimed today! Come back tomorrow.")+'</div>';
     if(sReady){
       const r=document.createElement("div"); r.className="stRow";
@@ -5309,13 +5333,13 @@ function sheetShop(){
     }
     b.appendChild(cg);
 
-    /* --- gems --- */
-    b.appendChild(stHeading("Gem Packs",fmt(G.spore)));
+    /* --- mana --- */
+    b.appendChild(stHeading("Mana Packs",fmt(G.spore)));
     const sg=document.createElement("div"); sg.className="tiles g3";
     for(const c of GEM_PACKS){
       const t=document.createElement("div"); t.className="tile gem"+(c.best?" best":"");
       t.innerHTML=(c.best?'<span class="bb2">BEST</span>':'')+
-        '<div class="dia">\u25C7</div>'+
+        '<div class="dia">\u25CF</div>'+
         '<div class="v">'+c.v.toLocaleString()+'</div>'+
         '<div class="n">'+c.n+'</div>'+
         '<button class="buy">'+c.p+'</button>';
@@ -5324,7 +5348,7 @@ function sheetShop(){
     b.appendChild(sg);
 
     const br=document.createElement("button");
-    br.className="dashBtn"; br.innerHTML='\u25C7 Browse Cosmetic Shop';
+    br.className="dashBtn"; br.innerHTML='\u25CF Browse Cosmetic Shop';
     br.onclick=()=>{ G.stTab="cos"; sheetSync&&sheetSync(); };
     b.appendChild(br);
 
@@ -5374,7 +5398,7 @@ function stCosmetics(b){
   const head=document.createElement("div"); head.className="cosHead";
   head.innerHTML='<span class="ic"><svg viewBox="0 0 24 24">'+ICONS.brush+'</svg></span>'+
     '<span class="t">Cosmetics</span>'+
-    '<span class="chip" style="font-size:11px;color:#7C3AED;background:#F3E8FF;padding:4px 11px;border-radius:99px">\u25C7 '+fmt(G.spore)+'</span>';
+    '<span class="chip" style="font-size:11px;color:#2563EB;background:#E5EEFF;padding:4px 11px;border-radius:99px">\u25CF '+fmt(G.spore)+'</span>';
   b.appendChild(head);
 
   const subs=document.createElement("div"); subs.className="cosSubs";
@@ -5407,13 +5431,13 @@ function stCosmetics(b){
     c.innerHTML='<span class="csw" style="background:'+it.sw+'"></span>'+
       '<span class="nm">'+it.nm+'</span>'+
       '<span class="d">'+it.d+'</span>'+
-      '<span class="c">'+(it.sel?"Equipped":(it.own?"Owned":"\u25C7 "+it.cost))+'</span>';
+      '<span class="c">'+(it.sel?"Equipped":(it.own?"Owned":"\u25CF "+it.cost))+'</span>';
     c.onclick=()=>{
       if(it.sel) return;
       if(it.own){ it.wear(); save(); }
       else if(G.spore>=it.cost){ G.spore-=it.cost; it.take(); it.wear();
         toast(it.nm+" unlocked"); save(); syncTop(); }
-      else { toast("Needs "+it.cost+" gems"); return; }
+      else { toast("Needs "+it.cost+" mana"); return; }
       sheetSync&&sheetSync();
     };
     grid.appendChild(c);
@@ -5676,7 +5700,7 @@ function sheetCustomise(){
           if(own){ G.pet=p.id; save(); }
           else if(G.spore>=p.cost){ G.spore-=p.cost; G.ownPet.push(p.id); G.pet=p.id;
                                     toast(p.nm+" unlocked"); save(); }
-          else toast("Needs "+p.cost+" gems");
+          else toast("Needs "+p.cost+" mana");
         }
       }));
     }
@@ -5691,7 +5715,7 @@ function sheetCustomise(){
           if(sel) return;
           if(own){ G.trail=t.id; save(); }
           else if(G.spore>=t.cost){ G.spore-=t.cost; G.ownTrail.push(t.id); G.trail=t.id; toast(t.nm+" unlocked"); save(); }
-          else toast("Needs "+t.cost+" gems");
+          else toast("Needs "+t.cost+" mana");
         }
       }));
     }
@@ -5705,11 +5729,11 @@ function sheetCustomise(){
         toast("+"+fmt(v)+" cash"); save(); syncTop(); sheetSync&&sheetSync();
       }:null}));
     b.appendChild(row({ic:ICO_SPORE,t:"Watch an ad for shards",
-      s:"Three gems. Once every five minutes.",
+      s:"Three mana. Once every five minutes.",
       btn:adReady("sp")?"Watch":adWait("sp"), btnOn:adReady("sp"),
       fn:adReady("sp")?function(){
         G.spore+=3; G.ad.sp=el+300;
-        toast("+3 gems"); save(); syncTop(); sheetSync&&sheetSync();
+        toast("+3 mana"); save(); syncTop(); sheetSync&&sheetSync();
       }:null}));
 
     b.appendChild(lbl("Powers"));
