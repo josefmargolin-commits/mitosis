@@ -2008,6 +2008,14 @@ let W=0,H=0,DPR=1,GS=1,S=1;
 const AR={x0:0,y0:0,x1:0,y1:0};
 
 
+function dishFloor(){
+  const dock=document.getElementById("dock");
+  if(!dock) return H-152;
+  let y=H-dock.offsetHeight;
+  const h=document.getElementById("dockHandle"), vb=document.getElementById("vBar");
+  if(h&&vb) y+=h.offsetTop+vb.offsetTop-8;    // eight pixels of air over it
+  return Math.max(H*.35, y);
+}
 function resize(){
   obsChanged();
   const r=roomArena.getBoundingClientRect();
@@ -2033,7 +2041,7 @@ function resize(){
   AR.x0=0; AR.x1=W;
   const gEl=document.getElementById("goal");
   AR.y0=(topEl?topEl.offsetHeight:58)+(gEl?gEl.offsetHeight+4:34);
-  AR.y1=H-(dockEl?dockEl.offsetHeight:152);
+  AR.y1=dishFloor();
   drawBg();
 }
 addEventListener("resize",resize);
@@ -2520,7 +2528,7 @@ function fuse(crew){
   }
   rings.push({x,y,r:n.r*1.5,R:n.r*.6,t:0,life:.34,col:"#fff",w:2.6});
   rings.push({x,y,r:n.r*.5,R:n.r*1.9,t:0,life:.42,col,w:2});
-  pushPop(x,y-n.r*.7,"+"+fmt(n.mass));
+  earn(n.mass, x, y-n.r*.7, col);
   shake=Math.max(shake,2.2+(DROPT-nt)*1.6);
   flash=Math.max(flash,.10+(DROPT-nt)*.06);
   if(nt<=1) freeze=Math.max(freeze,.045);
@@ -6678,9 +6686,9 @@ function setDockMin(min,quiet){
   dockTracking=true;
   const t0=now();
   const track=()=>{
-    AR.y1=H-dock.offsetHeight;
+    AR.y1=dishFloor();
     if(now()-t0<430) requestAnimationFrame(track);
-    else { dockTracking=false; AR.y1=H-dock.offsetHeight; }
+    else { dockTracking=false; AR.y1=dishFloor(); }
   };
   requestAnimationFrame(track);
 }
