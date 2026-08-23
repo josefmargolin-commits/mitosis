@@ -97,7 +97,34 @@ input{font:inherit;color:inherit}
   font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);
   white-space:nowrap;
 }
-#goUp{top:calc(var(--top-h) + 6px)}
+#goUp{top:calc(var(--top-h) + 40px)}
+/* ---- the goal bar ---- */
+#goal{
+  position:absolute;left:0;right:0;top:var(--top-h);z-index:6;
+  height:30px;padding:0 calc(12px + env(safe-area-inset-left)) 0 calc(12px + env(safe-area-inset-right));
+  display:flex;align-items:center;gap:8px;border:0;background:none;
+  pointer-events:auto;text-align:left;
+}
+#goal .pip{width:11px;height:11px;border-radius:50%;flex:none;
+  background:var(--gc,#F5A3C0);box-shadow:0 0 0 3px var(--gcs,rgba(245,163,192,.22))}
+#goal .l{display:flex;align-items:baseline;gap:6px;min-width:0}
+#goal .k{font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);flex:none}
+#goal .t{font-family:var(--font);font-weight:800;font-size:12.5px;letter-spacing:-.01em;
+  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#goal .p{margin-left:auto;font-size:11px;font-weight:700;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;flex:none}
+#goal .bar{position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:rgba(15,23,32,.08);overflow:hidden}
+#goal .bar i{display:block;height:100%;width:0%;
+  background:linear-gradient(90deg,var(--gc,#F5A3C0),var(--gc2,#C86A9A));
+  transition:width .3s ease}
+#goal.ready .bar i{background:linear-gradient(90deg,#FFD34D,#F5A300)}
+#goal.ready .p{color:#B67A00}
+#goal.ready .pip{background:#F5A300;box-shadow:0 0 0 3px rgba(245,163,0,.26);
+  animation:goalReady 1.5s ease-in-out infinite}
+@keyframes goalReady{50%{box-shadow:0 0 0 6px rgba(245,163,0,.14)}}
+#goal:active{opacity:.7}
 /* back to the dish is the way out of the tower, so it earns its size */
 #goDown{
   position:relative;left:auto;transform:none;margin:0 auto;
@@ -284,10 +311,10 @@ input{font:inherit;color:inherit}
 
 /* ============ rails ============ */
 .rail{position:absolute;z-index:5;display:flex;flex-direction:column;gap:12px}
-#railL{left:calc(10px + env(safe-area-inset-left));top:calc(var(--top-h) + 8px)}
+#railL{left:calc(10px + env(safe-area-inset-left));top:calc(var(--top-h) + 42px)}
 /* everything on the right sits on one centre line: the profile card is the
    widest thing there, so the column is its width and the rest centres in it */
-#railR{right:calc(10px + env(safe-area-inset-right));top:calc(var(--top-h) + 8px);
+#railR{right:calc(10px + env(safe-area-inset-right));top:calc(var(--top-h) + 42px);
   align-items:center;width:68px}
 /* each button carries its own colour in --c and its glyph colour in --ic; the
    lip and sheen are derived so one variable sets the whole button */
@@ -400,7 +427,7 @@ input{font:inherit;color:inherit}
 
 /* ============ hud text ============ */
 #combo{
-  position:absolute;z-index:5;left:50%;top:calc(var(--top-h) + 62px);
+  position:absolute;z-index:5;left:50%;top:calc(var(--top-h) + 92px);
   transform:translateX(-50%) scale(.8);
   font-family:var(--font);font-weight:700;
   font-size:34px;letter-spacing:-.01em;
@@ -1483,6 +1510,12 @@ input{font:inherit;color:inherit}
       <canvas id="bg"></canvas>
       <canvas id="goo"></canvas>
       <canvas id="fx"></canvas>
+      <button id="goal" aria-label="Progress to the next scale">
+        <i class="pip"></i>
+        <span class="l"><span class="k">Becoming</span><span class="t">Cellular</span></span>
+        <span class="p">0%</span>
+        <span class="bar"><i></i></span>
+      </button>
       <button id="goUp" aria-label="Up to the wizards">
         <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         <span>Wizards</span>
@@ -4874,6 +4907,10 @@ const ICONS={
      these are fills, and the two that are ours by right are ours: the shop is
      a cart of balls, and cosmetics is the merged silhouette the whole game is
      built on rather than a generic palette. */
+  dots:'<circle fill="currentColor" stroke="none" cx="5" cy="12" r="2.3"/>'+
+       '<circle fill="currentColor" stroke="none" cx="12" cy="12" r="2.3"/>'+
+       '<circle fill="currentColor" stroke="none" cx="19" cy="12" r="2.3"/>',
+
   gear:'<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M19.46 9.40L22.61 9.96L22.61 14.04L19.46 14.60A7.9 7.9 0 0 1 19.11 15.44L20.94 18.06L18.06 20.94L15.44 19.11A7.9 7.9 0 0 1 14.60 19.46L14.04 22.61L9.96 22.61L9.40 19.46A7.9 7.9 0 0 1 8.56 19.11L5.94 20.94L3.06 18.06L4.89 15.44A7.9 7.9 0 0 1 4.54 14.60L1.39 14.04L1.39 9.96L4.54 9.40A7.9 7.9 0 0 1 4.89 8.56L3.06 5.94L5.94 3.06L8.56 4.89A7.9 7.9 0 0 1 9.40 4.54L9.96 1.39L14.04 1.39L14.60 4.54A7.9 7.9 0 0 1 15.44 4.89L18.06 3.06L20.94 5.94L19.11 8.56A7.9 7.9 0 0 1 19.46 9.40ZM12 8.05A3.95 3.95 0 1 0 12 15.95A3.95 3.95 0 1 0 12 8.05Z"/>',
 
   chart:'<rect fill="currentColor" stroke="none" x="3.9" y="13.2" width="4.6" height="7.6" rx="1.5"/>'+
@@ -4968,11 +5005,9 @@ function levelProgress(){
 function buildRails(){
   const L=$("railL"); L.innerHTML="";
   for(const it of [
-    {id:"set", svg:ICONS.gear,   fn:sheetSettings,     c:"#232B39", ic:"#FFFFFF"},
-    {id:"stat",svg:ICONS.chart,  fn:sheetStats,        c:"#FFFFFF", ic:"#3A4A5E"},
-    {id:"ach", svg:ICONS.podium, fn:sheetBoard,        c:"#F7B500", ic:"#5A3B00"},
     {id:"shop",svg:ICONS.bag,    fn:()=>{G.stTab="shop"; sheetShop();}, c:"#22C55E", ic:"#FFFFFF"},
     {id:"mis", svg:ICONS.target, fn:sheetMissions,     c:"#F97316", ic:"#FFFFFF"},
+    {id:"more",svg:ICONS.dots,   fn:sheetMore,         c:"#232B39", ic:"#FFFFFF"},
   ]){
     const b=document.createElement("button");
     b.className="orb"; b.id="orb-"+it.id;
@@ -5057,6 +5092,13 @@ function syncRails(){
     b.classList.toggle("locked",!ok);
     if(ok){ cd.style.display="none"; lab.textContent=p.nm; }
     else  { cd.style.display="grid"; cd.textContent=adWait(k); lab.textContent=p.nm; }
+  }
+  const more=document.getElementById("orb-more");
+  if(more){
+    // anything worth a red dot behind the drawer shows one on the drawer
+    // the achievements board lives behind the drawer now, so its dot does too
+    const claimable=achAny&&achAny();
+    more.classList.toggle("alert",!!claimable);
   }
   const pc=document.getElementById("profCard");
   if(pc){
@@ -5381,6 +5423,27 @@ function twitchMoney(){
   ],{duration:220,easing:"cubic-bezier(.2,1.7,.35,1)"});
   tick(1180,.032);
 }
+/* the next rung, how close it is, and the colour of the thing you become */
+let goalSig="";
+function syncGoal(){
+  const g=$("goal"); if(!g) return;
+  const last=G.strain>=SCALES.length-1;
+  const nx=last?curScale():SCALES[G.strain+1];
+  const k=last?1:clamp(G.earned/nextScaleCost(),0,1);
+  const pct=last?"MAX":(k*100<10?(k*100).toFixed(1):Math.floor(k*100))+"%";
+  const sig=nx.n+"|"+pct+"|"+last;
+  if(sig!==goalSig){
+    goalSig=sig;
+    g.querySelector(".t").textContent=last?"Cosmic":nx.n;
+    g.querySelector(".k").textContent=last?"You are":"Becoming";
+    g.querySelector(".p").textContent=pct;
+    g.style.setProperty("--gc",nx.bg[1]);
+    g.style.setProperty("--gc2",shade(nx.bg[1],-.28));
+    g.style.setProperty("--gcs",shade(nx.bg[1],.55));
+    g.classList.toggle("ready",!last&&k>=1);
+  }
+  g.querySelector(".bar i").style.width=(k*100).toFixed(1)+"%";
+}
 function syncTop(){
   if(G.bio>bioSeen+0.5 && el-twT>0.1){ twT=el; twitchMoney(); }
   bioSeen=G.bio;
@@ -5448,6 +5511,23 @@ function stgRow(o){
      : '<span class="go">\u203A</span>');
   if(o.fn) d.onclick=()=>{ o.fn(); sheetSync&&sheetSync(); };
   return d;
+}
+/* the drawer: three destinations, each with the colour it had on the rail */
+function sheetMore(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#3A4A5E">'+ICONS.dots+'</svg>',
+    "More","Everything else",b=>{
+    const go=(fn)=>()=>fn();
+    const mk=(svg,bg,fg,t,sub,fn)=>{
+      const d=row({t,s:sub,fn:go(fn)});
+      d.querySelector(".ic").style.background=bg;
+      d.querySelector(".ic").style.color=fg;
+      d.querySelector(".ic").innerHTML='<svg viewBox="0 0 24 24" style="width:16px;height:16px;display:block">'+svg+'</svg>';
+      return d;
+    };
+    b.appendChild(mk(ICONS.podium,"#FFF6DA","#8A6200","Leaderboard","Where you stand",sheetBoard));
+    b.appendChild(mk(ICONS.chart,"#E8F0FF","#2563EB","Command Center","Live statistics",sheetStats));
+    b.appendChild(mk(ICONS.gear,"#EEF1F5","#3A4A5E","Settings","Sound, haptics, your save",sheetSettings));
+  });
 }
 function sheetSettings(){
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#3A4A5E">'+ICONS.gear+'</svg>',
@@ -6173,7 +6253,7 @@ function tickUI(dt){
       if(G.spore<60) G.spore=60;
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
-    syncTop(); syncCards(); syncRails();
+    syncTop(); syncCards(); syncRails(); syncGoal();
     const vb=$("vBar");
     if(vb){
       const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
@@ -6431,6 +6511,7 @@ $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
+$("goal").onclick=()=>{ G.tab="strain"; buildTabs(); save(); if(G.opt.dockMin) setDockMin(false); };
 $("wizUpBtn").onclick=sheetWizards;
 $("case").onclick=e=>{ if(e.target.id==="case"&&!caseBusy) $("case").classList.remove("on"); };
 holdRepeat($("summonBtn"),function(){
