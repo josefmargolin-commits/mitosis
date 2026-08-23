@@ -426,6 +426,7 @@ input{font:inherit;color:inherit}
   .prof{width:58px;padding:6px 5px 7px}
   .prof .lv{font-size:14px}
   #railR .pw .g{font-size:13px}
+  #fireWrap{left:106px;right:12px;height:58px;top:13px}
   #upBtn{width:86px;height:58px;left:12px;top:13px}
   #upBtn .mk{width:23px;height:23px}
   #upBtn b{font-size:9px}
@@ -484,8 +485,9 @@ input{font:inherit;color:inherit}
 
 /* ============ dock ============ */
 #dockHandle{
-  position:absolute;top:11px;left:0;right:0;margin-inline:auto;
+  position:absolute;inset:0;margin:auto;
   width:62px;height:62px;border-radius:50%;padding:0;
+  pointer-events:none;                       /* the pane takes the press */
   background:linear-gradient(180deg,#6BF08A,#33C95A);
   border:none;
   box-shadow:0 6px 0 #1E9B41, 0 10px 20px rgba(38,170,80,.34);
@@ -502,7 +504,7 @@ input{font:inherit;color:inherit}
 /* how long until the next one is loaded. It fills as the chamber does and
    drains the instant it fires. */
 #vBar{
-  position:absolute;left:50%;transform:translateX(-50%);top:-13px;
+  position:absolute;left:50%;transform:translateX(-50%);top:-11px;z-index:2;
   width:52px;height:6px;border-radius:99px;overflow:hidden;
   background:rgba(15,23,32,.10);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
@@ -525,12 +527,26 @@ input{font:inherit;color:inherit}
   background:none;border:none;box-shadow:none;pointer-events:none;
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
-#dockHandle,#upBtn{
+#fireWrap,#dockHandle,#upBtn{
   pointer-events:auto;-webkit-touch-callout:none;
   -webkit-user-select:none;user-select:none;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
 /* the way in to the five, standing on the strip beside the trigger */
+/* the glass the trigger stands on, and the whole of it is the trigger */
+#fireWrap{
+  position:absolute;left:120px;right:14px;top:11px;height:62px;
+  border-radius:21px;z-index:5;cursor:pointer;
+  background:rgba(255,255,255,.5);
+  -webkit-backdrop-filter:blur(12px) saturate(1.35);
+          backdrop-filter:blur(12px) saturate(1.35);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.72),
+             inset 0 1px 0 rgba(255,255,255,.9),
+             0 4px 14px rgba(15,23,32,.10);
+  transition:background .1s ease, transform .09s cubic-bezier(.2,1.7,.4,1);
+}
+#fireWrap:active{background:rgba(255,255,255,.74);transform:translateY(2px)}
+/* the circle centres itself on the pane rather than on the screen */
 #upBtn{
   position:absolute;left:14px;top:11px;
   width:98px;height:62px;border-radius:20px;padding:0;border:none;
@@ -1765,10 +1781,12 @@ input{font:inherit;color:inherit}
         <button id="upBtn" aria-label="Upgrades">
           <i class="mk"></i><b>Upgrades</b><span class="dot"></span>
         </button>
-        <button id="dockHandle" aria-label="Fire the arrow">
-          <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
+        <div id="fireWrap">
           <i id="vBar"><b></b></i>
-        </button>
+          <button id="dockHandle" aria-label="Fire the arrow" tabindex="-1">
+            <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -2289,9 +2307,9 @@ function dishFloor(){
   // the dock by rect, so safe areas and notches are inside the number
   let y=dock.getBoundingClientRect().top-ar.top;
   if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
-  const h=document.getElementById("dockHandle"), vb=document.getElementById("vBar");
-  // and the bar by offset, so the button's idle bob does not move the floor
-  if(h&&vb) y+=h.offsetTop+vb.offsetTop-8;    // eight pixels of air over it
+  const fw=document.getElementById("fireWrap"), vb=document.getElementById("vBar");
+  // by offset rather than rect: offsets are layout, and layout does not bob
+  if(fw&&vb) y+=fw.offsetTop+vb.offsetTop-8;  // eight pixels of air over it
   return Math.max(H*.35, Math.round(y));
 }
 /* where the chrome actually ends today, not where it ended at boot */
@@ -7237,8 +7255,14 @@ function setDockMin(min,quiet){
 /* press it and it fires: a green one, straight up, every time */
 document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")');
 (function arrowButton(){
-  const h=$("dockHandle");
-  h.onclick=()=>{ if(!ready) return; ventBall(6,true); };
+  const fw=$("fireWrap");
+  // click coalesces two simultaneous taps into one; pointerdown does not
+  fw.addEventListener("pointerdown",e=>{
+    if(e.button) return;
+    e.preventDefault();
+    if(!ready) return;
+    ventBall(6,true);
+  },{passive:false});
   const u=$("upBtn");
   if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
 })();
