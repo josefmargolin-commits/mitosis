@@ -745,9 +745,10 @@ input{font:inherit;color:inherit}
   border-bottom:4px solid var(--rc);
 }
 .crC .ic{
-  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
-  background:var(--rb);color:var(--rc);font:800 16px/1 var(--font);flex:none;
+  width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+  background:var(--rb);color:var(--rc);flex:none;
 }
+.crC .ic svg{width:36px;height:36px;display:block;overflow:visible}
 .crC b{font:800 10.5px/1.2 var(--font);color:var(--ink);text-align:center;
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .crC i{font:800 8px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;
@@ -760,6 +761,71 @@ input{font:inherit;color:inherit}
 .prize .pr{display:block;font:800 9.5px/1 var(--font);letter-spacing:.1em;
   text-transform:uppercase;margin-bottom:5px}
 .prize .pn{display:block;font:800 16px/1.2 var(--font);color:var(--ink)}
+/* the reveal, over the top of everything in the sheet */
+.chestWrap{position:relative}
+.crRev{
+  position:absolute;inset:-6px -14px;z-index:9;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  opacity:0;visibility:hidden;
+  background:radial-gradient(120% 78% at 50% 44%,
+    color-mix(in srgb, var(--rc) 22%, var(--panel)) 0%,
+    var(--panel) 62%, var(--panel) 100%);
+  transition:opacity .22s ease, visibility .22s;
+}
+.crRev.on{opacity:1;visibility:visible}
+/* the rays: a wheel of wedges, turning slowly */
+.crRev .rays{
+  position:absolute;top:38%;left:50%;width:420px;height:420px;margin:-210px 0 0 -210px;
+  background:repeating-conic-gradient(from 0deg,
+    var(--rc) 0deg 5deg, transparent 5deg 15deg);
+  opacity:.16;border-radius:50%;
+  -webkit-mask-image:radial-gradient(closest-side,#000 18%,transparent 74%);
+          mask-image:radial-gradient(closest-side,#000 18%,transparent 74%);
+  animation:crSpin 14s linear infinite;
+}
+@keyframes crSpin{to{transform:rotate(360deg)}}
+.crRev .halo{
+  position:absolute;top:38%;left:50%;width:170px;height:170px;margin:-85px 0 0 -85px;
+  border-radius:50%;background:radial-gradient(closest-side,
+    color-mix(in srgb, var(--rc) 42%, transparent), transparent 72%);
+  animation:crPulse 2.2s ease-in-out infinite;
+}
+@keyframes crPulse{50%{transform:scale(1.14);opacity:.75}}
+.crRev .rIco{
+  position:relative;width:118px;height:118px;display:grid;place-items:center;
+  transform:scale(.35);opacity:0;
+}
+.crRev .rIco svg{width:104px;height:104px;display:block;overflow:visible;
+  filter:drop-shadow(0 6px 14px rgba(15,23,32,.2))}
+.crRev.on .rIco{animation:crPop .62s cubic-bezier(.2,1.7,.35,1) forwards}
+@keyframes crPop{0%{transform:scale(.35);opacity:0}
+  55%{transform:scale(1.16);opacity:1} 100%{transform:scale(1);opacity:1}}
+.crRev .rr{
+  font:800 11px/1 var(--font);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--rc);opacity:0;
+}
+.crRev .rn{
+  font:800 21px/1.2 var(--font);color:var(--ink);text-align:center;
+  padding:0 18px;opacity:0;
+}
+.crRev.on .rr{animation:crUp .4s .3s ease forwards}
+.crRev.on .rn{animation:crUp .4s .38s ease forwards}
+@keyframes crUp{from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:none}}
+/* sparks, thrown on the beat the icon lands */
+.crRev .sp{
+  position:absolute;top:38%;left:50%;width:8px;height:8px;border-radius:50%;
+  background:var(--rc);opacity:0;
+}
+.crRev.on .sp{animation:crSpark .8s .22s cubic-bezier(.15,.7,.3,1) forwards}
+@keyframes crSpark{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(.4)}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.15)}}
+/* the crate rattles before the lid gives */
+.bchestArt.rattle{animation:crRattle .55s cubic-bezier(.36,.07,.19,.97)}
+@keyframes crRattle{
+  10%,30%,50%,70%{transform:translateX(-3px) rotate(-2.2deg)}
+  20%,40%,60%,80%{transform:translateX(3px) rotate(2.2deg)}
+  90%{transform:translateX(-1.5px)} 100%{transform:none}}
 .prize{font:800 15px/1.2 var(--font);color:var(--ink);text-align:center;min-height:19px;
   opacity:0;transform:translateY(4px);transition:opacity .3s ease, transform .3s ease}
 .prize.on{opacity:1;transform:none}
@@ -775,7 +841,8 @@ input{font:inherit;color:inherit}
 
 /* the five upgrade icons are drawn, and they carry the panel colour */
 .upR .ic{background:#EEF0FE;color:#4F5FE0}
-.upR .ic svg{width:17px;height:17px;display:block}
+.upR .ic{width:36px;height:36px;border-radius:11px}
+.upR .ic svg{width:23px;height:23px;display:block}
 .row .l{flex:1;min-width:0}
 .row .t{font-size:12px;line-height:1.35}
 .row .s{font-size:9.5px;color:var(--ink-3);line-height:1.45;margin-top:2px}
@@ -1883,9 +1950,12 @@ const UP={
            d:"Damage every tap deals. Tougher balls need more of it.",
            v:l=>1+Math.floor(l/4), fmt:l=>(1+Math.floor(l/4))+" dmg"},
   reach:  {tab:"touch",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<path d="M4.4 19.6 19.2 4.8" stroke="currentColor" stroke-width="2.6" '+
-               'stroke-linecap="round" fill="none"/>'+
-             '<path d="M7.8 16.2 5 19.6l4.4-.9zM16 8l3.2-3.2-.7 4.2z" fill="currentColor" opacity=".5"/></svg>',
+             // the ball, in halves pushed apart along the cut
+             '<path d="M11.2 4.1a7.6 7.6 0 0 0-4.4 12.6l8.2-8.2a7.6 7.6 0 0 0-3.8-4.4z" fill="currentColor" opacity=".5"/>'+
+             '<path d="M12.8 19.9a7.6 7.6 0 0 0 4.4-12.6L9 15.5a7.6 7.6 0 0 0 3.8 4.4z" fill="currentColor" opacity=".5"/>'+
+             // and the cut running well past it, which is what you are buying
+             '<path d="M2.6 21.4 21.4 2.6" stroke="currentColor" stroke-width="2.4" '+
+               'stroke-linecap="round" fill="none"/></svg>',
            nm:"Blade", base:10, gr:1.16, max:60,
            d:"How wide a path your swipe cuts through the dish.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
@@ -1903,8 +1973,12 @@ const UP={
            v:l=>Math.min(.09,l*.00225), fmt:l=>(0.5+Math.min(9,l*.225)).toFixed(1)+"%"},
 
   colony: {tab:"lysis",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<circle cx="8.4" cy="14.4" r="4.6" fill="currentColor" opacity=".45"/>'+
-             '<circle cx="15.8" cy="9.6" r="6.2" fill="currentColor"/></svg>',
+             // cells sitting there paying, which is the whole idea
+             '<circle cx="7.2" cy="16.6" r="4.4" fill="currentColor" opacity=".42"/>'+
+             '<circle cx="16.2" cy="16.8" r="5.6" fill="currentColor" opacity=".72"/>'+
+             '<circle cx="7.6" cy="7.4" r="2.6" fill="currentColor" opacity=".3"/>'+
+             '<path d="M16.2 2.4l1.2 3.4 3.4 1.2-3.4 1.2-1.2 3.4-1.2-3.4L11.6 7l3.4-1.2z" '+
+               'fill="currentColor"/></svg>',
            nm:"Colony", base:300, gr:1.26, max:40,
            d:"Every ball on the dish pays you a share of itself, every second. Bigger balls pay more, so a merged dish earns more than a broken one.",
            v:l=>l?0.010+l*0.006:0,
@@ -1917,27 +1991,45 @@ const UP={
   // and longest track in the game. Diminishing returns, steeper cost, half the
   // levels: it still ends up the biggest single buy, without eclipsing the rest.
   yield:  {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<circle cx="12" cy="12" r="8.4" fill="currentColor"/>'+
-             '<path d="M12 7.1v9.8M14.6 9.4c-.5-.8-1.5-1.2-2.6-1.2-1.5 0-2.7.7-2.7 1.9 0 2.6 5.4 1.3 5.4 3.9 0 1.2-1.2 2-2.7 2-1.2 0-2.2-.5-2.7-1.3" '+
-               'stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>',
+             // notes, with the multiplier sitting on them
+             '<rect x="2.6" y="13.4" width="18.8" height="6.2" rx="1.8" fill="currentColor" opacity=".34"/>'+
+             '<rect x="2.6" y="9.6" width="18.8" height="6.2" rx="1.8" fill="currentColor" opacity=".62"/>'+
+             '<rect x="2.6" y="5.8" width="18.8" height="6.2" rx="1.8" fill="currentColor"/>'+
+             '<path d="M9.8 7.4 14.2 10.4M14.2 7.4 9.8 10.4" stroke="#fff" stroke-width="1.7" '+
+               'stroke-linecap="round" fill="none"/></svg>',
            nm:"Payout", base:70, gr:1.28, max:70,
            d:"Cash you get from every split and pop.",
            v:l=>1+0.5*Math.pow(l,0.72), fmt:l=>"×"+(1+0.5*Math.pow(l,0.72)).toFixed(2)},
   reload: {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<path d="M12 3.6 18.6 13h-4V20h-5.2v-7h-4z" fill="currentColor"/></svg>',
+             // a clock almost run down, with the shot ready inside it
+             '<circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" '+
+               'stroke-width="2.2" opacity=".26"/>'+
+             '<path d="M12 2.8a9.2 9.2 0 0 1 8.4 12.9" fill="none" stroke="currentColor" '+
+               'stroke-width="2.2" stroke-linecap="round"/>'+
+             '<path d="M12 6.6 16.7 13h-2.9v4.6h-3.6V13H7.3z" fill="currentColor"/></svg>',
            nm:"Reload", base:400, gr:1.22, max:30,
            d:"How long the arrow takes to load its next free ball.",
            v:l=>Math.max(3.5, 10-l*0.22), fmt:l=>Math.max(3.5,10-l*0.22).toFixed(1)+"s"},
   payload:{tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<circle cx="8" cy="15" r="4" fill="currentColor" opacity=".45"/>'+
-             '<circle cx="16" cy="10" r="6" fill="currentColor"/></svg>',
+             // small becomes big, and the arrow says which way
+             '<circle cx="5.6" cy="17" r="3.4" fill="currentColor" opacity=".38"/>'+
+             '<circle cx="16.4" cy="10.4" r="6.6" fill="currentColor"/>'+
+             '<path d="M9.6 15.6 13.4 11.8" stroke="currentColor" stroke-width="1.8" '+
+               'stroke-linecap="round" fill="none" opacity=".55"/>'+
+             '<path d="M13.9 11.3h-3v-1.5h4.5v4.5h-1.5z" fill="currentColor" opacity=".55"/></svg>',
            nm:"Payload", base:260, gr:1.20, max:30,
            d:"Chance the arrow sends a ball one whole rung bigger than it rolled.",
            v:l=>Math.min(.84,l*.028), fmt:l=>Math.round(Math.min(84,l*2.8))+"%"},
   dish:   {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="2"/>'+
-             '<path d="M12 6.2v11.6M6.2 12h11.6" stroke="currentColor" stroke-width="1.6" '+
-               'stroke-linecap="round"/></svg>',
+             // a dish filled past where it used to stop
+             '<path d="M3.4 5.6h17.2v11a3.4 3.4 0 0 1-3.4 3.4H6.8a3.4 3.4 0 0 1-3.4-3.4z" '+
+               'fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'+
+             '<path d="M4.9 12.4h14.2v4.2a2 2 0 0 1-2 2H6.9a2 2 0 0 1-2-2z" fill="currentColor" opacity=".3"/>'+
+             '<circle cx="8.6" cy="15.4" r="2.5" fill="currentColor"/>'+
+             '<circle cx="14.4" cy="16" r="1.9" fill="currentColor"/>'+
+             '<circle cx="17.6" cy="14.2" r="1.4" fill="currentColor" opacity=".7"/>'+
+             '<path d="M3.4 10.6h17.2" stroke="currentColor" stroke-width="1.4" '+
+               'stroke-dasharray="2 2.2" opacity=".55"/></svg>',
            nm:"Dish", base:500, gr:1.30, max:20,
            d:"How much of the screen you are allowed to fill before the arrow stops feeding it.",
            v:l=>0.80+Math.min(.12,l*.006), fmt:l=>Math.round((0.80+Math.min(.12,l*.006))*100)+"%"},
@@ -5974,11 +6066,107 @@ const CHEST_SVG='<svg viewBox="0 0 64 48" aria-hidden="true">'+
   '<rect class="box" x="6" y="20" width="52" height="24" rx="3"/>'+
   '<rect class="band" x="27" y="5" width="10" height="39" rx="2"/>'+
   '<circle class="lock" cx="32" cy="26" r="4.6"/></svg>';
+let icoN=0;                          // gradients need ids of their own
+const RIDX={common:0,uncommon:1,rare:2,epic:3,legendary:4};
+/* a stack of notes, one taller and one coin richer per rarity */
+function icoCash(r){
+  const notes=[1,2,3,4,5][r], coins=[0,0,1,2,3][r];
+  let o='';
+  for(let i=0;i<notes;i++){
+    const y=27-i*4.2, tilt=(i%2?1:-1)*(1.5+i*0.7);
+    o+='<g transform="translate(20 '+y+') rotate('+tilt+')">'+
+       '<rect x="-13" y="-4.2" width="26" height="8.4" rx="1.9" fill="#3FBF6B"/>'+
+       '<rect x="-13" y="-4.2" width="26" height="8.4" rx="1.9" fill="none" '+
+         'stroke="#16A34A" stroke-width="1"/>'+
+       '<circle cx="0" cy="0" r="2.4" fill="#BBF7D0"/></g>';
+  }
+  for(let i=0;i<coins;i++){
+    const a=[-15.5,15.5,0][i], y=[31,31,9.5][i];
+    o+='<circle cx="'+(20+a)+'" cy="'+y+'" r="4.4" fill="#F5C33B"/>'+
+       '<circle cx="'+(20+a)+'" cy="'+(y-.8)+'" r="4.4" fill="#FFD966"/>';
+  }
+  if(r===4) o+='<path d="M32 6l1.1 3.1L36 10.2l-2.9 1.1L32 14.4l-1.1-3.1L28 10.2l2.9-1z" fill="#FFF3C4"/>';
+  return '<svg viewBox="0 0 40 40">'+o+'</svg>';
+}
+/* a cluster of orbs, same idea */
+function icoMana(r){
+  const n=[1,2,3,5,7][r];
+  const spots=[[20,20,7.6],[13,24,6],[27,24,6],[20,12,5.4],[10,15,4.6],[30,15,4.6],[20,29,4.6]];
+  const id="mg"+(++icoN);
+  let o='<defs><radialGradient id="'+id+'" cx=".35" cy=".3">'+
+        '<stop offset="0" stop-color="#BBD9FF"/><stop offset="1" stop-color="#2F6BFF"/>'+
+        '</radialGradient></defs>';
+  for(let i=n-1;i>=0;i--){
+    const p=spots[i];
+    o+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+p[2]+'" fill="url(#'+id+')"/>'+
+       '<circle cx="'+(p[0]-p[2]*.3)+'" cy="'+(p[1]-p[2]*.35)+'" r="'+(p[2]*.26)+'" fill="#EAF2FF" opacity=".85"/>';
+  }
+  if(r===4) o+='<path d="M33 7l1 2.7 2.7 1-2.7 1-1 2.7-1-2.7-2.7-1 2.7-1z" fill="#DCEBFF"/>';
+  return '<svg viewBox="0 0 40 40">'+o+'</svg>';
+}
+/* the ball itself, in the skin on offer, with a cleave through it */
+function icoSkin(cos){
+  const id="sg"+(++icoN);
+  const o=cos&&cos.o||{};
+  const grad=o.g||"linear-gradient(150deg,#B7F04A,#63D62F)";
+  const m=grad.match(/#[0-9A-Fa-f]{3,6}/g)||["#B7F04A","#63D62F"];
+  const cleave=(cos&&cos.kind==="trail"&&o.c)||"#FFC93C";
+  return '<svg viewBox="0 0 40 40">'+
+    '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2=".8" y2="1">'+
+      '<stop offset="0" stop-color="'+m[0]+'"/><stop offset="1" stop-color="'+(m[1]||m[0])+'"/>'+
+    '</linearGradient>'+
+    '<clipPath id="c'+id+'"><circle cx="20" cy="20" r="13.4"/></clipPath></defs>'+
+    // the two halves, pushed a hair apart along the cut
+    '<g clip-path="url(#c'+id+')">'+
+      '<circle cx="18.4" cy="21.6" r="13.4" fill="url(#'+id+')"/>'+
+      '<circle cx="21.6" cy="18.4" r="13.4" fill="url(#'+id+')"/>'+
+      '<circle cx="15.6" cy="15.6" r="4.2" fill="#fff" opacity=".38"/>'+
+    '</g>'+
+    // the cleave, running past the ball on both sides
+    '<path d="M4.5 31.5 35.5 8.5" stroke="'+cleave+'" stroke-width="2.6" '+
+      'stroke-linecap="round" fill="none" opacity=".95"/>'+
+    '<path d="M4.5 31.5 35.5 8.5" stroke="#fff" stroke-width="1" '+
+      'stroke-linecap="round" fill="none" opacity=".6"/></svg>';
+}
+/* every power draws what it actually does */
+const POWER_ICO={
+  ready:'<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="5.4" fill="currentColor"/>'+
+    [[20,7],[20,33],[7,20],[33,20],[10.8,10.8],[29.2,29.2],[29.2,10.8],[10.8,29.2]]
+      .map(p=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.8" fill="currentColor" opacity=".75"/>').join("")+
+    '</svg>',
+  rapid:'<svg viewBox="0 0 40 40">'+
+    '<path d="M20 5 30 19h-6v10h-8V19h-6z" fill="currentColor"/>'+
+    '<rect x="12" y="32" width="16" height="3.4" rx="1.7" fill="currentColor" opacity=".45"/>'+
+    '<rect x="12" y="32" width="11" height="3.4" rx="1.7" fill="currentColor"/></svg>',
+  fulld:'<svg viewBox="0 0 40 40">'+
+    '<circle cx="12" cy="26" r="7" fill="currentColor"/>'+
+    '<circle cx="26" cy="28" r="5.2" fill="currentColor" opacity=".8"/>'+
+    '<circle cx="22" cy="15" r="6" fill="currentColor" opacity=".62"/>'+
+    '<circle cx="31" cy="16" r="3.6" fill="currentColor" opacity=".45"/>'+
+    '<circle cx="9" cy="13" r="3.2" fill="currentColor" opacity=".45"/></svg>',
+  frenzy:'<svg viewBox="0 0 40 40">'+
+    '<path d="M20 4c4.2 6.3 1.4 8.4 3.5 11.2 1.6 2.1 4.4 1.2 4.4-1.4 3.6 3.6 5.1 7.4 5.1 11.2C33 32 27 36 20 36S7 32 7 25c0-5 2.6-9.3 6.6-12.6-.5 3.6 1 5.6 3 5.6 2.8 0 4.3-3.4 1.4-8 .7-2.6 1.4-4.4 2-6z" fill="currentColor"/>'+
+    '<path d="M20 36c-3.6 0-6-2.4-6-5.6 0-3 2.2-4.6 3.4-7.4 1.8 2.4 4 2.2 4 5 2.6-1.4 4.6 1 4.6 3.4 0 2.8-2.4 4.6-6 4.6z" fill="#fff" opacity=".55"/></svg>',
+  colony:'<svg viewBox="0 0 40 40">'+
+    '<circle cx="12" cy="27" r="6.4" fill="currentColor" opacity=".5"/>'+
+    '<circle cx="25" cy="26" r="8.4" fill="currentColor"/>'+
+    '<path d="M25 6.5l1.5 4.2 4.2 1.5-4.2 1.5L25 18l-1.5-4.3-4.2-1.5 4.2-1.5z" fill="currentColor"/>'+
+    '<path d="M11 11l.9 2.5 2.5.9-2.5.9L11 18l-.9-2.7-2.5-.9 2.5-.9z" fill="currentColor" opacity=".6"/></svg>',
+  bang:'<svg viewBox="0 0 40 40">'+
+    '<path d="M20 2l3.4 8.9L32 6.6l-3.1 8.8 9.1 1.2-7.6 5.2 7 5.6-9.2.4 2.4 8.9-8-4.8-6.6 6.4-.6-9.2-9 1.9 4.6-8L2 18.6l8.8-2.4L6.4 8.3l8.8 2.9z" fill="currentColor"/>'+
+    '<circle cx="20" cy="20" r="5.6" fill="#fff" opacity=".62"/></svg>',
+};
+function icoFor(p){
+  if(p.t==="cash") return icoCash(RIDX[p.r]);
+  if(p.t==="mana") return icoMana(RIDX[p.r]);
+  if(p.t==="skin") return icoSkin(p.cos);
+  return POWER_ICO[p.id]||POWER_ICO.ready;
+}
 const CELL_W=92;                       // one card plus its gutter
 function crateCell(p){
   const R=RARITY[p.r];
   return '<div class="crC r-'+p.r+'" style="--rc:'+R.c+';--rb:'+R.bg+'">'+
-    '<span class="ic">'+p.ic+'</span>'+
+    '<span class="ic">'+icoFor(p)+'</span>'+
     '<b>'+p.nm+'</b>'+
     '<i>'+R.nm+'</i></div>';
 }
@@ -5995,6 +6183,14 @@ function sheetChest(){
       '<div class="crate"><div class="crMark"></div>'+
         '<div class="crStrip" id="chStrip"></div></div>'+
       '<div class="prize" id="chPrize"></div>'+
+      '<div class="crRev" id="chRev"><div class="rays"></div><div class="halo"></div>'+
+        Array.from({length:14},(_,i)=>{
+          const a=(i/14)*Math.PI*2+0.3, d=86+((i*37)%54);
+          return '<span class="sp" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;'+
+                 '--dy:'+(Math.sin(a)*d).toFixed(0)+'px;'+
+                 'animation-delay:'+(0.22+(i%5)*0.03).toFixed(2)+'s"></span>';
+        }).join("")+
+        '<div class="rIco"></div><span class="rr"></span><span class="rn"></span></div>'+
       '<button class="chestGo" id="chGo">Open</button>';
     b.appendChild(wrap);
     const go=wrap.querySelector("#chGo"), strip=wrap.querySelector("#chStrip"),
@@ -6007,6 +6203,9 @@ function sheetChest(){
     go.onclick=()=>{
       if(spun) return;
       spun=true; go.disabled=true; go.textContent="…";
+      art.classList.add("rattle");
+      thud(70,{vol:.16,len:.4}); haptic([9,40,9,40,9]);
+      for(let i=0;i<5;i++) setTimeout(()=>pop(210+i*30,{vol:.05,wet:.2}), i*105);
       G.chests=Math.max(0,(G.chests|0)-1); save();
       const n=G.chests|0;
       $("sheetSub").textContent = n>1 ? n+" more waiting"
@@ -6027,9 +6226,12 @@ function sheetChest(){
       strip.style.transition="none";
       strip.style.transform="translateX(0px)";
       void strip.offsetWidth;
-      const DUR=5.2;
-      strip.style.transition="transform "+DUR+"s cubic-bezier(.09,.62,.14,1)";
-      strip.style.transform="translateX("+end+"px)";
+      const DUR=5.2, LAG=0.56;              // the rattle first
+      setTimeout(()=>{
+        art.classList.remove("rattle");
+        strip.style.transition="transform "+DUR+"s cubic-bezier(.09,.62,.14,1)";
+        strip.style.transform="translateX("+end+"px)";
+      }, LAG*1000);
       // the ticks: one per card as it crosses the marker, which means their
       // spacing has to follow the same easing the strip does
       const ease=t=>{ // cubic-bezier(.09,.62,.14,1) sampled by bisection on x
@@ -6048,16 +6250,25 @@ function sheetChest(){
         const tSec=((lo+hi)/2)*DUR;
         if(tSec>DUR-0.02) continue;
         setTimeout(()=>{ pop(520+(c%5)*40,{vol:c>WIN-8?.09:.05,wet:.12});
-                         if(c>WIN-5) haptic(6); }, tSec*1000);
+                         if(c>WIN-5) haptic(6); }, (LAG+tSec)*1000);
       }
       setTimeout(()=>{
         const R=RARITY[prize.r];
         art.classList.add("open");
         cells[WIN].classList.add("won");
         cratePay(prize);
+        // the reveal takes the panel: rays, halo, sparks, the icon at size
+        const rev=wrap.querySelector("#chRev");
+        rev.style.setProperty("--rc",R.c);
+        rev.querySelector(".rIco").innerHTML=icoFor(prize);
+        rev.querySelector(".rr").textContent=R.nm;
+        rev.querySelector(".rn").textContent=prize.sub||prize.nm;
+        rev.classList.add("on");
         pz.innerHTML='<span class="pr" style="color:'+R.c+'">'+R.nm+'</span>'+
                      '<span class="pn">'+(prize.sub||prize.nm)+'</span>';
         pz.classList.add("on");
+        // it clears after a beat, leaving the card lit in the strip
+        setTimeout(()=>rev.classList.remove("on"), prize.r==="legendary"||prize.r==="epic"?2600:1900);
         banner(prize.r==="legendary"?"LEGENDARY":(prize.r==="epic"?"EPIC":"CRATE"));
         const big=prize.r==="legendary"||prize.r==="epic";
         shake=Math.max(shake,big?11:5); flash=Math.max(flash,big?.3:.18);
@@ -6067,10 +6278,12 @@ function sheetChest(){
           chime(392*semi(LADDER[notes[n]]),{vol:.15,len:1.6,delay:n*.07,wet:.6});
         thud(52,{vol:.3,len:.9});
         haptic(big?[22,50,22,50,34]:[16,40,16]);
-        go.disabled=false;
-        go.textContent=(G.chests|0)>0 ? "Next crate" : "Collect";
-        go.onclick=()=>{ closeSheet(); if((G.chests|0)>0) setTimeout(sheetChest,280); };
-      }, DUR*1000+60);
+        setTimeout(()=>{
+          go.disabled=false;
+          go.textContent=(G.chests|0)>0 ? "Next crate" : "Collect";
+          go.onclick=()=>{ closeSheet(); if((G.chests|0)>0) setTimeout(sheetChest,280); };
+        }, 900);
+      }, (LAG+DUR)*1000+60);
     };
   });
 }
