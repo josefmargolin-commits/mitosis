@@ -702,6 +702,53 @@ input{font:inherit;color:inherit}
   background:var(--panel);border:1px solid var(--edge);box-shadow:0 1px 2px rgba(15,23,32,.04)}
 .row .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:14px;
   background:var(--surface);flex:none}
+/* ---- the boss chest ----------------------------------------------------
+   The lid hinges back on its own transform so the box under it can stay
+   still, which is what makes it read as opening rather than as growing. */
+.chestWrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0 2px}
+.bchestArt{width:150px;height:114px;display:grid;place-items:center;
+  filter:drop-shadow(0 8px 16px rgba(180,121,26,.28))}
+.bchestArt svg{width:150px;height:113px;overflow:visible}
+.bchestArt .box{fill:#B4791A}
+.bchestArt .lid{fill:#D69A2C;transform-origin:32px 20px;
+  transition:transform .5s cubic-bezier(.3,1.5,.5,1)}
+.bchestArt .band{fill:#8A5A05}
+.bchestArt .lock{fill:#FFD34D;transition:opacity .3s ease}
+.bchestArt.open .lid{transform:rotate(-108deg) translateY(-2px)}
+.bchestArt.open .lock{opacity:0}
+.bchestArt.open{animation:chJump .5s cubic-bezier(.3,1.6,.4,1)}
+@keyframes chJump{40%{transform:translateY(-9px) scale(1.05)}}
+/* the four kinds, running past under the lid */
+.reel{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;width:100%}
+.reel .cell{
+  background:var(--surface);border-radius:14px;padding:11px 4px 9px;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  opacity:.42;transform:scale(.93);
+  transition:opacity .12s linear, transform .12s linear, background .12s linear;
+}
+.reel .cell span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  font-size:15px;font-weight:800;background:#fff;color:var(--ink-3)}
+.reel .cell b{font:800 10px/1 var(--font);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-3)}
+.reel .cell.on{opacity:1;transform:scale(1.04);background:var(--cb)}
+.reel .cell.on span{background:#fff;color:var(--cf)}
+.reel .cell.on b{color:var(--cf)}
+.reel .cell.won{transform:scale(1.1);box-shadow:0 0 0 2px var(--cf) inset;
+  animation:chWon 1.1s ease-in-out infinite}
+@keyframes chWon{50%{box-shadow:0 0 0 2px var(--cf) inset, 0 0 16px rgba(255,176,32,.5)}}
+.prize{font:800 15px/1.2 var(--font);color:var(--ink);text-align:center;min-height:19px;
+  opacity:0;transform:translateY(4px);transition:opacity .3s ease, transform .3s ease}
+.prize.on{opacity:1;transform:none}
+.chestGo{
+  width:100%;padding:14px;border:none;border-radius:16px;
+  font:800 15px/1 var(--font);letter-spacing:.02em;color:#fff;
+  background:linear-gradient(180deg,#FFC24D,#F0A81E);
+  box-shadow:0 5px 0 #B4791A, 0 9px 18px rgba(240,168,30,.3);
+  transition:transform .09s cubic-bezier(.2,1.7,.4,1), box-shadow .09s ease, filter .2s ease;
+}
+.chestGo:active{transform:translateY(3px);box-shadow:0 2px 0 #B4791A}
+.chestGo:disabled{filter:saturate(.5) brightness(1.06)}
+
 /* the five upgrade icons are drawn, and they carry the panel colour */
 .upR .ic{background:#EEF0FE;color:#4F5FE0}
 .upR .ic svg{width:17px;height:17px;display:block}
@@ -1741,15 +1788,6 @@ const SKINS=[
   {id:"circuit",nm:"Circuit", cost:30, g:"linear-gradient(150deg,#5EEAD4,#0E9488)"},
   {id:"vortex", nm:"Vortex",  cost:38, g:"linear-gradient(150deg,#C4A5FF,#6D28D9)"},
 ];
-/* Chompy's coat: core, the two accretion arcs, and the halo it drags */
-const PETS=[
-  {id:"void",  nm:"Void",   cost:0,  core:"#0B0616", arc:"#C6A0FF", glow:"158,96,255",  d:"The one you started with."},
-  {id:"ember", nm:"Ember",  cost:8,  core:"#1A0703", arc:"#FFB27A", glow:"255,122,45",  d:"Burns as it feeds."},
-  {id:"frost", nm:"Frost",  cost:12, core:"#04141C", arc:"#9FE8FF", glow:"64,196,255",  d:"Cold and quiet."},
-  {id:"toxic", nm:"Toxic",  cost:16, core:"#08160A", arc:"#B9F87A", glow:"120,224,60",  d:"Something is wrong with this one."},
-  {id:"rose",  nm:"Rose",   cost:22, core:"#1B0510", arc:"#FFA6D2", glow:"255,90,170",  d:"Sweet, briefly."},
-];
-const pet=()=>PETS.find(p=>p.id===G.pet)||PETS[0];
 const TRAILS=[
   {id:"gold",  nm:"Golden Path",   c:"#FFC93C", cost:0,   d:"The cleave you start with.",
    g:"linear-gradient(150deg,#FFD866,#F5A300)"},
@@ -1840,15 +1878,13 @@ const UP={
            d:"Chance the arrow sends up a rainbow ball. It pops for twenty-five times its worth and opens a two minute ×5 window.",
            v:l=>Math.min(.09,l*.00225), fmt:l=>(0.5+Math.min(9,l*.225)).toFixed(1)+"%"},
 
-  pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.24, max:30,
-           d:"How often Chompy swallows. Buy the first level and he appears.",
-           v:l=>l?Math.min(3,0.3+l*0.09):0, fmt:l=>l?Math.min(3,0.3+l*0.09).toFixed(2)+"/s":"asleep"},
-  size:   {tab:"lysis",g:"◎",nm:"Size",  base:2500,gr:3.4,  max:4,
-           d:"How big a ball Chompy can swallow. He never grows into the top two rungs - those merges are yours.",
-           v:l=>l, fmt:l=>"up to "+(["green","cyan","blue","purple","red"][l]||"red")},
-  pull:   {tab:"lysis",g:"◌",nm:"Pull",  base:220,gr:1.28, max:44,
-           d:"How far Chompy drags balls in from. Anything inside is in range to be eaten.",
-           v:l=>150+l*20, fmt:l=>Math.round(150+l*20)+"px"},
+  colony: {tab:"lysis",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="8.4" cy="14.4" r="4.6" fill="currentColor" opacity=".45"/>'+
+             '<circle cx="15.8" cy="9.6" r="6.2" fill="currentColor"/></svg>',
+           nm:"Colony", base:300, gr:1.26, max:40,
+           d:"Every ball on the dish pays you a share of itself, every second. Bigger balls pay more, so a merged dish earns more than a broken one.",
+           v:l=>l?0.010+l*0.006:0,
+           fmt:l=>l?(100*(0.010+l*0.006)).toFixed(1)+"%/s":"off"},
 
   fusion: {tab:"field",g:"⊕",nm:"Merge", base:60, gr:1.20, max:40,
            d:"Two balls of the same colour that touch turn into one bigger ball. This is the wait before that happens.",
@@ -1888,7 +1924,7 @@ const UP={
 const UPK=Object.keys(UP);
 const UP_GROUPS=[
   {t:"The dish",  keys:["reach","reload","payload","dish","yield"]},
-  {t:"Chompy",    keys:["pulse","size","pull"]},
+  {t:"Passive",   keys:["colony"]},
 ];
 const SHOP_UP=UP_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
 
@@ -1984,7 +2020,7 @@ function freshState(){
   // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
   return {
-    v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0,
+    v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0, chests:0,
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
     pw:{}, boost:{},
@@ -2502,6 +2538,31 @@ function bumpCombo(){
   c.classList.remove("on"); void c.offsetWidth; c.classList.add("on");
 }
 let psFrame=0, psRate=0;
+const COLONY_POW=1.2;                // bigger balls pay more than their mass
+const COLONY_K=0.34;                 // and the scale is put back afterwards
+let rentAcc=0, rentT=0;
+function colonyTick(dt){
+  const rate=val("colony");
+  if(rate<=0||!balls.length) return;
+  let m=0;
+  for(const b of balls){ if(!b.gone && b.kind!=="boss") m+=Math.pow(b.mass,COLONY_POW); }
+  if(m<=0) return;
+  const v=m*COLONY_K*rate*yieldMul()*dt;
+  G.bio+=v; G.earned+=v; G.totalEarned+=v; psFrame+=v; rentAcc+=v;
+  objProg("earn",v);
+  // one number every so often, off whichever ball is paying the most
+  rentT-=dt;
+  if(rentT<=0){
+    rentT=1.3;
+    if(rentAcc>=0.5){
+      let big=null;
+      for(const b of balls){ if(b.gone||b.kind==="boss") continue;
+        if(!big||b.mass>big.mass) big=b; }
+      if(big) pushPop(big.x, big.y-big.r*.8, "+"+fmt(rentAcc));
+    }
+    rentAcc=0;
+  }
+}
 const perSec=()=>psRate;
 function earn(base,x,y,col){
   const v=base*yieldMul()*comboMul();
@@ -2685,7 +2746,9 @@ function strike(b,dmg,src,forced){
 function divide(b){
   if(b.kind==="boss"){
     G.bossMark=Math.min(BOSSES.length,(G.bossMark|0)+1);
+    G.chests=(G.chests|0)+1;
     goalSig="";                                   // the strip repaints its pips
+    setTimeout(()=>{ if(!zoomPhase) sheetChest(); }, 1150);
     banner(bossType(b).nm+" DOWN");
     shake=Math.max(shake,14); flash=Math.max(flash,.34); freeze=Math.max(freeze,.07);
     for(let i=0;i<9;i++)
@@ -3062,7 +3125,7 @@ function stepZoom(dt){
   zoomFade=(1-k)*0.35;
   if(k>=1){
     zoomPhase=0; zoomFade=0;
-    if(core){ bhBirth(core.x,core.y); remove(core); }
+    if(core){ remove(core); }
     core=null;
     drawBg();
     for(let i=0;i<SLOTS;i++) if(wiz(i)) WZ[i].t=Math.min(WZ[i].t,.25+i*.14);
@@ -4086,132 +4149,6 @@ function wizPortrait(rank,size){
   return c;
 }
 
-/* ---- the black hole ----------------------------------------------------
-   The idle hitter used to be invisible: a timer that struck the smallest
-   balls wherever they happened to be. Now it is a thing in the dish that you
-   can watch. It wanders, drags what is near it inward, and eats whatever ends
-   up inside. Buying the first level of Speed is what brings it into being. */
-const CHOMP_CUT=30;                  // what a swallow pays over its own pop
-const CHOMP_MIN=8;                   // he will not pick the table bare
-const BH={x:0,y:0,vx:0,vy:0,ph:0,eatT:0,init:false,fed:0,bornT:0};
-function bhOn(){ return val("pulse")>0; }
-// Tier indices run big-to-small. He used to start on lime, which is the rung
-// BELOW anything the game produces - the arrow sends blue or better and a tap
-// makes green - so a freshly hatched Chompy sat there eating nothing until you
-// also bought Size. He starts on green now, the same ball the button makes, and
-// every Size level reaches one rung further up.
-function bhTier(){ return Math.max(0, LAST - 1 - val("size")); }
-function bhR(){ return tierRadius(bhTier(), WRANK[0])*0.92; }
-function bhPull(){ return val("pull")*S; }
-/* everything you built collapsed to a point; that point is Chompy now */
-function bhBirth(x,y){
-  // if you had not bought one yet, this is how you get it
-  if(val("pulse")<=0) G.up.pulse=1;
-  BH.x=x; BH.y=y; BH.init=true; BH.bornT=el; BH.fed=1.4;
-  const P=pet();
-  rings.push({x,y,r:3*S,R:bhR()*8,t:0,life:.72,col:P.arc,w:3});
-  rings.push({x,y,r:2*S,R:bhR()*4,t:0,life:.42,col:"#fff",w:2});
-  for(let i=0;i<16;i++){
-    const a=rnd(0,TAU), sp=rnd(90,340)*S;
-    goo(x,y,rnd(2,5)*S,P.arc,rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
-  }
-  noiseHit(.5,{vol:.17,cut:680,to:3.6,wet:.34});
-  pop(90,{vol:.13,wet:.42});
-  thud(58,{vol:.22,len:.42});
-  haptic([18,30,18]);
-  save();
-}
-function bhStep(dt){
-  if(!bhOn()) return;
-  const r=bhR();
-  if(!BH.init){
-    BH.x=W*.5; BH.y=(AR.y0+AR.y1)*.5;
-    const a=rnd(0,TAU); BH.vx=Math.cos(a); BH.vy=Math.sin(a);
-    BH.init=true;
-  }
-  BH.ph=(BH.ph+dt)%3600;
-  // it travels like a ball: constant speed, reflecting off the dish
-  const spd=(70+val("pulse")*14)*S;
-  BH.x+=BH.vx*spd*dt; BH.y+=BH.vy*spd*dt;
-  if(BH.x<r){ BH.x=r; BH.vx=Math.abs(BH.vx); }
-  if(BH.x>W-r){ BH.x=W-r; BH.vx=-Math.abs(BH.vx); }
-  if(BH.y<AR.y0+r){ BH.y=AR.y0+r; BH.vy=Math.abs(BH.vy); }
-  if(BH.y>AR.y1-r){ BH.y=AR.y1-r; BH.vy=-Math.abs(BH.vy); }
-  const shim={x:BH.x,y:BH.y,r,vx:BH.vx,vy:BH.vy,wob:0};
-  bounceChrome(shim);
-  BH.x=shim.x; BH.y=shim.y;
-  const m=Math.hypot(shim.vx,shim.vy)||1;
-  BH.vx=shim.vx/m; BH.vy=shim.vy/m;
-  BH.fed*=Math.pow(.06,dt);
-  const R=bhPull();
-  for(const b of balls){
-    const dx=BH.x-b.x, dy=BH.y-b.y, d=Math.hypot(dx,dy);
-    if(d<R&&d>1){ const f=(1-d/R)*95*dt*S; b.vx+=dx/d*f; b.vy+=dy/d*f; }
-  }
-  // one at a time, and only what it is big enough for
-  BH.eatT-=dt;
-  if(BH.eatT<=0){
-    const maxT=bhTier(); let best=null, bt=-1, bd=1e9;
-    if(balls.length>CHOMP_MIN)
-    for(const b of balls){
-      if(b.tier<maxT||b.gone||b.kind==="boss") continue;   // smaller index = bigger
-      // its mouth is wider than its body, or a lime-sized hole would need a
-      // ball centred inside 9px and would never actually catch anything
-      const d=Math.hypot(b.x-BH.x,b.y-BH.y);
-      if(d>=r*1.9+b.r) continue;
-      // the smallest thing in reach, and the nearest of those
-      if(b.tier>bt || (b.tier===bt && d<bd)){ bt=b.tier; bd=d; best=b; }
-    }
-    if(best){
-      BH.eatT=1/Math.max(.6,val("pulse"));
-      BH.fed=1.4; G.stat.pellets=(G.stat.pellets|0)+1;
-      earn(best.mass*CHOMP_CUT, BH.x, BH.y-r*.9, pet().arc);
-      fuses.push({b:best,t:0,d:best.maxHp*4});   // swallowed whole
-    }
-  }
-}
-function drawBH(x){
-  if(!bhOn()||!BH.init) return;
-  // a newborn hole opens out of nothing over 600ms instead of blinking on
-  const born=BH.bornT?clamp((el-BH.bornT)/0.6,0,1):1;
-  if(born>=1&&BH.bornT) BH.bornT=0;
-  const grow=born<1?easeOut(born):1;
-  const r=bhR()*grow, R=bhPull()*born, k=1+BH.fed*.16;
-  x.save();
-  // its reach, stated faintly — everything inside is fair game
-  // inside a rainbow window he runs the same colours the ball did
-  const P=pet(), rb=luckOn(), i0=rbBand(0);
-  const ARC=rb?RBOW[i0]:P.arc, GLOW=rb?RBOW_RGB[i0]:P.glow;
-  x.globalAlpha=.14; x.strokeStyle=ARC; x.lineWidth=1.4;
-  const dashLen=12*S;                       // 5 + 7, one full pattern
-  x.setLineDash([5*S,7*S]); x.lineDashOffset=-((BH.ph*14*S)%dashLen);
-  x.beginPath(); x.arc(BH.x,BH.y,R,0,TAU); x.stroke();
-  x.setLineDash([]); x.globalAlpha=1;
-  // a soft shadow under him, so he does not vanish into a busy dish
-  x.globalAlpha=.20; x.fillStyle="#0B1020";
-  x.beginPath(); x.arc(BH.x,BH.y,r*2.5*k,0,TAU); x.fill();
-  x.globalAlpha=1;
-  const glow=Math.max(r*3.1*k,17*S);
-  const g=x.createRadialGradient(BH.x,BH.y,r*.6,BH.x,BH.y,glow);
-  g.addColorStop(0,"rgba("+GLOW+",.44)");
-  g.addColorStop(.45,"rgba("+(rb?RBOW_RGB[rbBand(2)]:P.glow)+",.20)");
-  g.addColorStop(1,"rgba("+GLOW+",0)");
-  x.fillStyle=g;
-  x.beginPath(); x.arc(BH.x,BH.y,glow,0,TAU); x.fill();
-  // accretion: two arcs, opposite sides, spinning
-  x.strokeStyle=ARC; x.globalAlpha=.9; x.lineWidth=Math.max(1.1,r*.22);
-  x.lineCap="round";
-  const a=(BH.ph*3.1)%TAU;
-  const ar=Math.max(r*1.42*k,6*S);
-  x.beginPath(); x.arc(BH.x,BH.y,ar,a,a+2.2); x.stroke();
-  if(rb) x.strokeStyle=RBOW[rbBand(3)];
-  x.beginPath(); x.arc(BH.x,BH.y,ar,a+Math.PI,a+Math.PI+1.4); x.stroke();
-  // and the hole
-  x.globalAlpha=1; x.fillStyle=P.core;
-  x.beginPath(); x.arc(BH.x,BH.y,r*k,0,TAU); x.fill();
-  x.restore();
-}
-
 /* ---- the camera ---- */
 let camBusy=0;
 function goRoom(to){
@@ -4336,6 +4273,7 @@ function bounceChrome(b){
 }
 function step(dt){
   el+=dt;
+  colonyTick(dt);
   // a four second half life: quick enough to answer a good run, slow enough
   // not to flicker between one ball and the next
   psRate += (psFrame/dt - psRate) * (1-Math.pow(0.5, dt/4));
@@ -4365,8 +4303,7 @@ function step(dt){
 
   // stepWizards(dt);   // the tower is closed
 
-  // the black hole drifts, drags, and swallows on contact
-  bhStep(dt);
+
 
   // motion
   const mag=val("magnet")*S;
@@ -5089,7 +5026,6 @@ function draw(){
     }
   }
 
-  drawBH(xFx);          // over the balls it is eating, under the cleave
   drawTrail(xFx,1,.72);
 
   xFx.save();
@@ -5633,9 +5569,9 @@ function buy(k){
              document.querySelector('#cards .card[data-k="'+k+'"]');
   buyFx(card);
   cashBurst(card, buyRun>0 ? (buyRun%3===0?4:0) : 7);
-  if(k==="pulse"&&lv(k)===1){
-    toast("Chompy is awake — he eats while you are away");
-    banner("CHOMPY");
+  if(k==="colony"&&lv(k)===1){
+    toast("The colony feeds — every ball pays you now");
+    banner("COLONY");
   }
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
@@ -5892,6 +5828,111 @@ function syncUpBtn(){
   const b=document.getElementById("upBtn"); if(!b) return;
   b.classList.toggle("can", SHOP_UP.some(k=>!maxed(k)&&G.bio>=cost(k)));
 }
+const CHEST_ODDS=[
+  {k:"cash",  w:42, nm:"Cash",  ic:"$", bg:"#DCFCE7", fg:"#16A34A"},
+  {k:"mana",  w:26, nm:"Mana",  ic:"●", bg:"#E5EEFF", fg:"#2563EB"},
+  {k:"power", w:17, nm:"Power", ic:"✦", bg:"#FFF3D6", fg:"#B4791A"},
+  {k:"cos",   w:15, nm:"Skin",  ic:"◎", bg:"#F5E8FF", fg:"#7C3AED"},
+];
+/* what is left on the shelves, so the reel never promises a skin you own */
+function chestCosPool(){
+  const out=[];
+  for(const t of TRAILS) if(!G.ownTrail.includes(t.id)) out.push({kind:"trail",o:t});
+  for(const k of SKINS)  if(!G.ownSkin.includes(k.id))  out.push({kind:"skin", o:k});
+  return out;
+}
+function chestRoll(){
+  const pool=chestCosPool();
+  const odds=CHEST_ODDS.filter(o=>o.k!=="cos"||pool.length);
+  let tot=0; for(const o of odds) tot+=o.w;
+  let r=Math.random()*tot, pick=odds[0];
+  for(const o of odds){ r-=o.w; if(r<=0){ pick=o; break; } }
+  if(pick.k==="cash"){
+    // a chest is worth a couple of minutes of whatever you are making now
+    const base=Math.max(120, perSec()*rnd(70,150), nextScaleCost()*0.012);
+    return {k:"cash", amt:Math.round(base), label:fmt(Math.round(base))+" cash"};
+  }
+  if(pick.k==="mana"){
+    const n=Math.round(rnd(3,9)+G.strain*2);
+    return {k:"mana", amt:n, label:n+" mana"};
+  }
+  if(pick.k==="power"){
+    return {k:"power", label:"Scatter, ready now"};
+  }
+  const c=pool[(Math.random()*pool.length)|0];
+  return {k:"cos", item:c, label:c.o.nm+(c.kind==="skin"?" skin":" cleave")};
+}
+function chestPay(p){
+  if(p.k==="cash"){ G.bio+=p.amt; G.earned+=p.amt; G.totalEarned+=p.amt; psFrame+=p.amt; }
+  else if(p.k==="mana"){ G.spore+=p.amt; }
+  else if(p.k==="power"){ const st=pwState(POWERS[0]); st.owned=true; st.cd=0; }
+  else if(p.k==="cos"){
+    if(p.item.kind==="skin") G.ownSkin.push(p.item.o.id);
+    else G.ownTrail.push(p.item.o.id);
+  }
+  save(); syncTop(); syncRails(); syncUpBtn();
+}
+const CHEST_SVG='<svg viewBox="0 0 64 48" aria-hidden="true">'+
+  '<path class="lid" d="M6 20V15A10 10 0 0 1 16 5h32a10 10 0 0 1 10 10v5z"/>'+
+  '<rect class="box" x="6" y="20" width="52" height="24" rx="3"/>'+
+  '<rect class="band" x="27" y="5" width="10" height="39" rx="2"/>'+
+  '<circle class="lock" cx="32" cy="26" r="4.6"/></svg>';
+function sheetChest(){
+  if((G.chests|0)<=0) return;
+  let spun=false;
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#B4791A">'+
+      '<path d="M3 9V7.5A4.5 4.5 0 0 1 7.5 3h9A4.5 4.5 0 0 1 21 7.5V9z" fill="currentColor"/>'+
+      '<rect x="3" y="9" width="18" height="10" rx="1.6" fill="currentColor"/></svg>',
+    "Boss chest", (G.chests|0)>1?(G.chests|0)+" waiting":"One for the boss you put down", b=>{
+    const wrap=document.createElement("div");
+    wrap.className="chestWrap";
+    wrap.innerHTML='<div class="bchestArt" id="chArt">'+CHEST_SVG+'</div>'+
+      '<div class="reel" id="chReel">'+
+        CHEST_ODDS.map(o=>'<div class="cell" data-k="'+o.k+'" '+
+          'style="--cb:'+o.bg+';--cf:'+o.fg+'"><span>'+o.ic+'</span><b>'+o.nm+'</b></div>').join("")+
+      '</div>'+
+      '<div class="prize" id="chPrize"></div>'+
+      '<button class="chestGo" id="chGo">Claim</button>';
+    b.appendChild(wrap);
+    const go=wrap.querySelector("#chGo"), reel=wrap.querySelector("#chReel"),
+          art=wrap.querySelector("#chArt"), pz=wrap.querySelector("#chPrize");
+    const cells=[...reel.querySelectorAll(".cell")];
+    go.onclick=()=>{
+      if(spun) return;
+      spun=true; go.disabled=true; go.textContent="…";
+      G.chests=Math.max(0,(G.chests|0)-1); save();
+      const n=G.chests|0;
+      $("sheetSub").textContent = n>1 ? n+" more waiting"
+                                : n ? "One more waiting" : "The last one";
+      const prize=chestRoll();
+      const end=CHEST_ODDS.findIndex(o=>o.k===prize.k);
+      // twenty-odd steps, easing out, finishing on the drawn prize
+      const steps=20+((4-((20-end)%4))%4)+8;
+      let i=0;
+      const tick=()=>{
+        cells.forEach((c,n)=>c.classList.toggle("on", n===(i%4)));
+        pop(360+(i%4)*90,{vol:.05,wet:.15});
+        i++;
+        if(i<=steps){ setTimeout(tick, 55+Math.pow(i/steps,3)*230); return; }
+        const win=cells[end];
+        cells.forEach((c,n)=>c.classList.toggle("on", n===end));
+        win.classList.add("won");
+        art.classList.add("open");
+        chestPay(prize);
+        pz.textContent=prize.label; pz.classList.add("on");
+        banner("CHEST");
+        shake=Math.max(shake,5); flash=Math.max(flash,.18);
+        cashBurst(win, 12);
+        for(let n=0;n<4;n++) chime(392*semi(LADDER[n*2]),{vol:.15,len:1.5,delay:n*.07,wet:.6});
+        thud(52,{vol:.3,len:.9}); haptic([18,44,18,44,30]);
+        go.disabled=false;
+        go.textContent=(G.chests|0)>0 ? "Next chest" : "Collect";
+        go.onclick=()=>{ closeSheet(); if((G.chests|0)>0) setTimeout(sheetChest,260); };
+      };
+      tick();
+    };
+  });
+}
 function sheetUpgrades(){
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#4F5FE0">'+
       '<rect x="3.4" y="13.6" width="4.2" height="7" rx="1.4" fill="currentColor"/>'+
@@ -5901,7 +5942,6 @@ function sheetUpgrades(){
     upRows={};
     for(const grp of UP_GROUPS){
     const hd=lbl(grp.t);
-    if(grp.keys[0]==="pulse"&&!bhOn()) hd.textContent=grp.t+" — not hatched yet";
     b.appendChild(hd);
     for(const k of grp.keys){
       const u=UP[k];
@@ -6035,22 +6075,6 @@ function sheetStats(){
       statCard("Fusions",       fmt(s2.merges),    "#DBEAFE","#2563EB","\u2295")+
       statCard("Detonations",   fmt(s2.bursts),    "#F3E8FF","#7C3AED","\u2738");
     b.appendChild(g);
-
-    // a wizard casts, it does not break: the only two things that take a
-    // ball off the dish are your finger and Chompy
-    const finger=Math.max(0,(s2.splits||0)+(s2.pops||0)-(s2.pellets||0));
-    const chompy=Math.max(0,s2.pellets||0);
-    const tot=Math.max(1,finger+chompy);
-    const dd=document.createElement("div");
-    dd.className="ddCard";
-    dd.innerHTML='<div class="h"><span style="color:#EA580C">\u25D4</span> Balls broken</div>'+
-      '<div class="dd"><div class="r"><span class="n">Finger</span>'+
-        '<span class="p">'+(finger/tot*100).toFixed(1)+'%</span></div>'+
-        '<div class="b"><i style="width:'+(finger/tot*100).toFixed(1)+'%;background:#F59E0B"></i></div></div>'+
-      '<div class="dd"><div class="r"><span class="n">Chompy</span>'+
-        '<span class="p">'+(chompy/tot*100).toFixed(1)+'%</span></div>'+
-        '<div class="b"><i style="width:'+(chompy/tot*100).toFixed(1)+'%;background:#1F2937"></i></div></div>';
-    b.appendChild(dd);
 
     const f=document.createElement("div");
     f.className="ccFoot";
@@ -6273,7 +6297,7 @@ function stCosmetics(b){
   b.appendChild(head);
 
   const subs=document.createElement("div"); subs.className="cosSubs";
-  for(const t of [["trail","Trails","\u2606"],["skin","Skins","\u25CE"],["pet","Chompy","\u25CC"]]){
+  for(const t of [["trail","Trails","\u2606"],["skin","Skins","\u25CE"]]){
     const x=document.createElement("button");
     x.className="cosSub"+(G.cosTab===t[0]?" on":"");
     x.innerHTML='<span>'+t[2]+'</span>'+t[1];
@@ -6288,11 +6312,6 @@ function stCosmetics(b){
         sw:k.g,
         own:G.ownSkin.includes(k.id),sel:G.skin===k.id,
         take:()=>G.ownSkin.push(k.id),wear:()=>{G.skin=k.id;}}))
-    : G.cosTab==="pet"
-    ? PETS.map(p=>({nm:p.nm,d:p.d,cost:p.cost,
-        sw:"linear-gradient(150deg,"+p.arc+","+p.core+")",
-        own:G.ownPet.includes(p.id),sel:G.pet===p.id,
-        take:()=>G.ownPet.push(p.id),wear:()=>{G.pet=p.id;}}))
     : TRAILS.map(t=>({nm:t.nm,d:t.d,cost:t.cost,sw:t.g||t.c,
         own:G.ownTrail.includes(t.id),sel:G.trail===t.id,
         take:()=>G.ownTrail.push(t.id),wear:()=>{G.trail=t.id;}}));
@@ -6560,22 +6579,6 @@ function achRows(b){
 }
 function sheetCustomise(){
   openSheet("◑","Your Balls","Cleave colour and powers",b=>{
-    b.appendChild(lbl("Chompy"));
-    for(const p of PETS){
-      const own=G.ownPet.includes(p.id), sel=G.pet===p.id;
-      b.appendChild(row({
-        swatch:p.arc, t:p.nm, s:p.d, sel,
-        btn:sel?"Equipped":(own?"Equip":ICO_SPORE+p.cost), btnOn:!sel,
-        fn:()=>{
-          if(sel) return;
-          if(own){ G.pet=p.id; save(); }
-          else if(G.spore>=p.cost){ G.spore-=p.cost; G.ownPet.push(p.id); G.pet=p.id;
-                                    toast(p.nm+" unlocked"); save(); }
-          else toast("Needs "+p.cost+" mana");
-        }
-      }));
-    }
-
     b.appendChild(lbl("Cleave colour"));
     for(const t of TRAILS){
       const own=G.ownTrail.includes(t.id), sel=G.trail===t.id;
@@ -6627,7 +6630,7 @@ function sheetWelcome(secs,gain){
   wbPending=gain;
   G.bio-=gain; G.earned-=gain; G.totalEarned-=gain;   // handed over on Collect
   $("wbRank").textContent=RANKS[Math.min(RANKS.length-1,Math.floor((playerLevel()-1)/3))];
-  $("wbAway").innerHTML="Chompy and your wizards worked for <b>"+fmtTime(secs)+"</b>";
+  $("wbAway").innerHTML="The colony fed for <b>"+fmtTime(secs)+"</b>";
   $("wbVal").innerHTML=ICO_MASS+"+$"+fmt(gain);
   $("wb").classList.add("on");
 }
@@ -6716,6 +6719,7 @@ function begin(){
 G=load();
 if(!G.obj) rollObjectives();
 if(!TABS.some(t=>t.id===G.tab)) G.tab="balls";
+if(G.cosTab==="pet") G.cosTab="trail";      // his shelf is gone
 G.strain=clamp(G.strain|0,0,SCALES.length-1);
 FORM=curScale().form;
 if(G.opt.sandbox===undefined) G.opt.sandbox=true;
@@ -6886,14 +6890,9 @@ const TUT=[
   {room:"wiz",   t:"Wizards do the dropping",
    s:"Each one casts a ball on its own timer, so the dish fills while you are away. A wizard’s column decides which lane its balls fall down — line them up and their balls meet and fuse, spread them out and they will not.",
    go(){}},
-  {room:"arena", t:"Meet Chompy",
-   s:"This is Chompy. He drifts around the dish on his own, pulling balls together so they merge, and swallowing the small ones whole. Feed him Size and he can take on bigger ones. You can change how he looks in the Store, under Cosmetics.",
-   go(){
-     // make sure there is one to look at, even on a fresh run
-     if(!bhOn()) G.up.pulse=Math.max(1,G.up.pulse|0);
-     BH.init=false;
-     tutBall("plain",6); tutBall("plain",6);
-   }},
+  {room:"arena", t:"The dish pays rent",
+   s:"Buy Colony and every ball down there starts paying you a share of itself, every second. Bigger balls pay more, so a dish you have merged up earns more than one you have smashed apart. Popping a ball trades that rent for one lump of cash.",
+   go(){ tutBall("plain",3); tutBall("plain",5); }},
   {room:"arena", t:"Some of them are unstable",
    s:"A pale ball ringed with pulsing spokes is unstable. It will not fuse with anything, and tapping it does not split it — it detonates, and takes whatever is nearby with it. Useful on a crowded dish, expensive on a tidy one.",
    go(){ tutBall("unstable",2); }},
