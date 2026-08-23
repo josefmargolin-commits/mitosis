@@ -281,6 +281,18 @@ input{font:inherit;color:inherit}
 #bioWrap.l5 .n{font-size:30px}
 #bioWrap.l6 .n{font-size:26px}
 #bioWrap .n .u{opacity:.62;font-size:.5em}
+/* the rate sits under the amount rather than beside it, so a long number
+   still has the whole bar to itself */
+#bioWrap{position:relative}
+#bioWrap .ps{
+  position:absolute;left:39px;bottom:-9px;
+  font:800 11px/1 var(--font);letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums lining-nums;
+  color:#3FBF6B;opacity:0;transform:translateY(-2px);
+  transition:opacity .3s ease, transform .3s ease;white-space:nowrap;
+}
+#bioWrap .ps.on{opacity:.92;transform:none}
+#bioWrap .ps .u{opacity:.6}
 .pip.spore{background:linear-gradient(140deg,#6FC3FF,#2F6BFF)}
 .cur .n{font-family:var(--font);font-weight:800;font-size:23px;line-height:1;
   letter-spacing:-.032em;font-variant-numeric:tabular-nums lining-nums;
@@ -1577,7 +1589,7 @@ input{font:inherit;color:inherit}
   </div>
 
   <div id="top">
-    <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span></div>
+    <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span><span class="ps" id="bioPs">0/s</span></div>
     <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
 
@@ -1828,12 +1840,12 @@ const UP={
            d:"Chance the arrow sends up a rainbow ball. It pops for twenty-five times its worth and opens a two minute ×5 window.",
            v:l=>Math.min(.09,l*.00225), fmt:l=>(0.5+Math.min(9,l*.225)).toFixed(1)+"%"},
 
-  pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
-           d:"How fast Chompy moves and how quickly he can swallow the next one. Buy the first level and he appears.",
-           v:l=>l*0.16, fmt:l=>(l*0.16).toFixed(2)+"/s"},
-  size:   {tab:"lysis",g:"◎",nm:"Size",  base:6000,gr:6.2,  max:7,
-           d:"How big Chompy is. He can only swallow balls his own size or smaller, so every level opens up the next size up.",
-           v:l=>l, fmt:l=>"eats "+(l+1)+" size"+(l?"s":"")},
+  pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.24, max:30,
+           d:"How often Chompy swallows. Buy the first level and he appears.",
+           v:l=>l?Math.min(3,0.3+l*0.09):0, fmt:l=>l?Math.min(3,0.3+l*0.09).toFixed(2)+"/s":"asleep"},
+  size:   {tab:"lysis",g:"◎",nm:"Size",  base:2500,gr:3.4,  max:4,
+           d:"How big a ball Chompy can swallow. He never grows into the top two rungs - those merges are yours.",
+           v:l=>l, fmt:l=>"up to "+(["green","cyan","blue","purple","red"][l]||"red")},
   pull:   {tab:"lysis",g:"◌",nm:"Pull",  base:220,gr:1.28, max:44,
            d:"How far Chompy drags balls in from. Anything inside is in range to be eaten.",
            v:l=>150+l*20, fmt:l=>Math.round(150+l*20)+"px"},
@@ -1874,7 +1886,11 @@ const UP={
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
 };
 const UPK=Object.keys(UP);
-const SHOP_UP=["reach","reload","payload","dish","yield"];
+const UP_GROUPS=[
+  {t:"The dish",  keys:["reach","reload","payload","dish","yield"]},
+  {t:"Chompy",    keys:["pulse","size","pull"]},
+];
+const SHOP_UP=UP_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
 
 const POWERS=[
   {id:"scatter",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
@@ -2485,9 +2501,11 @@ function bumpCombo(){
   c.style.setProperty("--cg", k<.34?"#E8A200":k<.68?"#FF6B2C":"#FF3B57");
   c.classList.remove("on"); void c.offsetWidth; c.classList.add("on");
 }
+let psFrame=0, psRate=0;
+const perSec=()=>psRate;
 function earn(base,x,y,col){
   const v=base*yieldMul()*comboMul();
-  G.bio+=v; G.earned+=v; G.totalEarned+=v;
+  G.bio+=v; G.earned+=v; G.totalEarned+=v; psFrame+=v;
   objProg("earn",v);
   if(v>=0.5) pushPop(x,y,"+"+fmt(v));
 }
@@ -4073,11 +4091,16 @@ function wizPortrait(rank,size){
    balls wherever they happened to be. Now it is a thing in the dish that you
    can watch. It wanders, drags what is near it inward, and eats whatever ends
    up inside. Buying the first level of Speed is what brings it into being. */
+const CHOMP_CUT=30;                  // what a swallow pays over its own pop
+const CHOMP_MIN=8;                   // he will not pick the table bare
 const BH={x:0,y:0,vx:0,vy:0,ph:0,eatT:0,init:false,fed:0,bornT:0};
 function bhOn(){ return val("pulse")>0; }
-// tier indices run big-to-small, so LAST is the lime rung it starts on and
-// every Size level lets it reach one rung further up the ladder
-function bhTier(){ return Math.max(0, LAST - val("size")); }
+// Tier indices run big-to-small. He used to start on lime, which is the rung
+// BELOW anything the game produces - the arrow sends blue or better and a tap
+// makes green - so a freshly hatched Chompy sat there eating nothing until you
+// also bought Size. He starts on green now, the same ball the button makes, and
+// every Size level reaches one rung further up.
+function bhTier(){ return Math.max(0, LAST - 1 - val("size")); }
 function bhR(){ return tierRadius(bhTier(), WRANK[0])*0.92; }
 function bhPull(){ return val("pull")*S; }
 /* everything you built collapsed to a point; that point is Chompy now */
@@ -4128,17 +4151,21 @@ function bhStep(dt){
   // one at a time, and only what it is big enough for
   BH.eatT-=dt;
   if(BH.eatT<=0){
-    const maxT=bhTier(); let best=null, bd=1e9;
+    const maxT=bhTier(); let best=null, bt=-1, bd=1e9;
+    if(balls.length>CHOMP_MIN)
     for(const b of balls){
       if(b.tier<maxT||b.gone||b.kind==="boss") continue;   // smaller index = bigger
       // its mouth is wider than its body, or a lime-sized hole would need a
       // ball centred inside 9px and would never actually catch anything
       const d=Math.hypot(b.x-BH.x,b.y-BH.y);
-      if(d<r*1.9+b.r && d<bd){ bd=d; best=b; }
+      if(d>=r*1.9+b.r) continue;
+      // the smallest thing in reach, and the nearest of those
+      if(b.tier>bt || (b.tier===bt && d<bd)){ bt=b.tier; bd=d; best=b; }
     }
     if(best){
       BH.eatT=1/Math.max(.6,val("pulse"));
       BH.fed=1.4; G.stat.pellets=(G.stat.pellets|0)+1;
+      earn(best.mass*CHOMP_CUT, BH.x, BH.y-r*.9, pet().arc);
       fuses.push({b:best,t:0,d:best.maxHp*4});   // swallowed whole
     }
   }
@@ -4309,6 +4336,10 @@ function bounceChrome(b){
 }
 function step(dt){
   el+=dt;
+  // a four second half life: quick enough to answer a good run, slow enough
+  // not to flicker between one ball and the next
+  psRate += (psFrame/dt - psRate) * (1-Math.pow(0.5, dt/4));
+  psFrame=0;
   VENT.t-=dt;
   if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? val("reload") : 2.5; VENT.max=VENT.t; }
   bossGate(); bossPull(dt);
@@ -5602,7 +5633,10 @@ function buy(k){
              document.querySelector('#cards .card[data-k="'+k+'"]');
   buyFx(card);
   cashBurst(card, buyRun>0 ? (buyRun%3===0?4:0) : 7);
-  if(k==="pulse"&&lv(k)===1) toast("Idle hits are on — they keep going while you are away");
+  if(k==="pulse"&&lv(k)===1){
+    toast("Chompy is awake — he eats while you are away");
+    banner("CHOMPY");
+  }
 }
 let PC=null;   // refs into the scale card, so it updates without rebuilding
 /* A preview of what a ball looks like at another scale: swap FORM for the
@@ -5770,6 +5804,13 @@ function syncTop(){
     const w=document.getElementById("bioWrap"); if(w) w.classList.remove("rising"); }
   setCur("bioN",G.bio);
   setCur("sporeN",G.spore);
+  const ps=document.getElementById("bioPs");
+  if(ps){
+    const r=perSec();
+    ps.classList.toggle("on", r>=0.05);
+    const t="+"+fmt(r)+"/s";
+    if(ps.textContent!==t) ps.textContent=t;
+  }
 }
 
 /* ---------------------------------------------------------------- sheets */
@@ -5858,7 +5899,11 @@ function sheetUpgrades(){
       '<rect x="16.4" y="4.4" width="4.2" height="16.2" rx="1.4" fill="currentColor"/></svg>',
     "Upgrades","Hold a price to keep buying",b=>{
     upRows={};
-    for(const k of SHOP_UP){
+    for(const grp of UP_GROUPS){
+    const hd=lbl(grp.t);
+    if(grp.keys[0]==="pulse"&&!bhOn()) hd.textContent=grp.t+" — not hatched yet";
+    b.appendChild(hd);
+    for(const k of grp.keys){
       const u=UP[k];
       const d=row({ic:u.g, t:u.nm, s:u.d, v:u.fmt(lv(k)), btn:fmt(cost(k)), btnOn:false});
       d.classList.add("upR");
@@ -5870,6 +5915,7 @@ function sheetUpgrades(){
       holdBuy(btn,k);
       upRows[k]={el:d, lvT:lt, v:d.querySelector(".v"), btn};
       b.appendChild(d);
+    }
     }
     syncUpRows();
   });
