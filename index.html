@@ -554,6 +554,20 @@ input{font:inherit;color:inherit}
              inset 0 1px 0 rgba(124,224,255,.42);
 }
 /* the port the ball leaves by, cut into the top edge above the arrow */
+#rigEdit{
+  position:absolute;right:9px;top:50%;margin-top:-17px;
+  width:34px;height:34px;border-radius:11px;padding:0;border:none;z-index:7;
+  background:rgba(124,224,255,.12);
+  box-shadow:inset 0 0 0 1px rgba(124,224,255,.30);
+  display:grid;place-items:center;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .14s ease, box-shadow .14s ease;
+}
+#rigEdit svg{width:17px;height:17px;fill:#7CE0FF;display:block}
+#rigEdit.on{background:#7CE0FF;box-shadow:0 0 14px rgba(124,224,255,.6)}
+#rigEdit.on svg{fill:#08121E}
+/* while it is open the dish stops taking swipes, so a drag is only a drag */
+.rigEditing #fx{touch-action:none}
 #firePort{
   position:absolute;left:50%;top:-1px;width:46px;height:9px;
   margin-left:-23px;border-radius:0 0 12px 12px;z-index:6;pointer-events:none;
@@ -562,7 +576,21 @@ input{font:inherit;color:inherit}
   opacity:.55;transition:opacity .12s ease, transform .12s ease;
   transform-origin:50% 0;
 }
-#fireWrap.shot #firePort{opacity:1;transform:scaleY(2.1)}
+#fireWrap.shot #rigEdit{
+  position:absolute;right:9px;top:50%;margin-top:-17px;
+  width:34px;height:34px;border-radius:11px;padding:0;border:none;z-index:7;
+  background:rgba(124,224,255,.12);
+  box-shadow:inset 0 0 0 1px rgba(124,224,255,.30);
+  display:grid;place-items:center;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .14s ease, box-shadow .14s ease;
+}
+#rigEdit svg{width:17px;height:17px;fill:#7CE0FF;display:block}
+#rigEdit.on{background:#7CE0FF;box-shadow:0 0 14px rgba(124,224,255,.6)}
+#rigEdit.on svg{fill:#08121E}
+/* while it is open the dish stops taking swipes, so a drag is only a drag */
+.rigEditing #fx{touch-action:none}
+#firePort{opacity:1;transform:scaleY(2.1)}
 /* the circle centres itself on the pane rather than on the screen */
 #upBtn{
   position:absolute;right:calc(10px + env(safe-area-inset-right));
@@ -1790,6 +1818,12 @@ input{font:inherit;color:inherit}
         <div id="fireWrap">
           <i id="vBar" title="Next free ball"><b></b></i>
           <i id="firePort"></i>
+          <button id="rigEdit" aria-label="Rearrange the guns">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 20.4h4.2L19 9.6l-4.2-4.2L4 16.2z"/>
+              <path d="M16.2 4l3.8 3.8 1.6-1.6a2 2 0 0 0 0-2.8l-1-1a2 2 0 0 0-2.8 0z"/>
+            </svg>
+          </button>
           <button id="dockHandle" aria-label="Drop a ball" tabindex="-1">
             <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
           </button>
@@ -2207,6 +2241,7 @@ function freshState(){
   const up={}; for(const k of UPK) up[k]=0;
   return {
     v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0, chests:0,
+    rig:[null,null,null,null,"eye","eye",null,null,null,null],
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
     pw:{}, boost:{},
@@ -2667,10 +2702,17 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const TURRETS=[{off:-1, lean:-0.30}, {off:0, lean:0, ufo:true}, {off:1, lean:0.30}];
-const TUR_R=()=>22*S;
-const TUR_H=()=>Math.round(TUR_R()*1.30);            // how far they stand up
-/* the top edge of the green panel, in the arena's own coordinates */
+const RIG_N=10;                     // ten slots, five each side
+const TUR_TYPES={
+  eye:   {nm:"Eye",    gap:9,  cost:0,     col:"#7CE0FF",
+          d:"Turns to the nearest ball and fires a needle that ricochets three times."},
+  sniper:{nm:"Sniper", gap:17, cost:2200,  col:"#FF7A8A",
+          d:"Charges slowly, picks the biggest ball on the dish and lobs a shell that detonates."},
+  hive:  {nm:"Hive",   gap:13, cost:3400,  col:"#8DF7C4",
+          d:"Releases three drones that steer to whatever is closest and go off when they arrive."},
+};
+const TUR_R=()=>22*S;                                // the saucer
+const TUR_H=()=>Math.round(TUR_R()*1.30);            // how far the rig stands up
 function panelTopY(){
   const dock=document.getElementById("dock"), fw=document.getElementById("fireWrap");
   if(!dock||!fw) return H-90;
@@ -2679,123 +2721,355 @@ function panelTopY(){
   if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
   return Math.round(y+fw.offsetTop);
 }
-const TUR_GAP=()=>TUR_R()*2.5;                       // shoulder to shoulder
-const turretAt=i=>({x:(AR.x0+AR.x1)*.5 + TURRETS[i].off*TUR_GAP(),
-                    y:panelTopY()+2});
-const ufoAt=()=>{ const i=TURRETS.findIndex(t=>t.ufo);
-                  return i<0?turretAt(0):turretAt(i); };
+/* how wide a slot can be, given the saucer is sitting in the middle of them */
+function rigGeom(){
+  const R=TUR_R(), cx=(AR.x0+AR.x1)*.5, ufoW=R*1.34;
+  const step=Math.max(20,((AR.x1-AR.x0)-20-ufoW*2)/RIG_N);
+  return {cx, ufoW, step, sr:Math.min(17*S, step*0.46)};
+}
+function slotAt(i){
+  const g=rigGeom();
+  const n=i<RIG_N/2 ? i-RIG_N/2 : i-RIG_N/2+1;       // -5..-1, 1..5
+  return {x:g.cx+Math.sign(n)*(g.ufoW+(Math.abs(n)-0.5)*g.step),
+          y:panelTopY()+2, r:g.sr};
+}
+const UFO={ufo:true, k:0, lean:0, aim:-Math.PI/2, type:"ufo"};
+let TURRETS=[UFO];
+/* the list of live guns, rebuilt from the slots, keeping the ones that have
+   not changed so their clocks and their aim survive a rearrange */
+function rebuildRig(){
+  const keep={};
+  for(const t of TURRETS) if(t.slot!==undefined) keep[t.slot+"|"+t.type]=t;
+  const out=[UFO];
+  if(!Array.isArray(G.rig)) G.rig=Array(RIG_N).fill(null);
+  for(let i=0;i<RIG_N;i++){
+    const ty=G.rig[i];
+    if(!ty||!TUR_TYPES[ty]) continue;
+    const had=keep[i+"|"+ty];
+    out.push(had||{slot:i, type:ty, cd:rnd(1,TUR_TYPES[ty].gap), k:0,
+                   aim:-Math.PI/2, lean:0});
+  }
+  TURRETS=out;
+}
+const turR=t=>t.ufo?TUR_R():rigGeom().sr;
+const turretAt=t=>{
+  if(typeof t==="number") t=TURRETS[t];
+  if(!t||t.ufo){ const g=rigGeom(); return {x:g.cx, y:panelTopY()+2}; }
+  return slotAt(t.slot);
+};
+const ufoAt=()=>turretAt(UFO);
+
+/* --------------------------------------------------------------- drawing */
 function drawTurrets(x){
   x.save();
   x.translate(0, panelDown*4);              // the same four pixels the CSS moves
-  for(let i=0;i<TURRETS.length;i++){
-    const t=TURRETS[i], p=turretAt(i);
-    const k=Math.max(0,(t.k||0));            // 1 the instant it fires, then decays
-    const R=TUR_R();
-    x.save();
-    x.translate(p.x, p.y);
-    // the collar across the join, so it reads as bolted on rather than resting
-    x.fillStyle="#0B101A";
-    x.beginPath(); x.roundRect(-R*(t.ufo?1.30:1.02),-1.5*S,R*(t.ufo?2.60:2.04),8*S,3*S); x.fill();
-    x.fillStyle="rgba(124,224,255,.30)";
-    x.beginPath(); x.roundRect(-R*(t.ufo?1.16:0.88),-0.5*S,R*(t.ufo?2.32:1.76),1.6*S,1*S); x.fill();
-    if(t.ufo){
-      // a saucer: a wide flattened hull with a canopy on top and lights round
-      // the rim, which is what makes the middle one the one you look at
-      x.fillStyle="#111A2A";
-      x.beginPath();
-      x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.40*(1-k*0.14),0,Math.PI,TAU);
-      x.fill();
-      x.beginPath();
-      x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.30,0,0,Math.PI);
-      x.fill();
-      x.fillStyle="#1C2942";
-      x.beginPath();
-      x.ellipse(0,-R*0.22,R*0.98,R*0.24,0,Math.PI,TAU);
-      x.fill();
-      // the canopy
-      x.fillStyle="#16223A";
-      x.beginPath();
-      x.ellipse(0,-R*0.42,R*0.56*(1+k*0.08),R*0.50*(1-k*0.12),0,Math.PI,TAU);
-      x.fill();
-      // rim lights
-      for(let q=-2;q<=2;q++){
-        if(!q) continue;
-        x.fillStyle="rgba(124,224,255,"+(0.34+k*0.5).toFixed(2)+")";
-        x.beginPath(); x.arc(q*R*0.44,-R*0.10,R*0.075,0,TAU); x.fill();
-      }
-    } else {
-      // the dome, squashing down as it lets go
-      x.fillStyle="#111A2A";
-      x.beginPath();
-      x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU);
-      x.fill();
-      x.fillStyle="#1C2942";
-      x.beginPath();
-      x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU);
-      x.fill();
+  if(rigEdit) drawSlots(x);
+  for(const t of TURRETS){
+    if(t===rigHeld) continue;               // the one in your hand draws last
+    drawOneTurret(x,t,turretAt(t));
+  }
+  if(rigHeld) drawOneTurret(x,rigHeld,{x:rigHeldX,y:rigHeldY},true);
+  x.restore();
+}
+function drawSlots(x){
+  for(let i=0;i<RIG_N;i++){
+    const p=slotAt(i), taken=G.rig&&G.rig[i];
+    x.save(); x.translate(p.x,p.y);
+    x.strokeStyle=taken?"rgba(124,224,255,.30)":"rgba(124,224,255,.55)";
+    x.setLineDash(taken?[]:[3*S,3*S]);
+    x.lineWidth=Math.max(1,1.4*S);
+    x.beginPath(); x.roundRect(-p.r,-p.r*1.5,p.r*2,p.r*1.6,3*S); x.stroke();
+    x.setLineDash([]);
+    x.restore();
+  }
+}
+function drawOneTurret(x,t,p,lifted){
+  const k=Math.max(0,(t.k||0));
+  const R=turR(t), C=TUR_TYPES[t.type]?TUR_TYPES[t.type].col:"#7CE0FF";
+  x.save();
+  x.translate(p.x, p.y);
+  if(lifted){ x.globalAlpha=.92; x.scale(1.12,1.12); }
+  // the collar across the join
+  x.fillStyle="#0B101A";
+  x.beginPath(); x.roundRect(-R*(t.ufo?1.34:1.06),-1.5*S,R*(t.ufo?2.68:2.12),8*S,3*S); x.fill();
+  x.fillStyle="rgba(124,224,255,.30)";
+  x.beginPath(); x.roundRect(-R*(t.ufo?1.18:0.90),-0.5*S,R*(t.ufo?2.36:1.80),1.6*S,1*S); x.fill();
+  if(t.ufo){
+    x.fillStyle="#111A2A";
+    x.beginPath(); x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.40*(1-k*0.14),0,Math.PI,TAU); x.fill();
+    x.beginPath(); x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.30,0,0,Math.PI); x.fill();
+    x.fillStyle="#1C2942";
+    x.beginPath(); x.ellipse(0,-R*0.22,R*0.98,R*0.24,0,Math.PI,TAU); x.fill();
+    x.fillStyle="#16223A";
+    x.beginPath(); x.ellipse(0,-R*0.42,R*0.56*(1+k*0.08),R*0.50*(1-k*0.12),0,Math.PI,TAU); x.fill();
+    for(let q=-2;q<=2;q++){ if(!q) continue;
+      x.fillStyle="rgba(124,224,255,"+(0.34+k*0.5).toFixed(2)+")";
+      x.beginPath(); x.arc(q*R*0.44,-R*0.10,R*0.075,0,TAU); x.fill(); }
+  } else if(t.type==="sniper"){
+    // a long low body with a raised sight, so it reads as the patient one
+    x.fillStyle="#111A2A";
+    x.beginPath(); x.ellipse(0,0,R*(1+k*0.10),R*(0.70-k*0.12),0,Math.PI,TAU); x.fill();
+    x.save(); x.rotate((t.aim===undefined?-Math.PI/2:t.aim)+Math.PI/2);
+    x.fillStyle="#1C2942";
+    x.beginPath(); x.roundRect(-R*0.20,-R*1.55,R*0.40,R*1.30,R*0.16); x.fill();
+    x.fillStyle=C;
+    x.beginPath(); x.arc(0,-R*1.45,R*0.17,0,TAU); x.fill();
+    x.restore();
+  } else if(t.type==="hive"){
+    // a squat pod with cells in it
+    x.fillStyle="#111A2A";
+    x.beginPath(); x.ellipse(0,0,R*(1+k*0.12),R*(0.92-k*0.14),0,Math.PI,TAU); x.fill();
+    x.fillStyle="#1C2942";
+    x.beginPath(); x.ellipse(0,0,R*0.74,R*0.68,0,Math.PI,TAU); x.fill();
+    for(let q=0;q<3;q++){
+      const a=Math.PI+ (q+0.5)/3*Math.PI;
+      x.fillStyle="rgba(141,247,196,"+(0.42+k*0.5).toFixed(2)+")";
+      x.beginPath(); x.arc(Math.cos(a)*R*0.42,Math.sin(a)*R*0.34,R*0.15,0,TAU); x.fill();
     }
-    // the eye: the pupil rides toward whatever it has picked
+  } else {
+    x.fillStyle="#111A2A";
+    x.beginPath(); x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU); x.fill();
+    x.fillStyle="#1C2942";
+    x.beginPath(); x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU); x.fill();
+  }
+  if(t.type!=="sniper"){
     const aim=(t.aim===undefined?-Math.PI/2:t.aim);
     const cy=t.ufo? -R*0.52 : -R*0.14;
     const ex=Math.cos(aim)*R*(t.ufo?0.22:0.30), ey=cy+Math.sin(aim)*R*0.18+R*0.06;
-    const open=0.30+k*0.70;
-    const ar=R*0.34*open;
+    const open=0.30+k*0.70, ar=R*0.34*open;
     const g=x.createRadialGradient(ex,ey,0,ex,ey,Math.max(1,ar*2.6));
     g.addColorStop(0,"rgba(255,255,255,"+(0.5+k*0.5).toFixed(2)+")");
-    g.addColorStop(.45,"rgba(124,224,255,"+(0.42+k*0.5).toFixed(2)+")");
-    g.addColorStop(1,"rgba(124,224,255,0)");
+    g.addColorStop(.45,hexA(C,(0.42+k*0.5)));
+    g.addColorStop(1,hexA(C,0));
     x.fillStyle=g;
     x.beginPath(); x.arc(ex,ey,Math.max(1,ar*2.6),0,TAU); x.fill();
     x.fillStyle="#EAFBFF";
     x.beginPath(); x.arc(ex,ey,Math.max(.8,ar),0,TAU); x.fill();
-    // the socket it moves inside, which is what makes it read as an eye
-    x.strokeStyle="rgba(124,224,255,"+(0.34+k*0.45).toFixed(2)+")";
+    x.strokeStyle=hexA(C,0.34+k*0.45);
     x.lineWidth=Math.max(1.2,1.7*S);
     x.beginPath(); x.arc(0,cy+R*0.06,R*(t.ufo?0.34:0.46),0,TAU); x.stroke();
-    x.restore();
   }
   x.restore();
 }
-let panelDown=0, panelDownT=0;              // where the press is, and where it is going
+function hexA(h,a){
+  const n=parseInt(h.slice(1),16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+Math.max(0,Math.min(1,a)).toFixed(2)+")";
+}
+
+/* --------------------------------------------------------------- the clocks */
+let rigEdit=false, rigHeld=null, rigHeldX=0, rigHeldY=0, rigFrom=-1;
+function setRigEdit(on){
+  rigEdit=!!on;
+  const b=document.getElementById("rigEdit");
+  if(b) b.classList.toggle("on",rigEdit);
+  app.classList.toggle("rigEditing",rigEdit);
+  if(!rigEdit&&rigHeld){ dropHeld(-1); }
+  if(rigEdit) toast("Drag a gun to move it");
+  save();
+}
+/* which slot a point is over, or -1 */
+function slotHit(x,y){
+  let best=-1, bd=1e9;
+  for(let i=0;i<RIG_N;i++){
+    const p=slotAt(i), d=Math.hypot(x-p.x, y-(p.y-p.r*0.7));
+    if(d<bd&&d<p.r*2.1){ bd=d; best=i; }
+  }
+  return best;
+}
+function pickHeld(x,y){
+  const i=slotHit(x,y);
+  if(i<0||!G.rig[i]) return false;
+  rigFrom=i; rigHeldX=x; rigHeldY=y;
+  rigHeld=TURRETS.find(t=>t.slot===i)||{slot:i,type:G.rig[i],k:0,aim:-Math.PI/2};
+  haptic(8); pop(720,{vol:.05,wet:.2});
+  return true;
+}
+function dropHeld(to){
+  if(!rigHeld) return;
+  const from=rigFrom, ty=G.rig[from];
+  if(to>=0&&to!==from){
+    G.rig[from]=G.rig[to]||null;            // a swap, not an overwrite
+    G.rig[to]=ty;
+    haptic(10); pop(980,{vol:.06,wet:.2});
+  }
+  rigHeld=null; rigFrom=-1;
+  rebuildRig(); save();
+}
+let panelDown=0, panelDownT=0;
 function stepTurrets(dt){
   panelDown += (panelDownT-panelDown)*(1-Math.pow(0.00002,dt));
-  for(let i=0;i<TURRETS.length;i++){
-    const t=TURRETS[i];
+  for(const t of TURRETS){
     if(t.k) t.k=Math.max(0,t.k-dt*4.2);
-    if(t.aim===undefined) t.aim=-Math.PI/2+t.lean;
-    const p=turretAt(i);
-    // the nearest thing a needle could actually hit
+    if(t.aim===undefined) t.aim=-Math.PI/2;
+    const p=turretAt(t);
+    // what it is looking at: the sniper wants the biggest, everyone else the nearest
+    let best=null, score=t.type==="sniper"?-1:1e9;
+    for(const b of balls){
+      if(b.gone||b.kind==="boss") continue;
+      if(t.type==="sniper"){ if(b.mass>score){ score=b.mass; best=b; } }
+      else { const dx=b.x-p.x, dy=b.y-p.y, d=dx*dx+dy*dy;
+             if(d<score){ score=d; best=b; } }
+    }
+    if(best){
+      let want=Math.atan2(best.y-p.y, best.x-p.x);
+      if(want>-0.22) want=-0.22;
+      if(want<-Math.PI+0.22) want=-Math.PI+0.22;
+      let d2=want-t.aim;
+      while(d2>Math.PI) d2-=TAU;
+      while(d2<-Math.PI) d2+=TAU;
+      t.aim+=d2*(1-Math.pow(t.type==="sniper"?0.02:0.0008,dt));
+    }
+    // and its own trigger
+    if(t.ufo||rigEdit) continue;
+    const spec=TUR_TYPES[t.type]; if(!spec) continue;
+    if(t.cd===undefined) t.cd=spec.gap;
+    t.cd-=dt;
+    if(t.cd<=0){
+      if(!ready||zoomPhase||!best){ t.cd=Math.min(t.cd+0.5,0.5); continue; }
+      t.cd=spec.gap;
+      if(t.type==="eye") fireNeedle(t);
+      else if(t.type==="sniper") fireShell(t,best);
+      else if(t.type==="hive") fireDrones(t);
+    }
+  }
+}
+let shells=[], drones=[];
+/* SNIPER: a slow arc at the biggest ball, and everything near where it
+   lands takes a hit */
+function fireShell(t,target){
+  if(!target) return false;
+  const p=turretAt(t); t.k=1;
+  const x=p.x, y=p.y-turR(t)*1.4;
+  const a=Math.atan2(target.y-y,target.x-x);
+  shells.push({x,y,a,t:0,sp:420*S,tgt:target});
+  pop(150,{pan:panAt(x),vol:.09,len:.16,wet:.14});
+  thud(64,{pan:panAt(x),vol:.10,len:.22});
+  haptic(11);
+  return true;
+}
+function stepShells(dt){
+  for(let i=shells.length-1;i>=0;i--){
+    const sh=shells[i];
+    sh.t+=dt;
+    // it keeps steering at what it was sent for, so a slow shell still lands
+    if(sh.tgt&&!sh.tgt.gone){
+      let want=Math.atan2(sh.tgt.y-sh.y,sh.tgt.x-sh.x), d=want-sh.a;
+      while(d>Math.PI) d-=TAU; while(d<-Math.PI) d+=TAU;
+      sh.a+=d*(1-Math.pow(0.25,dt));
+    }
+    sh.x+=Math.cos(sh.a)*sh.sp*dt; sh.y+=Math.sin(sh.a)*sh.sp*dt;
+    let hit=null;
+    for(const b of balls){
+      if(b.gone||b.kind==="boss") continue;
+      const dx=b.x-sh.x, dy=b.y-sh.y;
+      if(dx*dx+dy*dy<=b.r*b.r){ hit=b; break; }
+    }
+    const out=sh.x<AR.x0-40||sh.x>AR.x1+40||sh.y<AR.y0-40||sh.y>AR.y1+40;
+    if(hit||out||sh.t>4){
+      if(hit) burstShell(sh.x,sh.y);
+      shells.splice(i,1);
+    }
+  }
+}
+function burstShell(x,y){
+  const R=74*S;
+  rings.push({x,y,r:4,R:R*1.5,t:0,life:.42,col:"#FF7A8A",w:3});
+  rings.push({x,y,r:2,R:R*0.8,t:0,life:.28,col:"#FFE9A8",w:2.2});
+  for(let i=0;i<16;i++){
+    const a=rnd(0,TAU), sp=rnd(120,460)*S;
+    goo(x,y,rnd(2.4,5.4)*S,i%2?"#FF7A8A":"#FFC24D",rnd(.24,.46),Math.cos(a)*sp,Math.sin(a)*sp);
+  }
+  for(const b of balls.slice()){
+    if(b.gone||b.kind==="boss") continue;
+    if(Math.hypot(b.x-x,b.y-y)<=R+b.r){ b.lastHit=-1e9; strike(b,undefined,{x,y},true); }
+  }
+  shake=Math.max(shake,6); flash=Math.max(flash,.16);
+  thud(46,{pan:panAt(x),vol:.16,len:.5});
+  pop(220,{pan:panAt(x),vol:.10,wet:.3});
+  haptic(16);
+}
+function drawShells(x){
+  for(const sh of shells){
+    x.save(); x.translate(sh.x,sh.y); x.rotate(sh.a);
+    const g=x.createLinearGradient(-26*S,0,6*S,0);
+    g.addColorStop(0,"rgba(255,122,138,0)"); g.addColorStop(1,"rgba(255,122,138,.6)");
+    x.strokeStyle=g; x.lineWidth=7*S; x.lineCap="round";
+    x.beginPath(); x.moveTo(-26*S,0); x.lineTo(0,0); x.stroke();
+    x.fillStyle="#0B101A";
+    x.beginPath(); x.ellipse(0,0,7.4*S,5.2*S,0,0,TAU); x.fill();
+    x.fillStyle="#FF7A8A";
+    x.beginPath(); x.arc(2.6*S,0,2.6*S,0,TAU); x.fill();
+    x.restore();
+  }
+}
+/* HIVE: three small ones that pick their own target and go off on arrival */
+function fireDrones(t){
+  const p=turretAt(t); t.k=1;
+  for(let i=0;i<3;i++){
+    const a=-Math.PI/2+rnd(-.9,.9);
+    drones.push({x:p.x+rnd(-4,4)*S, y:p.y-turR(t)*0.9,
+      vx:Math.cos(a)*rnd(90,150)*S, vy:Math.sin(a)*rnd(90,150)*S, t:0});
+  }
+  pop(700,{pan:panAt(p.x),vol:.06,wet:.2});
+  haptic(8);
+  return true;
+}
+function stepDrones(dt){
+  for(let i=drones.length-1;i>=0;i--){
+    const d=drones[i];
+    d.t+=dt;
     let best=null, bd=1e9;
     for(const b of balls){
       if(b.gone||b.kind==="boss") continue;
-      const dx=b.x-p.x, dy=b.y-p.y;
-      const d=dx*dx+dy*dy;
-      if(d<bd){ bd=d; best=b; }
+      const dx=b.x-d.x, dy=b.y-d.y, q=dx*dx+dy*dy;
+      if(q<bd){ bd=q; best=b; }
     }
-    t.eye=!!best;
-    if(!best) continue;
-    let want=Math.atan2(best.y-p.y, best.x-p.x);
-    // never into the floor: keep it in the upper half with a little margin
-    if(want>-0.22) want=-0.22;
-    if(want<-Math.PI+0.22) want=-Math.PI+0.22;
-    // turn toward it rather than snapping, so the aim is something you watch
-    let d2=want-t.aim;
-    while(d2>Math.PI) d2-=TAU;
-    while(d2<-Math.PI) d2+=TAU;
-    t.aim+=d2*(1-Math.pow(0.0008,dt));
+    if(best){
+      const dx=best.x-d.x, dy=best.y-d.y, L=Math.max(1,Math.hypot(dx,dy));
+      const acc=760*S*dt;
+      d.vx+=dx/L*acc; d.vy+=dy/L*acc;
+    }
+    const sp=Math.hypot(d.vx,d.vy), cap=330*S;
+    if(sp>cap){ d.vx*=cap/sp; d.vy*=cap/sp; }
+    d.x+=d.vx*dt; d.y+=d.vy*dt;
+    d.x=clamp(d.x,AR.x0+2,AR.x1-2); d.y=clamp(d.y,AR.y0+2,AR.y1-2);
+    let hit=null;
+    for(const b of balls){
+      if(b.gone||b.kind==="boss") continue;
+      const dx=b.x-d.x, dy=b.y-d.y;
+      if(dx*dx+dy*dy<=(b.r+3*S)*(b.r+3*S)){ hit=b; break; }
+    }
+    if(hit||d.t>7){
+      if(hit){
+        hit.lastHit=-1e9; strike(hit,undefined,d,true);
+        rings.push({x:d.x,y:d.y,r:2,R:26*S,t:0,life:.24,col:"#8DF7C4",w:2});
+        for(let q=0;q<4;q++) spark(d.x,d.y,"#8DF7C4");
+        pop(940,{pan:panAt(d.x),vol:.05,wet:.16});
+      }
+      drones.splice(i,1);
+    }
+  }
+}
+function drawDrones(x){
+  for(const d of drones){
+    const a=Math.atan2(d.vy,d.vx);
+    x.save(); x.translate(d.x,d.y); x.rotate(a);
+    x.strokeStyle="rgba(141,247,196,.5)"; x.lineWidth=3*S; x.lineCap="round";
+    x.beginPath(); x.moveTo(-13*S,0); x.lineTo(0,0); x.stroke();
+    x.fillStyle="#0B101A";
+    x.beginPath(); x.arc(0,0,3.6*S,0,TAU); x.fill();
+    x.fillStyle="#8DF7C4";
+    x.beginPath(); x.arc(0,0,1.9*S,0,TAU); x.fill();
+    x.restore();
   }
 }
 let needles=[];
-function fireNeedle(){
-  if(!ready||W<10||NEEDLE.cd>0) return false;
-  NEEDLE.cd=NEEDLE.gap;
-  // the saucer is the ball rig, so the needle only ever leaves a dome
-  const guns=[]; for(let g=0;g<TURRETS.length;g++) if(!TURRETS[g].ufo) guns.push(g);
-  if(!guns.length) return false;
-  const i=guns[(NEEDLE.n++)%guns.length];
-  const t=TURRETS[i], p=turretAt(i);
+function fireNeedle(t){
+  if(!ready||W<10) return false;
+  if(!t){ t=TURRETS.find(q=>q.type==="eye"); if(!t) return false; }
+  const p=turretAt(t);
   t.k=1;                                    // it rocks back
-  const x=p.x, y=p.y-18*S;
+  const x=p.x, y=p.y-turR(t)*1.1;
   const a=(t.aim===undefined?-Math.PI/2+t.lean:t.aim)+rnd(-.04,.04);
   needles.push({x, y, a, left:NEEDLE.bounces, t:0, hit:0, px:x, py:y});
   rings.push({x,y,r:2,R:18*S,t:0,life:.2,col:"#8FA0B8",w:1.8});
@@ -2806,9 +3080,7 @@ function fireNeedle(){
 }
 /* it moves in small steps so a fast needle cannot tunnel through a ball */
 function stepNeedles(dt){
-  if(NEEDLE.cd>0) NEEDLE.cd=Math.max(0,NEEDLE.cd-dt);
-  // it fires itself the moment it is charged
-  else if(ready && !zoomPhase && balls.length) fireNeedle();
+
   for(let i=needles.length-1;i>=0;i--){
     const n=needles[i];
     n.t+=dt;
@@ -3586,6 +3858,7 @@ function applyAscent(){
   const up={}; for(const k of UPK) up[k]=0;
   G.up=up;
   parts.length=0; fuses.length=0; rings.length=0; pops.length=0; needles.length=0;
+  shells.length=0; drones.length=0;
   G.wiz=Array(SLOTS).fill(null); G.wlvl=[0,0,0,0,0,0]; G.summons=0;
   G.wiz[5]={id:++G.wizSeq, rank:0};
   WZ=[]; syncWZ(); wizSel=-1;
@@ -4732,7 +5005,7 @@ function step(dt){
   psFrame=0;
   VENT.t-=dt;
   if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? val("reload") : 2.5; VENT.max=VENT.t; }
-  bossGate(); bossPull(dt); stepNeedles(dt); stepTurrets(dt);
+  bossGate(); bossPull(dt); stepNeedles(dt); stepShells(dt); stepDrones(dt); stepTurrets(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
@@ -5480,6 +5753,8 @@ function draw(){
 
   drawTurrets(xFx);
   drawNeedles(xFx);
+  drawShells(xFx);
+  drawDrones(xFx);
   drawTrail(xFx,1,.72);
 
   xFx.save();
@@ -6567,6 +6842,30 @@ function sheetUpgrades(){
       b.appendChild(d);
     }
     }
+    // and the guns themselves, which have to come from somewhere
+    b.appendChild(lbl("Guns"));
+    for(const key of ["sniper","hive"]){
+      const spec=TUR_TYPES[key];
+      const have=(G.rig||[]).filter(v=>v===key).length;
+      const free=(G.rig||[]).indexOf(null);
+      const price=Math.ceil(spec.cost*scaleMul()*Math.pow(1.9,have));
+      const can=free>=0 && G.bio>=price;
+      const d=row({ic:'<span style="color:'+spec.col+'">\u25C6</span>',
+        t:spec.nm+(have?"  \u00D7"+have:""), s:spec.d,
+        v:free<0?"rig full":"", btn:fmt(price), btnOn:can,
+        fn:()=>{
+          const f=(G.rig||[]).indexOf(null);
+          if(f<0){ toast("Every slot is taken"); return; }
+          if(G.bio<price){ toast("Needs "+fmt(price)+" cash"); return; }
+          G.bio-=price; G.rig[f]=key; rebuildRig();
+          buySound(2); haptic(12); save(); syncTop();
+          toast(spec.nm+" mounted");
+        }});
+      d.classList.add("upR");
+      d.style.setProperty("--uc",spec.col);
+      d.style.setProperty("--ub","rgba(124,224,255,.10)");
+      b.appendChild(d);
+    }
     syncUpRows();
   });
 }
@@ -7460,20 +7759,48 @@ function setDockMin(min,quiet){
 }
 /* press it and it fires: a green one, straight up, every time */
 document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")');
+/* the drag lives on the effects canvas, because that is where the guns are */
+(function rigDrag(){
+  const c=document.getElementById("fx");
+  if(!c) return;
+  const at=e=>{ const r=roomArena.getBoundingClientRect();
+                return {x:e.clientX-r.left, y:e.clientY-r.top-panelDown*4}; };
+  c.addEventListener("pointerdown",e=>{
+    if(!rigEdit||e.button) return;
+    const p=at(e);
+    if(pickHeld(p.x,p.y)){ e.preventDefault(); e.stopPropagation();
+      try{ c.setPointerCapture(e.pointerId); }catch(err){} }
+  },{passive:false,capture:true});
+  c.addEventListener("pointermove",e=>{
+    if(!rigHeld) return;
+    const p=at(e); rigHeldX=p.x; rigHeldY=p.y;
+    e.preventDefault(); e.stopPropagation();
+  },{passive:false,capture:true});
+  for(const ev of ["pointerup","pointercancel"])
+    c.addEventListener(ev,e=>{
+      if(!rigHeld) return;
+      const p=at(e);
+      dropHeld(slotHit(p.x,p.y));
+      e.preventDefault(); e.stopPropagation();
+    },{passive:false,capture:true});
+})();
 (function arrowButton(){
   const fw=$("fireWrap");
   // click coalesces two simultaneous taps into one; pointerdown does not
   fw.addEventListener("pointerdown",e=>{
     if(e.button) return;
+    if(e.target.closest&&e.target.closest("#rigEdit")) return;   // the pencil
     e.preventDefault();
     panelDownT=1; fw.classList.add("down");
-    if(!ready) return;
+    if(!ready||rigEdit) return;              // rearranging is not firing
     ventBall(6,true);
   },{passive:false});
   for(const ev of ["pointerup","pointercancel","pointerleave"])
     fw.addEventListener(ev,()=>{ panelDownT=0; fw.classList.remove("down"); },{passive:true});
   const u=$("upBtn");
   if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
+  const re=$("rigEdit");
+  if(re) re.onclick=e=>{ e.stopPropagation(); if(ready) setRigEdit(!rigEdit); };
 
 })();
 /* the tower is closed */
@@ -7492,7 +7819,7 @@ document.getElementById("goDown").onclick=()=>goRoom("arena");
   });
 })();
 
-buildRails(); syncTop(); syncRails();
+buildRails(); rebuildRig(); syncTop(); syncRails();
 $("introHint").textContent = G.totalEarned>0
   ? "Banked "+fmt(G.totalEarned)+" · Strain "+ROMAN[G.strain] : "";
 /* ---------------------------------------------------------------- tutorial
