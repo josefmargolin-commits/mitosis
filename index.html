@@ -2704,7 +2704,7 @@ const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
 const RIG_N=10;                     // ten slots, five each side
 const TUR_TYPES={
-  eye:   {nm:"Eye",    gap:9,  cost:0,     col:"#7CE0FF",
+  eye:   {nm:"Eye",    gap:9,  cost:900,   col:"#7CE0FF",
           d:"Turns to the nearest ball and fires a needle that ricochets three times."},
   sniper:{nm:"Sniper", gap:17, cost:2200,  col:"#FF7A8A",
           d:"Charges slowly, picks the biggest ball on the dish and lobs a shell that detonates."},
@@ -2772,14 +2772,30 @@ function drawTurrets(x){
   x.restore();
 }
 function drawSlots(x){
+  const over=rigHeld?slotHit(rigHeldX,rigHeldY):-1;
   for(let i=0;i<RIG_N;i++){
-    const p=slotAt(i), taken=G.rig&&G.rig[i];
+    const p=slotAt(i), taken=G.rig&&G.rig[i], lit=(i===over);
     x.save(); x.translate(p.x,p.y);
-    x.strokeStyle=taken?"rgba(124,224,255,.30)":"rgba(124,224,255,.55)";
-    x.setLineDash(taken?[]:[3*S,3*S]);
-    x.lineWidth=Math.max(1,1.4*S);
+    if(lit){
+      x.fillStyle="rgba(124,224,255,.20)";
+      x.beginPath(); x.roundRect(-p.r*1.1,-p.r*1.7,p.r*2.2,p.r*1.9,4*S); x.fill();
+    }
+    x.strokeStyle=lit?"rgba(124,224,255,.95)"
+                    :(taken?"rgba(124,224,255,.26)":"rgba(124,224,255,.5)");
+    x.setLineDash(taken||lit?[]:[3*S,3*S]);
+    x.lineWidth=Math.max(1,(lit?2:1.4)*S);
     x.beginPath(); x.roundRect(-p.r,-p.r*1.5,p.r*2,p.r*1.6,3*S); x.stroke();
     x.setLineDash([]);
+    // the plus: what an empty slot is for, and the thing you press
+    if(!taken){
+      const a=p.r*0.52, cy=-p.r*0.7;
+      x.strokeStyle="rgba(124,224,255,"+(lit?.95:.72)+")";
+      x.lineWidth=Math.max(1.6,2.1*S); x.lineCap="round";
+      x.beginPath();
+      x.moveTo(-a,cy); x.lineTo(a,cy);
+      x.moveTo(0,cy-a); x.lineTo(0,cy+a);
+      x.stroke();
+    }
     x.restore();
   }
 }
@@ -6818,6 +6834,47 @@ function sheetChest(){
     };
   });
 }
+const GUN_ICO=k=>{
+  const c=TUR_TYPES[k]?TUR_TYPES[k].col:"#7CE0FF";
+  if(k==="sniper") return '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="17" rx="9" ry="4.4" fill="'+c+'" opacity=".45"/>'+
+    '<rect x="10.2" y="4" width="3.6" height="11" rx="1.6" fill="'+c+'"/>'+
+    '<circle cx="12" cy="4.6" r="2.2" fill="#fff"/></svg>';
+  if(k==="hive") return '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="9" ry="6" fill="'+c+'" opacity=".45"/>'+
+    '<circle cx="7.6" cy="15" r="2.2" fill="'+c+'"/><circle cx="12" cy="13.4" r="2.2" fill="'+c+'"/>'+
+    '<circle cx="16.4" cy="15" r="2.2" fill="'+c+'"/></svg>';
+  return '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="9" ry="6.4" fill="'+c+'" opacity=".45"/>'+
+    '<circle cx="12" cy="13" r="3.4" fill="#fff"/><circle cx="12" cy="13" r="1.5" fill="'+c+'"/></svg>';
+};
+const gunPrice=k=>Math.ceil(TUR_TYPES[k].cost*scaleMul()
+                  *Math.pow(1.9,(G.rig||[]).filter(v=>v===k).length));
+/* pressing a slot: a plus asks what goes in it, a gun asks if it should go */
+function sheetSlot(slot){
+  const here=G.rig&&G.rig[slot];
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
+      '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" '+
+      'stroke-linecap="round" fill="none"/></svg>',
+    here?TUR_TYPES[here].nm:"Empty slot",
+    here?"Slot "+(slot+1)+" of "+RIG_N:"Pick what stands here", b=>{
+    if(here){
+      b.appendChild(row({ic:GUN_ICO(here), t:TUR_TYPES[here].nm, s:TUR_TYPES[here].d}));
+      b.appendChild(row({ic:"\u2715", t:"Take it off", s:"Frees the slot. You do not get the cash back.",
+        btn:"Remove", btnOn:true,
+        fn:()=>{ G.rig[slot]=null; rebuildRig(); save(); haptic(10); closeSheet(); }}));
+      return;
+    }
+    for(const k of Object.keys(TUR_TYPES)){
+      const spec=TUR_TYPES[k], price=gunPrice(k), can=G.bio>=price;
+      b.appendChild(row({ic:GUN_ICO(k), t:spec.nm, s:spec.d,
+        btn:price?fmt(price):"Free", btnOn:can,
+        fn:()=>{
+          if(G.bio<price){ toast("Needs "+fmt(price)+" cash"); return; }
+          G.bio-=price; G.rig[slot]=k; rebuildRig();
+          buySound(2); haptic(12); save(); syncTop();
+          toast(spec.nm+" mounted"); closeSheet();
+        }}));
+    }
+  });
+}
 function sheetUpgrades(){
   openSheet('<img src="'+ART.mark_ink+'" alt="" '+
       'style="width:21px;height:21px;display:block;object-fit:contain">',
@@ -6841,30 +6898,6 @@ function sheetUpgrades(){
       upRows[k]={el:d, lvT:lt, v:d.querySelector(".v"), btn};
       b.appendChild(d);
     }
-    }
-    // and the guns themselves, which have to come from somewhere
-    b.appendChild(lbl("Guns"));
-    for(const key of ["sniper","hive"]){
-      const spec=TUR_TYPES[key];
-      const have=(G.rig||[]).filter(v=>v===key).length;
-      const free=(G.rig||[]).indexOf(null);
-      const price=Math.ceil(spec.cost*scaleMul()*Math.pow(1.9,have));
-      const can=free>=0 && G.bio>=price;
-      const d=row({ic:'<span style="color:'+spec.col+'">\u25C6</span>',
-        t:spec.nm+(have?"  \u00D7"+have:""), s:spec.d,
-        v:free<0?"rig full":"", btn:fmt(price), btnOn:can,
-        fn:()=>{
-          const f=(G.rig||[]).indexOf(null);
-          if(f<0){ toast("Every slot is taken"); return; }
-          if(G.bio<price){ toast("Needs "+fmt(price)+" cash"); return; }
-          G.bio-=price; G.rig[f]=key; rebuildRig();
-          buySound(2); haptic(12); save(); syncTop();
-          toast(spec.nm+" mounted");
-        }});
-      d.classList.add("upR");
-      d.style.setProperty("--uc",spec.col);
-      d.style.setProperty("--ub","rgba(124,224,255,.10)");
-      b.appendChild(d);
     }
     syncUpRows();
   });
@@ -7765,22 +7798,31 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
   if(!c) return;
   const at=e=>{ const r=roomArena.getBoundingClientRect();
                 return {x:e.clientX-r.left, y:e.clientY-r.top-panelDown*4}; };
+  let downAt=null, moved=0;
   c.addEventListener("pointerdown",e=>{
     if(!rigEdit||e.button) return;
     const p=at(e);
-    if(pickHeld(p.x,p.y)){ e.preventDefault(); e.stopPropagation();
-      try{ c.setPointerCapture(e.pointerId); }catch(err){} }
+    const slot=slotHit(p.x,p.y);
+    if(slot<0) return;
+    downAt={x:p.x,y:p.y,slot}; moved=0;
+    e.preventDefault(); e.stopPropagation();
+    try{ c.setPointerCapture(e.pointerId); }catch(err){}
+    if(G.rig[slot]) pickHeld(p.x,p.y);      // only a gun can be lifted
   },{passive:false,capture:true});
   c.addEventListener("pointermove",e=>{
-    if(!rigHeld) return;
-    const p=at(e); rigHeldX=p.x; rigHeldY=p.y;
+    if(!downAt) return;
+    const p=at(e);
+    moved=Math.max(moved,Math.hypot(p.x-downAt.x,p.y-downAt.y));
+    if(rigHeld){ rigHeldX=p.x; rigHeldY=p.y; }
     e.preventDefault(); e.stopPropagation();
   },{passive:false,capture:true});
   for(const ev of ["pointerup","pointercancel"])
     c.addEventListener(ev,e=>{
-      if(!rigHeld) return;
-      const p=at(e);
-      dropHeld(slotHit(p.x,p.y));
+      if(!downAt) return;
+      const p=at(e), slot=downAt.slot, tap=moved<9;
+      if(rigHeld) dropHeld(tap?slot:slotHit(p.x,p.y));
+      if(tap) sheetSlot(slot);              // a press that stayed put
+      downAt=null; moved=0;
       e.preventDefault(); e.stopPropagation();
     },{passive:false,capture:true});
 })();
