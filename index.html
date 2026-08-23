@@ -435,9 +435,6 @@ input{font:inherit;color:inherit}
   .orb svg{width:18px;height:18px}
   #railR{width:58px}
   #railR .pw{width:38px;height:38px;border-radius:12px}
-  .prof{width:38px;height:38px;border-radius:12px;padding:0}
-  .prof .lv{font-size:12px}
-  .prof .bar{left:5px;right:5px;bottom:4px}
   #railR .pw .g{font-size:13px}
   #fireWrap{left:106px;right:12px;height:58px;top:13px}
   #upBtn{width:86px;height:58px;left:12px;top:13px}
@@ -1398,19 +1395,6 @@ input{font:inherit;color:inherit}
 .card.locked .ct{color:var(--ink-3);font-size:9px;font-weight:500}
 
 /* the profile card at the head of the power rail */
-.prof{width:46px;height:46px;border-radius:15px;background:var(--panel);
-  border:1px solid var(--edge);
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 5px 11px rgba(16,22,37,.18);
-  padding:0;text-align:center;flex:none;position:relative;overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:center}
-.prof .hi{display:none}
-.prof .rk{display:none}
-.prof .lv{font-family:var(--font);font-weight:800;
-  font-size:13.5px;line-height:1;letter-spacing:-.03em;margin-bottom:3px}
-.prof .bar{position:absolute;left:6px;right:6px;bottom:5px;
-  height:3px;border-radius:99px;background:#E4E9F1;overflow:hidden}
-.prof .bar i{display:block;height:100%;border-radius:99px;background:#2F6BFF;transition:width .3s}
-
 /* a power you can watch an ad to fire early */
 .pw .adb{position:absolute;top:-7px;right:-7px;width:16px;height:16px;border-radius:50%;
   background:linear-gradient(180deg,#A78BFA,#7C3AED);color:#fff;display:none;
@@ -3380,7 +3364,7 @@ function objProg(k,amt,abs){
   for(const o of G.obj){
     if(o.k!==k||o.done) continue;
     o.prog=abs!==undefined?Math.max(o.prog,abs):o.prog+amt;
-    if(o.prog>=o.goal){ o.prog=o.goal; o.done=true; alertOrb("mis",true); toast("Goal complete"); }
+    if(o.prog>=o.goal){ o.prog=o.goal; o.done=true; toast("Goal complete"); }
   }
 }
 function objLabel(o){ return (OBJPOOL.find(p=>p.k===o.k)||OBJPOOL[0]).t(o.goal); }
@@ -5628,12 +5612,6 @@ function buildRails(){
   }
   obsChanged();
   const R=$("railR"); R.innerHTML="";
-  const pr=document.createElement("div");
-  pr.className="prof"; pr.id="profCard";
-  pr.innerHTML='<div class="hi">Hey</div><div class="lv"></div>'+
-    '<div class="rk"></div><div class="bar"><i></i></div>';
-  pr.onclick=()=>{ if(ready) sheetAchievements(); };
-  R.appendChild(pr);
   const add=(p,isBoost)=>{
     const b=document.createElement("button");
     b.className="pw"; b.id=(isBoost?"bo-":"pw-")+p.id;
@@ -5721,20 +5699,12 @@ function syncRails(){
     if(ok){ cd.style.display="none"; lab.textContent=p.nm; }
     else  { cd.style.display="grid"; cd.textContent=adWait(k); lab.textContent=p.nm; }
   }
+  // a dot is a claim waiting, and nothing else. Derived, never remembered.
   const more=document.getElementById("orb-more");
-  if(more){
-    // anything worth a red dot behind the drawer shows one on the drawer
-    // the achievements board lives behind the drawer now, so its dot does too
-    const claimable=achAny&&achAny();
-    more.classList.toggle("alert",!!claimable);
-  }
-  const pc=document.getElementById("profCard");
-  if(pc){
-    const l=playerLevel();
-    pc.querySelector(".lv").textContent="Lv."+l;
-    pc.querySelector(".rk").textContent=RANKS[Math.min(RANKS.length-1,Math.floor((l-1)/3))];
-    pc.querySelector(".bar i").style.width=(levelProgress()*100).toFixed(0)+"%";
-  }
+  if(more) more.classList.toggle("alert", !!(achAny&&achAny()));
+  const mis=document.getElementById("orb-mis");
+  if(mis) mis.classList.toggle("alert",
+    !!(G.obj&&G.obj.some(o=>o.done&&!o.claimed)));
   for(const p of POWERS){
     const s=pwState(p), b=$("pw-"+p.id); if(!b) continue;
     const cd=b.querySelector(".cd"), lab=b.querySelector(".l");
@@ -5762,8 +5732,7 @@ function syncRails(){
     if(s.cd>0){ cd.style.display="grid"; cd.textContent=Math.ceil(s.cd); }
     else cd.style.display="none";
   }
-  alertOrb("ach",false);
-  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done&&!o.claimed)));
+
 }
 
 function buildTabs(){
@@ -6960,7 +6929,7 @@ function claimObj(o,btn,mult){
   haptic([14,26,14,40]);
   save(); syncTop();
   if(sheetSync) flipMissions(sheetSync);
-  alertOrb("mis",!!(G.obj&&G.obj.some(x=>x.done&&!x.claimed)));
+
 }
 const DAY_MS=24*3600*1000;
 function missionsLeft(){
@@ -7121,8 +7090,7 @@ function achRows(b){
           const got=achGive(r);
           toast(a.nm+" \u2014 "+got);
           save(); syncTop(); buildCards();
-          alertOrb("ach",false);
-  alertOrb("mis",achAny()||!!(G.obj&&G.obj.some(o=>o.done&&!o.claimed)));
+        
         }:null
       }));
     }
