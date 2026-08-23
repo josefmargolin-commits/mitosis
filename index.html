@@ -508,12 +508,11 @@ input{font:inherit;color:inherit}
 /* how long until the next one is loaded. It fills as the chamber does and
    drains the instant it fires. */
 #vBar{
-  position:absolute;top:-11px;z-index:2;
-  width:46px;height:6px;border-radius:99px;overflow:hidden;
-  background:rgba(15,23,32,.10);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.72);
+  position:absolute;bottom:9px;left:50%;transform:translateX(-50%);z-index:2;
+  width:66px;height:5px;border-radius:99px;overflow:hidden;
+  background:rgba(124,224,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(124,224,255,.22);
 }
-#vBar{left:50%;transform:translateX(-50%);width:56px}
 #vBar b{display:block;height:100%;width:0%;border-radius:99px;
   background:linear-gradient(90deg,#2FA3FF,#7CE0FF);
   transition:width .1s linear}
@@ -2315,9 +2314,9 @@ function dishFloor(){
   // the dock by rect, so safe areas and notches are inside the number
   let y=dock.getBoundingClientRect().top-ar.top;
   if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
-  const fw=document.getElementById("fireWrap"), vb=document.getElementById("vBar");
-  // by offset rather than rect: offsets are layout, and layout does not bob
-  if(fw&&vb) y+=fw.offsetTop+vb.offsetTop-8;  // eight pixels of air over it
+  const fw=document.getElementById("fireWrap");
+  // off the panel's own edge, less the guns standing on it and a little air
+  if(fw) y+=fw.offsetTop-TUR_H()-6;
   return Math.max(H*.35, Math.round(y));
 }
 /* where the chrome actually ends today, not where it ended at boot */
@@ -2668,27 +2667,71 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const TURRETS=[{fx:.50, lean:0}];
-const turretAt=i=>({x:AR.x0+(AR.x1-AR.x0)*TURRETS[i].fx, y:AR.y1});
+const TURRETS=[{fx:.22, lean:-0.30}, {fx:.50, lean:0, ufo:true}, {fx:.78, lean:0.30}];
+const TUR_R=()=>22*S;
+const TUR_H=()=>Math.round(TUR_R()*1.30);            // how far they stand up
+/* the top edge of the green panel, in the arena's own coordinates */
+function panelTopY(){
+  const dock=document.getElementById("dock"), fw=document.getElementById("fireWrap");
+  if(!dock||!fw) return H-90;
+  const ar=roomArena.getBoundingClientRect();
+  let y=dock.getBoundingClientRect().top-ar.top;
+  if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
+  return Math.round(y+fw.offsetTop);
+}
+const turretAt=i=>({x:AR.x0+(AR.x1-AR.x0)*TURRETS[i].fx, y:panelTopY()+2});
 function drawTurrets(x){
   for(let i=0;i<TURRETS.length;i++){
     const t=TURRETS[i], p=turretAt(i);
     const k=Math.max(0,(t.k||0));            // 1 the instant it fires, then decays
-    const R=22*S;
+    const R=TUR_R();
     x.save();
-    x.translate(p.x, p.y+2*S);
-    // the dome, squashing down as it lets go
-    x.fillStyle="#111A2A";
-    x.beginPath();
-    x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU);
-    x.fill();
-    x.fillStyle="#1C2942";
-    x.beginPath();
-    x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU);
-    x.fill();
+    x.translate(p.x, p.y);
+    // the collar across the join, so it reads as bolted on rather than resting
+    x.fillStyle="#0B101A";
+    x.beginPath(); x.roundRect(-R*(t.ufo?1.30:1.02),-1.5*S,R*(t.ufo?2.60:2.04),8*S,3*S); x.fill();
+    x.fillStyle="rgba(124,224,255,.30)";
+    x.beginPath(); x.roundRect(-R*(t.ufo?1.16:0.88),-0.5*S,R*(t.ufo?2.32:1.76),1.6*S,1*S); x.fill();
+    if(t.ufo){
+      // a saucer: a wide flattened hull with a canopy on top and lights round
+      // the rim, which is what makes the middle one the one you look at
+      x.fillStyle="#111A2A";
+      x.beginPath();
+      x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.40*(1-k*0.14),0,Math.PI,TAU);
+      x.fill();
+      x.beginPath();
+      x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.30,0,0,Math.PI);
+      x.fill();
+      x.fillStyle="#1C2942";
+      x.beginPath();
+      x.ellipse(0,-R*0.22,R*0.98,R*0.24,0,Math.PI,TAU);
+      x.fill();
+      // the canopy
+      x.fillStyle="#16223A";
+      x.beginPath();
+      x.ellipse(0,-R*0.42,R*0.56*(1+k*0.08),R*0.50*(1-k*0.12),0,Math.PI,TAU);
+      x.fill();
+      // rim lights
+      for(let q=-2;q<=2;q++){
+        if(!q) continue;
+        x.fillStyle="rgba(124,224,255,"+(0.34+k*0.5).toFixed(2)+")";
+        x.beginPath(); x.arc(q*R*0.44,-R*0.10,R*0.075,0,TAU); x.fill();
+      }
+    } else {
+      // the dome, squashing down as it lets go
+      x.fillStyle="#111A2A";
+      x.beginPath();
+      x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU);
+      x.fill();
+      x.fillStyle="#1C2942";
+      x.beginPath();
+      x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU);
+      x.fill();
+    }
     // the eye: the pupil rides toward whatever it has picked
     const aim=(t.aim===undefined?-Math.PI/2:t.aim);
-    const ex=Math.cos(aim)*R*0.30, ey=-R*0.34+Math.sin(aim)*R*0.20+R*0.20;
+    const cy=t.ufo? -R*0.52 : -R*0.14;
+    const ex=Math.cos(aim)*R*(t.ufo?0.22:0.30), ey=cy+Math.sin(aim)*R*0.18+R*0.06;
     const open=0.30+k*0.70;
     const ar=R*0.34*open;
     const g=x.createRadialGradient(ex,ey,0,ex,ey,Math.max(1,ar*2.6));
@@ -2702,10 +2745,7 @@ function drawTurrets(x){
     // the socket it moves inside, which is what makes it read as an eye
     x.strokeStyle="rgba(124,224,255,"+(0.34+k*0.45).toFixed(2)+")";
     x.lineWidth=Math.max(1.2,1.7*S);
-    x.beginPath(); x.arc(0,-R*0.20,R*0.46,0,TAU); x.stroke();
-    // and a lip along the floor so it reads as standing on something
-    x.fillStyle="#0B101A";
-    x.beginPath(); x.roundRect(-R*1.06,-1.6*S,R*2.12,3.4*S,1.8*S); x.fill();
+    x.beginPath(); x.arc(0,cy+R*0.06,R*(t.ufo?0.34:0.46),0,TAU); x.stroke();
     x.restore();
   }
 }
