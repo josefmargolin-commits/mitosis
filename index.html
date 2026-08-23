@@ -2011,22 +2011,31 @@ const UP={
            nm:"Blade", base:10, gr:1.16, max:60,
            d:"How wide a path your swipe cuts through the dish.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
-  cascade:{tab:"touch",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
-             '<circle cx="12" cy="4.6" r="3.1" fill="currentColor"/>'+
-             '<path d="M12 8.2v2.4M12 10.6 6.6 14.4M12 10.6l5.4 3.8" fill="none" '+
-               'stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'+
-             '<circle cx="5.6" cy="18" r="2.9" fill="currentColor"/>'+
-             '<circle cx="18.4" cy="18" r="2.9" fill="currentColor"/></svg>',
-           nm:"Multiply",base:90,gr:1.24, max:50,
-           d:"Chance a split splits its halves again, all the way down.",
+  cascade:{tab:"touch",g:aimg("up_dish"),
+           nm:"Double", base:90, gr:1.24, max:50,
+           d:"Chance a slice bursts into twice as many balls, and those can double again.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
-  purity: {tab:"arena",g:"✦",nm:"Income",base:130,gr:1.24, max:40,
-           d:"Chance the arrow sends up a rainbow ball. It pops for twenty-five times its worth and opens a two minute ×5 window.",
+  purity: {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="11" cy="13.4" r="8.2" fill="currentColor"/>'+
+             '<path d="M4.1 17.8a8.2 8.2 0 0 0 13.8 0z" fill="#fff" opacity=".3"/>'+
+             '<path d="M3.2 13.4a8.2 8.2 0 0 1 15.6 0z" fill="#fff" opacity=".18"/>'+
+             '<circle cx="8.2" cy="10.2" r="2.4" fill="#fff" opacity=".55"/>'+
+             '<path d="M19.4 1.6l1.1 3 3 1.1-3 1.1-1.1 3-1.1-3-3-1.1 3-1.1z" fill="currentColor"/></svg>',
+           nm:"Lucky", base:130,gr:1.24, max:40,
+           d:"Chance the arrow sends a rainbow ball. It pops for twenty-five times its worth and opens a frenzy.",
            v:l=>Math.min(.09,l*.00225), fmt:l=>(0.5+Math.min(9,l*.225)).toFixed(1)+"%"},
 
+  crit:   {tab:"touch",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="10.4" cy="13.6" r="7" fill="currentColor" opacity=".38"/>'+
+             '<path d="M15.6 1.8l1.9 5 5 1.9-5 1.9-1.9 5-1.9-5-5-1.9 5-1.9z" fill="currentColor"/>'+
+             '<path d="M4.6 17.4l.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4L1.3 20.7l2.4-.9z" '+
+               'fill="currentColor" opacity=".62"/></svg>',
+           nm:"Crit",  base:180, gr:1.25, max:30,
+           d:"Chance a ball pays double when you burst it.",
+           v:l=>Math.min(.6,l*.02), fmt:l=>Math.round(Math.min(60,l*2))+"%"},
   colony: {tab:"lysis",g:aimg("up_colony"),
-           nm:"Colony", base:300, gr:1.26, max:40,
-           d:"Every ball on the dish pays you a share of itself, every second. Bigger balls pay more, so a merged dish earns more than a broken one.",
+           nm:"Idle Cash", base:300, gr:1.26, max:40,
+           d:"Every ball sitting on the dish pays you cash every second, just for being there. Bigger balls pay more.",
            v:l=>l?0.010+l*0.006:0,
            fmt:l=>l?(100*(0.010+l*0.006)).toFixed(1)+"%/s":"off"},
 
@@ -2048,27 +2057,33 @@ const UP={
            nm:"Payload", base:260, gr:1.20, max:30,
            d:"Chance the arrow sends a ball one whole rung bigger than it rolled.",
            v:l=>Math.min(.84,l*.028), fmt:l=>Math.round(Math.min(84,l*2.8))+"%"},
-  dish:   {tab:"arena",g:aimg("up_dish"),
-           nm:"Dish", base:500, gr:1.30, max:20,
-           d:"How much of the screen you are allowed to fill before the arrow stops feeding it.",
-           v:l=>0.80+Math.min(.12,l*.006), fmt:l=>Math.round((0.80+Math.min(.12,l*.006))*100)+"%"},
-  magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
-           d:"Balls drift toward your finger while you hold it down.",
+  magnet: {tab:"field",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<path d="M5.2 20.4V12a6.8 6.8 0 0 1 13.6 0v8.4h-4.4V12a2.4 2.4 0 0 0-4.8 0v8.4z" '+
+               'fill="currentColor"/>'+
+             '<rect x="5.2" y="17" width="4.4" height="3.4" rx="1" fill="#fff" opacity=".55"/>'+
+             '<rect x="14.4" y="17" width="4.4" height="3.4" rx="1" fill="#fff" opacity=".55"/>'+
+             '<circle cx="12" cy="5.2" r="2.6" fill="currentColor" opacity=".45"/></svg>',
+           nm:"Magnet",base:90, gr:1.19, max:40,
+           d:"Balls drift toward your finger while you hold it down, so a swipe catches what it nearly missed.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
 };
 const UPK=Object.keys(UP);
 const UP_GROUPS=[
-  {t:"The dish",  keys:["reach","reload","payload","dish","yield"]},
-  {t:"Passive",   keys:["colony"]},
+  {t:"Your swipe", keys:["reach","cascade","crit","magnet"]},
+  {t:"The arrow",  keys:["reload","payload"]},
+  {t:"What it pays", keys:["yield","colony","purity"]},
 ];
 const SHOP_UP=UP_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
 const UP_HUE={
   reach:  {c:"#E8434F", bg:"#FFE8EA"},
+  cascade:{c:"#0E9488", bg:"#DDF6F2"},
+  crit:   {c:"#EC4899", bg:"#FFE7F3"},
+  magnet: {c:"#4F5FE0", bg:"#EEF0FE"},
   reload: {c:"#2F6BFF", bg:"#E5EEFF"},
   payload:{c:"#7C3AED", bg:"#F3E8FF"},
-  dish:   {c:"#0E9488", bg:"#DDF6F2"},
   yield:  {c:"#16A34A", bg:"#DCFCE7"},
   colony: {c:"#D98209", bg:"#FFF1D6"},
+  purity: {c:"#B4791A", bg:"#FFF3D6"},
 };
 
 const POWERS=[
@@ -2982,7 +2997,16 @@ function finish(b,col){
   rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*3,t:0,life:.4,col,w:2});
   shake=Math.max(shake,2.8);
   bumpCombo();
-  earn(b.mass*(b.kind==="golden"?25:1),b.x,b.y,col);
+  const crit = b.kind!=="golden" && Math.random()<val("crit");
+  earn(b.mass*(b.kind==="golden"?25:1)*(crit?2:1),b.x,b.y,col);
+  if(crit){
+    // it has to be visible or it is just a number that is sometimes bigger
+    rings.push({x:b.x,y:b.y,r:b.r*.4,R:b.r*3.4,t:0,life:.34,col:"#FF3B57",w:2.6});
+    for(let i=0;i<6;i++) spark(b.x,b.y,"#FF6B8A");
+    pop(880,{pan:panAt(b.x),vol:.09,wet:.2});
+    shake=Math.max(shake,3.4);
+    haptic(12);
+  }
   const fp2=panAt(b.x);
   pop(NOTE[LAST]*2.4*semi(noteStep()),{pan:fp2,vol:.22,wet:.2});
   noiseHit(.07,{pan:fp2,vol:.05,cut:6000,type:"highpass",to:.6,wet:.12});
@@ -4337,8 +4361,8 @@ function arenaArea(){
    third of the speed, so it stops well short. */
 const BALL_SOFT=300;
 const ballCeil=()=>app.classList.contains("lowfx")?260:BALL_SOFT;
-const DISH_MAX=0.80;                 // the floor; Dish raises it toward .92
-const dishMax=()=>val("dish");
+const DISH_MAX=0.86;                 // how full the screen may get, flat
+const dishMax=()=>DISH_MAX;
 /* each icon costs its own rectangle plus a working margin, because the strip
    right beside one is ground no ball of any size can settle in */
 let blockedA=0, blockedFor=-1;
