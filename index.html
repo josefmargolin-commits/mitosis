@@ -326,8 +326,9 @@ input{font:inherit;color:inherit}
 #railL{left:calc(10px + env(safe-area-inset-left));top:calc(var(--top-h) + 42px)}
 /* everything on the right sits on one centre line: the profile card is the
    widest thing there, so the column is its width and the rest centres in it */
-#railR{right:calc(10px + env(safe-area-inset-right));top:calc(var(--top-h) + 42px);
-  align-items:center;width:68px}
+#railR{right:calc(10px + env(safe-area-inset-right));
+  top:calc(var(--top-h) + 42px + 62px);
+  align-items:center;width:54px}
 /* each button carries its own colour in --c and its glyph colour in --ic; the
    lip and sheen are derived so one variable sets the whole button */
 .orb{
@@ -433,13 +434,13 @@ input{font:inherit;color:inherit}
   .rail{gap:7px}
   .orb{width:38px;height:38px}
   .orb svg{width:18px;height:18px}
-  #railR{width:58px}
+  #railR{width:46px;top:calc(var(--top-h) + 42px + 54px)}
   #railR .pw{width:38px;height:38px;border-radius:12px}
   #railR .pw .g{font-size:13px}
-  #fireWrap{left:106px;right:12px;height:58px;top:13px}
-  #upBtn{width:86px;height:58px;left:12px;top:13px}
-  #upBtn .mk{width:23px;height:23px}
-  #upBtn b{font-size:9px}
+  #fireWrap{left:10px;right:10px;height:58px;top:13px}
+  #upBtn{width:46px;height:46px;border-radius:14px}
+  #upBtn .mk{width:20px;height:20px}
+  #upBtn b{font-size:6.5px}
   #railR .pw .g .ai{width:22px;height:22px}
   #railR .pw .l{font-size:6px}
   #railR .pw .cd{border-radius:12px;font-size:11px}
@@ -538,7 +539,7 @@ input{font:inherit;color:inherit}
 /* the way in to the five, standing on the strip beside the trigger */
 /* the glass the trigger stands on, and the whole of it is the trigger */
 #fireWrap{
-  position:absolute;left:118px;right:14px;top:11px;height:62px;
+  position:absolute;left:12px;right:12px;top:11px;height:62px;
   border-radius:20px;z-index:5;cursor:pointer;
   background:linear-gradient(180deg,#6BF08A,#33C95A);
   box-shadow:0 6px 0 #1E9B41, 0 10px 20px rgba(38,170,80,.32),
@@ -552,22 +553,23 @@ input{font:inherit;color:inherit}
 }
 /* the circle centres itself on the pane rather than on the screen */
 #upBtn{
-  position:absolute;left:14px;top:11px;
-  width:98px;height:62px;border-radius:20px;padding:0;border:none;
+  position:absolute;right:calc(10px + env(safe-area-inset-right));
+  top:calc(var(--top-h) + 42px);
+  width:54px;height:54px;border-radius:16px;padding:0;border:none;
   background:linear-gradient(180deg,#7C8DF7,#4F5FE0);
-  box-shadow:0 6px 0 #3A47B8, 0 10px 20px rgba(70,86,215,.32);
+  box-shadow:0 5px 0 #3A47B8, 0 8px 16px rgba(70,86,215,.30);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   z-index:6;
   transition:transform .09s cubic-bezier(.2,1.7,.4,1), box-shadow .09s ease;
 }
 #upBtn b{
-  font:800 10px/1 var(--font);letter-spacing:.07em;text-transform:uppercase;
+  font:800 7px/1 var(--font);letter-spacing:.06em;text-transform:uppercase;
   color:#fff;opacity:.95;
 }
-#upBtn:active{transform:translateY(4px);
+#upBtn:active{transform:translateY(3px);
   box-shadow:0 2px 0 #3A47B8, 0 4px 9px rgba(70,86,215,.26)}
 #upBtn .mk{
-  width:26px;height:26px;display:block;flex:none;
+  width:23px;height:23px;display:block;flex:none;
   background:var(--mark-w) center/contain no-repeat;
 }
 #upBtn .dot{
@@ -1769,10 +1771,10 @@ input{font:inherit;color:inherit}
       <div class="rail" id="railL"></div>
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
+      <button id="upBtn" aria-label="Upgrades">
+        <i class="mk"></i><b>Upgrades</b><span class="dot"></span>
+      </button>
       <div id="dock">
-        <button id="upBtn" aria-label="Upgrades">
-          <i class="mk"></i><b>Upgrades</b><span class="dot"></span>
-        </button>
         <div id="fireWrap">
           <i id="vBar" title="Next free ball"><b></b></i>
           <button id="dockHandle" aria-label="Drop a ball" tabindex="-1">
@@ -2652,7 +2654,7 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const TURRETS=[{fx:.20, lean:-0.42}, {fx:.50, lean:0}, {fx:.80, lean:0.42}];
+const TURRETS=[{fx:.50, lean:0}];
 const turretAt=i=>({x:AR.x0+(AR.x1-AR.x0)*TURRETS[i].fx, y:AR.y1});
 function drawTurrets(x){
   for(let i=0;i<TURRETS.length;i++){
@@ -5624,17 +5626,19 @@ function buildRails(){
   }
   obsChanged();
   const R=$("railR"); R.innerHTML="";
-  const add=(p,isBoost)=>{
+  // Scatter lives under the drawer on the left now
+  const SR=L;
+  const add=(p,isBoost,into)=>{
     const b=document.createElement("button");
     b.className="pw"; b.id=(isBoost?"bo-":"pw-")+p.id;
     b.innerHTML='<span class="g">'+p.g+'</span><span class="l">'+p.nm+'</span>'+
                  '<span class="cd"></span><span class="adb">\u25B6</span>';
     b.onclick=()=>isBoost?fireBoost(p):firePower(p);
     b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d);};
-    R.appendChild(b);
+    (into||R).appendChild(b);
   };
   // Scatter is the one everybody has; everything else is earned
-  add(POWERS[0],false);
+  add(POWERS[0],false,SR);
   const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned)
     .concat(BOOSTS.filter(b2=>boState(b2).owned));
   const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
