@@ -404,7 +404,7 @@ input{font:inherit;color:inherit}
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #D9A518,0 5px 11px rgba(180,120,0,.24)}
 .pw.ready .l{color:var(--yellow)}
 /* the needle keeps its own colour so it does not read as a power you own */
-.pw.ndl .g{color:#2FA3FF}
+.pw.ndl .g{color:#0B101A}
 .pw.ndl.ready{background:linear-gradient(180deg,#EAF7FF 0%,#D6EEFF 48%,#BFE4FF 100%);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #4E9FD6,0 5px 11px rgba(30,110,180,.22)}
 .pw.ndl.ready .l{color:#1E6EB4}
@@ -435,8 +435,9 @@ input{font:inherit;color:inherit}
   .orb svg{width:18px;height:18px}
   #railR{width:58px}
   #railR .pw{width:38px;height:38px;border-radius:12px}
-  .prof{width:58px;padding:6px 5px 7px}
-  .prof .lv{font-size:14px}
+  .prof{width:38px;height:38px;border-radius:12px;padding:0}
+  .prof .lv{font-size:12px}
+  .prof .bar{left:5px;right:5px;bottom:4px}
   #railR .pw .g{font-size:13px}
   #fireWrap{left:106px;right:12px;height:58px;top:13px}
   #upBtn{width:86px;height:58px;left:12px;top:13px}
@@ -1397,16 +1398,17 @@ input{font:inherit;color:inherit}
 .card.locked .ct{color:var(--ink-3);font-size:9px;font-weight:500}
 
 /* the profile card at the head of the power rail */
-.prof{width:68px;border-radius:14px;background:var(--panel);border:1px solid var(--edge);
+.prof{width:46px;height:46px;border-radius:15px;background:var(--panel);
+  border:1px solid var(--edge);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #C9D4E2,0 5px 11px rgba(16,22,37,.18);
-  padding:8px 7px 9px;text-align:center;flex:none}
-.prof .hi{font-size:7.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--ink-3)}
+  padding:0;text-align:center;flex:none;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center}
+.prof .hi{display:none}
+.prof .rk{display:none}
 .prof .lv{font-family:var(--font);font-weight:800;
-  font-size:16px;line-height:1.05;margin-top:2px;letter-spacing:-.02em}
-.prof .rk{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
-  color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prof .bar{height:4px;border-radius:99px;background:#E4E9F1;overflow:hidden;margin-top:6px}
+  font-size:13.5px;line-height:1;letter-spacing:-.03em;margin-bottom:3px}
+.prof .bar{position:absolute;left:6px;right:6px;bottom:5px;
+  height:3px;border-radius:99px;background:#E4E9F1;overflow:hidden}
 .prof .bar i{display:block;height:100%;border-radius:99px;background:#2F6BFF;transition:width .3s}
 
 /* a power you can watch an ad to fire early */
@@ -2727,7 +2729,7 @@ function stepNeedles(dt){
       n.in=over;
       if((n.mk=(n.mk||0)+sd) > 26*S){
         n.mk=0;
-        goo(n.x,n.y,2.4*S,"#7CE0FF",.22,rnd(-14,14)*S,rnd(-14,14)*S);
+        goo(n.x,n.y,2.6*S,"#1B2740",.24,rnd(-14,14)*S,rnd(-14,14)*S);
       }
     }
   }
@@ -2745,24 +2747,26 @@ function drawNeedles(x){
     x.translate(n.x,n.y);
     x.rotate(n.a);
     // the streak behind it, then the head
-    const L=62*S;
-    // the glow first, so the streak sits inside it
+    const L=70*S;
+    // a cyan glow underneath, so it still reads as speed
     const gg=x.createLinearGradient(-L,0,12*S,0);
     gg.addColorStop(0,"rgba(47,163,255,0)");
-    gg.addColorStop(1,"rgba(47,163,255,.5)");
-    x.strokeStyle=gg; x.lineWidth=9*S; x.lineCap="round";
+    gg.addColorStop(1,"rgba(47,163,255,.55)");
+    x.strokeStyle=gg; x.lineWidth=12*S; x.lineCap="round";
     x.beginPath(); x.moveTo(-L,0); x.lineTo(9*S,0); x.stroke();
+    // and the needle itself in near black, which is the one value nothing
+    // else on this dish uses
     const g=x.createLinearGradient(-L,0,12*S,0);
-    g.addColorStop(0,"rgba(124,224,255,0)");
-    g.addColorStop(.55,"rgba(124,224,255,.75)");
-    g.addColorStop(1,"#EAFBFF");
-    x.strokeStyle=g; x.lineWidth=4.2*S;
+    g.addColorStop(0,"rgba(11,16,26,0)");
+    g.addColorStop(.45,"rgba(11,16,26,.72)");
+    g.addColorStop(1,"#0B101A");
+    x.strokeStyle=g; x.lineWidth=5.4*S;
     x.beginPath(); x.moveTo(-L,0); x.lineTo(9*S,0); x.stroke();
-    // the head, and a halo on it
-    x.fillStyle="rgba(124,224,255,.42)";
-    x.beginPath(); x.arc(9*S,0,8*S,0,TAU); x.fill();
+    // the head: a black ring round a white core
+    x.fillStyle="#0B101A";
+    x.beginPath(); x.arc(9*S,0,6.6*S,0,TAU); x.fill();
     x.fillStyle="#fff";
-    x.beginPath(); x.arc(9*S,0,4.2*S,0,TAU); x.fill();
+    x.beginPath(); x.arc(9*S,0,3.4*S,0,TAU); x.fill();
     x.restore();
   }
 }
@@ -3881,7 +3885,13 @@ function ventBall(forceTier, plainOnly){
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
   if(!roomFor(rr)) return false;               // it has to fit, not just fit in
-  const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
+  const mk=document.getElementById("dockHandle");
+  let cx=W*.5;
+  if(mk){
+    const ar=roomArena.getBoundingClientRect(), m=mk.getBoundingClientRect();
+    if(m.width) cx=m.left-ar.left+m.width*.5;
+  }
+  const x=clamp(cx+rnd(-22,22)*S, rr+2, Math.max(rr+3,W-rr-2));
   const y=AR.y1-rr*1.05;
   // the heavy ones leave slower, or a yellow would be off the top of the dish
   const kick=clamp(1-up*.075,.66,1.12);
