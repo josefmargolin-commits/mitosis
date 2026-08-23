@@ -426,7 +426,10 @@ input{font:inherit;color:inherit}
   .prof{width:58px;padding:6px 5px 7px}
   .prof .lv{font-size:14px}
   #railR .pw .g{font-size:13px}
-  #fireWrap{left:106px;right:12px;height:58px;top:13px}
+  #fireWrap{left:106px;right:82px;height:58px;top:13px}
+  #ndlBtn{width:58px;height:58px;right:12px;top:13px}
+  #ndlBtn .ico{width:24px;height:24px}
+  #ndlBtn .ring{width:52px;height:52px}
   #upBtn{width:86px;height:58px;left:12px;top:13px}
   #upBtn .mk{width:23px;height:23px}
   #upBtn b{font-size:9px}
@@ -527,15 +530,40 @@ input{font:inherit;color:inherit}
   background:none;border:none;box-shadow:none;pointer-events:none;
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
-#fireWrap,#dockHandle,#upBtn{
+#fireWrap,#dockHandle,#upBtn,#ndlBtn{
   pointer-events:auto;-webkit-touch-callout:none;
   -webkit-user-select:none;user-select:none;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
 /* the way in to the five, standing on the strip beside the trigger */
+/* the needle, on the far side of the pane */
+#ndlBtn{
+  position:absolute;right:14px;top:11px;
+  width:62px;height:62px;border-radius:50%;padding:0;border:none;
+  background:linear-gradient(180deg,#3C4A63,#232B39);
+  box-shadow:0 6px 0 #151B26, 0 10px 20px rgba(21,27,38,.34);
+  display:grid;place-items:center;z-index:6;
+  transition:transform .09s cubic-bezier(.2,1.7,.4,1), box-shadow .09s ease,
+             filter .2s ease;
+}
+#ndlBtn:active{transform:translateY(4px);
+  box-shadow:0 2px 0 #151B26, 0 4px 9px rgba(21,27,38,.3)}
+#ndlBtn .ico{width:27px;height:27px;display:block;grid-area:1/1}
+#ndlBtn .ring{width:56px;height:56px;grid-area:1/1;transform:rotate(-90deg);
+  pointer-events:none}
+#ndlBtn .ring .rbg{fill:none;stroke:rgba(255,255,255,.13);stroke-width:3}
+#ndlBtn .ring .rfg{
+  fill:none;stroke:#7CE0FF;stroke-width:3;stroke-linecap:round;
+  stroke-dasharray:125.6;stroke-dashoffset:0;
+  transition:stroke-dashoffset .12s linear;
+}
+/* while it is charging the head dims and the ring drains */
+#ndlBtn.cool{filter:saturate(.55) brightness(.86)}
+#ndlBtn.cool .ico{opacity:.5}
+#ndlBtn.ready .ring .rfg{stroke:#8DF7C4}
 /* the glass the trigger stands on, and the whole of it is the trigger */
 #fireWrap{
-  position:absolute;left:120px;right:14px;top:11px;height:62px;
+  position:absolute;left:120px;right:90px;top:11px;height:62px;
   border-radius:21px;z-index:5;cursor:pointer;
   background:rgba(255,255,255,.5);
   -webkit-backdrop-filter:blur(12px) saturate(1.35);
@@ -1781,6 +1809,19 @@ input{font:inherit;color:inherit}
         <button id="upBtn" aria-label="Upgrades">
           <i class="mk"></i><b>Upgrades</b><span class="dot"></span>
         </button>
+        <button id="ndlBtn" aria-label="Fire a needle">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.4 15.1 9l-3.1 2.1L8.9 9z" fill="#EAFBFF"/>
+            <path d="M12 11.1 12 21.6" stroke="#7CE0FF" stroke-width="2.2"
+                  stroke-linecap="round" fill="none" opacity=".85"/>
+            <path d="M5.4 15.4 8.6 18.6M18.6 15.4 15.4 18.6" stroke="#7CE0FF"
+                  stroke-width="2" stroke-linecap="round" fill="none" opacity=".55"/>
+          </svg>
+          <svg class="ring" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="rbg" cx="22" cy="22" r="20"/>
+            <circle class="rfg" cx="22" cy="22" r="20"/>
+          </svg>
+        </button>
         <div id="fireWrap">
           <i id="vBar"><b></b></i>
           <button id="dockHandle" aria-label="Fire the arrow" tabindex="-1">
@@ -2658,6 +2699,98 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 
 /* ---------------------------------------------------------------- world */
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
+const NEEDLE={cd:0, gap:7, bounces:3, life:4.2, speed:1180};
+let needles=[];
+function fireNeedle(){
+  if(!ready||W<10||NEEDLE.cd>0) return false;
+  NEEDLE.cd=NEEDLE.gap;
+  const fw=document.getElementById("fireWrap");
+  const ar=roomArena.getBoundingClientRect();
+  let x=W*.5;
+  if(fw){ const r=fw.getBoundingClientRect(); x=r.left-ar.left+r.width*.5; }
+  needles.push({x:clamp(x,12,W-12), y:AR.y1-4,
+    a:-Math.PI/2+rnd(-.30,.30), left:NEEDLE.bounces, t:0, hit:0,
+    px:x, py:AR.y1-4});
+  pop(1180,{pan:panAt(x),vol:.09,wet:.12});
+  noiseHit(.06,{pan:panAt(x),vol:.05,cut:3200,q:4});
+  haptic(9);
+  return true;
+}
+/* it moves in small steps so a fast needle cannot tunnel through a ball */
+function stepNeedles(dt){
+  if(NEEDLE.cd>0) NEEDLE.cd=Math.max(0,NEEDLE.cd-dt);
+  for(let i=needles.length-1;i>=0;i--){
+    const n=needles[i];
+    n.t+=dt;
+    if(n.t>NEEDLE.life||n.left<=0){ burstNeedle(n); needles.splice(i,1); continue; }
+    const dist=NEEDLE.speed*S*dt;
+    const steps=Math.max(1,Math.ceil(dist/(9*S)));
+    const sd=dist/steps;
+    n.px=n.x; n.py=n.y;
+    for(let k=0;k<steps;k++){
+      n.x+=Math.cos(n.a)*sd; n.y+=Math.sin(n.a)*sd;
+      let hitWall=false;
+      if(n.x<AR.x0+3){ n.x=AR.x0+3; n.a=Math.PI-n.a; hitWall=true; }
+      else if(n.x>AR.x1-3){ n.x=AR.x1-3; n.a=Math.PI-n.a; hitWall=true; }
+      if(n.y<AR.y0+3){ n.y=AR.y0+3; n.a=-n.a; hitWall=true; }
+      else if(n.y>AR.y1-3){ n.y=AR.y1-3; n.a=-n.a; hitWall=true; }
+      if(hitWall){
+        n.left--;
+        rings.push({x:n.x,y:n.y,r:2,R:26*S,t:0,life:.26,col:"#7CE0FF",w:2.2});
+        for(let q=0;q<3;q++) spark(n.x,n.y,"#BFF0FF");
+        pop(760+n.left*90,{pan:panAt(n.x),vol:.06,wet:.14});
+        if(n.left<=0) break;
+      }
+      // one hit for going through it, not one per step spent inside it
+      let over=null;
+      for(const b of balls){
+        if(b.gone||b.kind==="boss") continue;
+        const dx=b.x-n.x, dy=b.y-n.y;
+        if(dx*dx+dy*dy<=b.r*b.r){ over=b; break; }
+      }
+      if(over && over!==n.in){ strike(over,undefined,n,true); n.hit++; }
+      n.in=over;
+      if((n.mk=(n.mk||0)+sd) > 26*S){
+        n.mk=0;
+        goo(n.x,n.y,2.4*S,"#7CE0FF",.22,rnd(-14,14)*S,rnd(-14,14)*S);
+      }
+    }
+  }
+}
+function burstNeedle(n){
+  rings.push({x:n.x,y:n.y,r:3,R:34*S,t:0,life:.3,col:"#7CE0FF",w:2.4});
+  for(let q=0;q<7;q++) spark(n.x,n.y,"#BFF0FF");
+  pop(520,{pan:panAt(n.x),vol:.06,wet:.2});
+}
+function drawNeedles(x){
+  for(const n of needles){
+    const fade=clamp(1-(n.t-(NEEDLE.life-.5))/.5,0,1);
+    x.save();
+    x.globalAlpha=fade;
+    x.translate(n.x,n.y);
+    x.rotate(n.a);
+    // the streak behind it, then the head
+    const L=62*S;
+    // the glow first, so the streak sits inside it
+    const gg=x.createLinearGradient(-L,0,12*S,0);
+    gg.addColorStop(0,"rgba(47,163,255,0)");
+    gg.addColorStop(1,"rgba(47,163,255,.5)");
+    x.strokeStyle=gg; x.lineWidth=9*S; x.lineCap="round";
+    x.beginPath(); x.moveTo(-L,0); x.lineTo(9*S,0); x.stroke();
+    const g=x.createLinearGradient(-L,0,12*S,0);
+    g.addColorStop(0,"rgba(124,224,255,0)");
+    g.addColorStop(.55,"rgba(124,224,255,.75)");
+    g.addColorStop(1,"#EAFBFF");
+    x.strokeStyle=g; x.lineWidth=4.2*S;
+    x.beginPath(); x.moveTo(-L,0); x.lineTo(9*S,0); x.stroke();
+    // the head, and a halo on it
+    x.fillStyle="rgba(124,224,255,.42)";
+    x.beginPath(); x.arc(9*S,0,8*S,0,TAU); x.fill();
+    x.fillStyle="#fff";
+    x.beginPath(); x.arc(9*S,0,4.2*S,0,TAU); x.fill();
+    x.restore();
+  }
+}
 let combo=0,comboT=0,shake=0,freeze=0,flash=0,el=0,pulseT=0,seq=0;
 let trail=[],ptrDown=false,ptrX=0,ptrY=0,ptrId=null,ready=false;
 let zoom=1,zoomPhase=0,zoomT=0,zoomFade=0;
@@ -3367,7 +3500,7 @@ function applyAscent(){
   // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
   G.up=up;
-  parts.length=0; fuses.length=0; rings.length=0; pops.length=0;
+  parts.length=0; fuses.length=0; rings.length=0; pops.length=0; needles.length=0;
   G.wiz=Array(SLOTS).fill(null); G.wlvl=[0,0,0,0,0,0]; G.summons=0;
   G.wiz[5]={id:++G.wizSeq, rank:0};
   WZ=[]; syncWZ(); wizSel=-1;
@@ -4506,7 +4639,7 @@ function step(dt){
   psFrame=0;
   VENT.t-=dt;
   if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? val("reload") : 2.5; VENT.max=VENT.t; }
-  bossGate(); bossPull(dt);
+  bossGate(); bossPull(dt); stepNeedles(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
@@ -5252,6 +5385,7 @@ function draw(){
     }
   }
 
+  drawNeedles(xFx);
   drawTrail(xFx,1,.72);
 
   xFx.save();
@@ -7070,6 +7204,14 @@ function tickUI(dt){
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
     syncTop(); syncRails(); syncGoal(); syncUpBtn();
+    const nb=$("ndlBtn");
+    if(nb){
+      const k=clamp(1-NEEDLE.cd/NEEDLE.gap,0,1);
+      const fg=nb.querySelector(".rfg");
+      if(fg) fg.style.strokeDashoffset=(125.6*(1-k)).toFixed(1);
+      nb.classList.toggle("cool",k<1);
+      nb.classList.toggle("ready",k>=1);
+    }
     const vb=$("vBar");
     if(vb){
       const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
@@ -7265,6 +7407,13 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
   },{passive:false});
   const u=$("upBtn");
   if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
+  const nb=$("ndlBtn");
+  if(nb) nb.addEventListener("pointerdown",e=>{
+    if(e.button) return;
+    e.preventDefault();
+    if(!ready) return;
+    if(!fireNeedle()) haptic(4);
+  },{passive:false});
 })();
 /* the tower is closed */
 document.getElementById("goDown").onclick=()=>goRoom("arena");
