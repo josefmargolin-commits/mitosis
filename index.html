@@ -2672,21 +2672,23 @@ function drawTurrets(x){
     x.beginPath();
     x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU);
     x.fill();
-    // the aperture: shut at rest, wide open on the shot
+    // the eye: the pupil rides toward whatever it has picked
+    const aim=(t.aim===undefined?-Math.PI/2:t.aim);
+    const ex=Math.cos(aim)*R*0.30, ey=-R*0.34+Math.sin(aim)*R*0.20+R*0.20;
     const open=0.30+k*0.70;
     const ar=R*0.34*open;
-    const g=x.createRadialGradient(0,-R*0.30,0,0,-R*0.30,Math.max(1,ar*2.6));
+    const g=x.createRadialGradient(ex,ey,0,ex,ey,Math.max(1,ar*2.6));
     g.addColorStop(0,"rgba(255,255,255,"+(0.5+k*0.5).toFixed(2)+")");
     g.addColorStop(.45,"rgba(124,224,255,"+(0.42+k*0.5).toFixed(2)+")");
     g.addColorStop(1,"rgba(124,224,255,0)");
     x.fillStyle=g;
-    x.beginPath(); x.arc(0,-R*0.30,Math.max(1,ar*2.6),0,TAU); x.fill();
+    x.beginPath(); x.arc(ex,ey,Math.max(1,ar*2.6),0,TAU); x.fill();
     x.fillStyle="#EAFBFF";
-    x.beginPath(); x.arc(0,-R*0.30,Math.max(.8,ar),0,TAU); x.fill();
-    // a rim round the mouth, so it is the first thing you see on the dome
-    x.strokeStyle="rgba(124,224,255,"+(0.5+k*0.45).toFixed(2)+")";
+    x.beginPath(); x.arc(ex,ey,Math.max(.8,ar),0,TAU); x.fill();
+    // the socket it moves inside, which is what makes it read as an eye
+    x.strokeStyle="rgba(124,224,255,"+(0.34+k*0.45).toFixed(2)+")";
     x.lineWidth=Math.max(1.2,1.7*S);
-    x.beginPath(); x.arc(0,-R*0.30,R*0.40,0,TAU); x.stroke();
+    x.beginPath(); x.arc(0,-R*0.20,R*0.46,0,TAU); x.stroke();
     // and a lip along the floor so it reads as standing on something
     x.fillStyle="#0B101A";
     x.beginPath(); x.roundRect(-R*1.06,-1.6*S,R*2.12,3.4*S,1.8*S); x.fill();
@@ -2694,7 +2696,31 @@ function drawTurrets(x){
   }
 }
 function stepTurrets(dt){
-  for(const t of TURRETS) if(t.k) t.k=Math.max(0,t.k-dt*4.2);
+  for(let i=0;i<TURRETS.length;i++){
+    const t=TURRETS[i];
+    if(t.k) t.k=Math.max(0,t.k-dt*4.2);
+    if(t.aim===undefined) t.aim=-Math.PI/2+t.lean;
+    const p=turretAt(i);
+    // the nearest thing a needle could actually hit
+    let best=null, bd=1e9;
+    for(const b of balls){
+      if(b.gone||b.kind==="boss") continue;
+      const dx=b.x-p.x, dy=b.y-p.y;
+      const d=dx*dx+dy*dy;
+      if(d<bd){ bd=d; best=b; }
+    }
+    t.eye=!!best;
+    if(!best) continue;
+    let want=Math.atan2(best.y-p.y, best.x-p.x);
+    // never into the floor: keep it in the upper half with a little margin
+    if(want>-0.22) want=-0.22;
+    if(want<-Math.PI+0.22) want=-Math.PI+0.22;
+    // turn toward it rather than snapping, so the aim is something you watch
+    let d2=want-t.aim;
+    while(d2>Math.PI) d2-=TAU;
+    while(d2<-Math.PI) d2+=TAU;
+    t.aim+=d2*(1-Math.pow(0.0008,dt));
+  }
 }
 let needles=[];
 function fireNeedle(){
@@ -2705,7 +2731,7 @@ function fireNeedle(){
   const t=TURRETS[i], p=turretAt(i);
   t.k=1;                                    // it rocks back
   const x=p.x, y=p.y-18*S;
-  const a=-Math.PI/2+t.lean+rnd(-.06,.06);
+  const a=(t.aim===undefined?-Math.PI/2+t.lean:t.aim)+rnd(-.04,.04);
   needles.push({x, y, a, left:NEEDLE.bounces, t:0, hit:0, px:x, py:y});
   rings.push({x,y,r:2,R:18*S,t:0,life:.2,col:"#8FA0B8",w:1.8});
   pop(1180,{pan:panAt(x),vol:.05,wet:.12});
