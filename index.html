@@ -1472,6 +1472,50 @@ input{font:inherit;color:inherit}
   100%{background:#FF3B57}
 }
 #fzTag .s{font-variant-numeric:tabular-nums;opacity:.72;letter-spacing:.04em}
+/* ---- the shooters ------------------------------------------------------
+   They sit on the lip of the shelf, on the floor of the dish, which is
+   where the balls come from. Each is a barrel with the reload underneath
+   and its price on it; the ghost at the end is the next one you can buy. */
+#shootRow{position:absolute;left:0;right:0;top:-56px;height:56px;z-index:5;pointer-events:none}
+.shooter{
+  position:absolute;bottom:0;transform:translateX(-50%);
+  width:46px;padding:0;border:0;background:none;pointer-events:auto;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.shooter .barrel{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:var(--panel);border:1px solid var(--edge);box-shadow:var(--shadow);
+  transition:transform .12s cubic-bezier(.2,1.7,.4,1);
+}
+.shooter .barrel svg{width:18px;height:18px;stroke:var(--ink-2);fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.shooter .rl{width:24px;height:3px;border-radius:99px;background:rgba(15,23,32,.11);overflow:hidden}
+.shooter .rl i{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#7CB2FF,#2F6BFF);transition:width .12s linear}
+.shooter .c{
+  font-size:8.5px;font-weight:700;letter-spacing:.02em;line-height:1;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap;
+  padding:2px 6px;border-radius:99px;background:var(--panel);
+  border:1px solid var(--edge);
+}
+.shooter.can .c{color:#15803D;border-color:rgba(34,197,94,.45);background:#F2FDF6}
+.shooter.can .barrel{border-color:rgba(34,197,94,.5)}
+.shooter .lv{position:absolute;top:-4px;right:-2px;
+  font-size:8px;font-weight:800;line-height:1;padding:2px 5px;border-radius:99px;
+  background:linear-gradient(180deg,#FFE79A,#D99B0E);color:#3B2A02;
+  border:1px solid #A9760A;box-shadow:0 1px 2px rgba(16,22,37,.25)}
+.shooter:active .barrel{transform:translateY(3px) scale(.94)}
+.shooter.held .barrel{transform:translateY(2px) scale(.96)}
+/* the one you have not bought yet */
+.shooter.ghost .barrel{background:transparent;border-style:dashed;box-shadow:none;opacity:.72}
+.shooter.ghost .barrel svg{stroke:var(--ink-3)}
+.shooter.ghost .rl{visibility:hidden}
+@media (max-height:680px){
+  #shootRow{top:-50px;height:50px}
+  .shooter{width:42px}
+  .shooter .barrel{width:34px;height:34px}
+  .shooter .barrel svg{width:16px;height:16px}
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
@@ -1524,7 +1568,7 @@ input{font:inherit;color:inherit}
         <span class="p">0%</span>
         <span class="bar"><i></i></span>
       </button>
-      <button id="goUp" aria-label="Up to the wizards">
+      <button id="goUp" aria-label="Up to the wizards" hidden>
         <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         <span>Wizards</span>
         <i class="dot"></i>
@@ -1533,9 +1577,9 @@ input{font:inherit;color:inherit}
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
       <div id="dock">
+        <div id="shootRow"></div>
         <button id="dockHandle" aria-label="Show or hide upgrades">
           <span class="ah"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></span>
-          <i id="vBar"><b></b></i>
         </button>
         <nav id="tabs"></nav>
         <div id="cards"></div>
@@ -1915,6 +1959,7 @@ function freshState(){
     v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0,
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
+    shoot:[{lv:0,t:1}],
     pw:{}, boost:{},
     name:"cell", skin:"solid", pal:"classic", trail:"gold",
     ownSkin:["solid"], ownPal:["classic"], ownTrail:["gold"],
@@ -1949,13 +1994,14 @@ const lv=k=>G.up[k]|0;
 const val=k=>UP[k].v(lv(k));
 const GRX=1.35;          // every upgrade's growth rate, raised to this power
 /* Measured after the merge and split rules changed: a working board earns
-   about 82K a minute in whatever scale it is standing on. The ladder was cut
+   about 490K a minute in whatever scale it is standing on, now that the
+   shooters do the producing. The ladder was cut
    against 1.65M, which is why everything above was hours further away than
    it read. The rungs are written as minutes of that income now, so the
    number means something you can check. The first is deliberately short —
    nobody waits two hours to find out whether a game is worth playing. */
-const SCALE_INCOME=8.2e4;
-const SCALE_MINUTES=[10, 30, 55, 80, 100];
+const SCALE_INCOME=4.9e5;
+const SCALE_MINUTES=[40, 85, 140, 200, 260];
 const scaleMul=()=>curScale().mult;
 const cost=k=>Math.ceil(UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
 const maxed=k=>lv(k)>=UP[k].max;
@@ -2041,7 +2087,7 @@ function resize(){
   const gEl=document.getElementById("goal");
   AR.y0=(topEl?topEl.offsetHeight:58)+(gEl?gEl.offsetHeight+4:34);
   AR.y1=H-(dockEl?dockEl.offsetHeight:152);
-  layoutWizards();
+  layoutShooters(); shootSig="";
   drawBg();
 }
 addEventListener("resize",resize);
@@ -2935,6 +2981,8 @@ function applyAscent(){
   // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
   G.up=up;
+  G.shoot=[{lv:0,t:1}];
+  shootSig=""; buildShooters();
   parts.length=0; fuses.length=0; rings.length=0; pops.length=0;
   G.wiz=Array(SLOTS).fill(null); G.wlvl=[0,0,0,0,0,0]; G.summons=0;
   G.wiz[5]={id:++G.wizSeq, rank:0};
@@ -2974,9 +3022,11 @@ const castX=i=>((i%WCOLS)+0.5)/WCOLS*W;
 const wizCount=()=>{ let n=0; for(let i=0;i<PLAY;i++) if(G.wiz[i]) n++; return n; };
 
 function throughput(){
+  // every shooter's mass a second, which is what the dish is fed
   let t=0;
-  for(let i=0;i<SLOTS;i++) if(wiz(i)) t+=wrank(i).mass/wDelay(i);
-  return t*yieldMul();
+  shootInit();
+  for(let i=0;i<shootCount();i++) t+=shootMass(i)/shootGap(i);
+  return t*yieldMul()*1.35;          // a ball is worth a bit more than its mass
 }
 function anyMerge(){
   const seen={};
@@ -3125,6 +3175,34 @@ function stepWizards(dt){
    seconds. It is a floor, not a source — its mass is fixed at eight and
    never follows your rank, so by the time wizards are working it is noise. */
 const VENT={t:3.5, max:3.5, mass:26, n:0};
+
+/* ---- the row of shooters ------------------------------------------------
+   Six is the most the floor holds without them touching. Buying the next
+   one costs about four and a half times the last, so a second shooter is
+   an early goal and a sixth is a late one; a level makes a shooter fire
+   faster and throw heavier, and the two together are what growth is. */
+const SHOOT_MAX=6;
+const shootCount=()=>Math.max(1,Math.min(SHOOT_MAX,(G.shoot&&G.shoot.length)||1));
+const shootLv=i=>(G.shoot&&G.shoot[i]&&G.shoot[i].lv)|0;
+const shootBuy=n=>Math.ceil(260*Math.pow(4.6,n-1)*scaleMul());
+const shootUp=i=>Math.ceil(70*Math.pow(1.19,shootLv(i))*scaleMul());
+/* four and a bit seconds at level nought, down to three quarters of one */
+const shootGap=i=>Math.max(.75, 4.4*Math.pow(.955,shootLv(i)));
+const shootMass=i=>VENT.mass*(1+shootLv(i)*0.5);
+function shootInit(){
+  if(!Array.isArray(G.shoot)||!G.shoot.length) G.shoot=[{lv:0,t:1}];
+  for(const sh of G.shoot){ if(typeof sh.t!=="number") sh.t=rnd(.4,1.6); }
+}
+/* how many places the row is holding: the shooters, plus the ghost for the
+   next one while there is room for it */
+const shootSlots=()=>shootCount()+(shootCount()<SHOOT_MAX?1:0);
+/* where a place sits along the floor, evenly spread across the dish */
+function shootX(i,total){
+  const n=total||shootSlots();
+  if(n<=1) return W*.5;
+  const pad=Math.min(W*.19, 66*S);
+  return pad+(W-pad*2)*(i/(n-1));
+}
 /* What the vent rolls: cyan is the floor and yellow is the prize, four rungs
    up the ladder. Rarer has to be worth more or the colour is just a colour,
    so the mass climbs 1.6x a rung — a yellow one carries eight times a cyan
@@ -3227,24 +3305,86 @@ function setFrenzy(on){
   if(f) f.classList.toggle("on",!!on);
   if(t){ t.classList.toggle("on",!!on); if(!on) t.dataset.s=""; }
 }
+/* ---- building and keeping the row ---------------------------------------
+   Rebuilt only when the number of them changes; the reload bars and the
+   prices are written every tick, because those move. */
+let shootSig="";
+function buildShooters(){
+  const row=$("shootRow"); if(!row) return;
+  shootInit();
+  const n=shootCount(), ghost=n<SHOOT_MAX?1:0;
+  row.innerHTML="";
+  for(let i=0;i<n+ghost;i++){
+    const g=i>=n;
+    const b=document.createElement("button");
+    b.className="shooter"+(g?" ghost":""); b.dataset.i=i;
+    b.setAttribute("aria-label", g?"Buy another shooter":"Upgrade shooter "+(i+1));
+    b.innerHTML='<span class="barrel">'+(g?"<svg viewBox=\"0 0 24 24\"><path d=\"M12 6v12M6 12h12\"/></svg>":"<svg viewBox=\"0 0 24 24\"><path d=\"M12 19V6M6 12l6-6 6 6\"/></svg>")+
+      (g?"":'<span class="lv"></span>')+'</span>'+
+      '<span class="rl"><i></i></span><span class="c"></span>';
+    if(g) holdRepeat(b,()=>{
+      const c=shootBuy(shootCount());
+      if(shootCount()>=SHOOT_MAX){ toast("The floor is full"); return false; }
+      if(G.bio<c){ toast("Needs $"+fmt(c)+" for another shooter"); return false; }
+      G.bio-=c; G.shoot.push({lv:0,t:.4});
+      buySound(0); haptic(14); save(); buildShooters(); obsChanged();
+      cashBurst(b,6);
+      return true;
+    });
+    else holdRepeat(b,()=>{
+      const c=shootUp(i);
+      if(G.bio<c){ toast("Needs $"+fmt(c)); return false; }
+      G.bio-=c; G.shoot[i].lv=shootLv(i)+1;
+      buySound(shootLv(i)); haptic(9); save();
+      cashBurst(b,4);
+      return true;
+    });
+    row.appendChild(b);
+  }
+  layoutShooters();
+}
+function layoutShooters(){
+  const row=$("shootRow"); if(!row) return;
+  const total=row.children.length||shootSlots();
+  for(const b of row.children) b.style.left=Math.round(shootX(+b.dataset.i,total))+"px";
+}
+function syncShooters(){
+  const row=$("shootRow"); if(!row||!row.children.length) return;
+  const n=shootCount();
+  const sig=n+"|"+W;
+  if(sig!==shootSig){ shootSig=sig; layoutShooters(); }
+  for(const b of row.children){
+    const i=+b.dataset.i, g=i>=n;
+    const c=g?shootBuy(n):shootUp(i);
+    const can=G.bio>=c && !(g&&n>=SHOOT_MAX);
+    b.classList.toggle("can",can);
+    b.querySelector(".c").textContent="$"+fmt(c);
+    if(!g){
+      b.querySelector(".lv").textContent=shootLv(i);
+      const sh=G.shoot[i], k=sh&&sh.max?clamp(1-sh.t/sh.max,0,1):0;
+      b.querySelector(".rl i").style.width=(k*100).toFixed(0)+"%";
+    }
+  }
+}
 function ventRoll(){
   let r=Math.random();
   for(const v of VENT_ROLL){ r-=v.p; if(r<=0) return v.tier; }
   return VENT_ROLL[0].tier;
 }
-function ventBall(){
+function ventBall(which){
   if(!ready||W<10) return false;
+  const idx=which|0;
   const cls=WRANK[0], kind=dropKind(VENT_LUCKY);
   const t=ventRoll();
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
   if(!roomFor(rr)) return false;               // it has to fit, not just fit in
-  const x=clamp(W*.5+rnd(-30,30)*S, rr+2, Math.max(rr+3,W-rr-2));
+  const x=clamp(shootX(idx)+rnd(-14,14)*S, rr+2, Math.max(rr+3,W-rr-2));
   const y=AR.y1-rr*1.05;
   // the heavy ones leave slower, or a yellow would be off the top of the dish
   const kick=clamp(1-up*.075,.66,1.12);
   const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S*kick, cls,
-                   VENT.mass*Math.pow(1.6,up), kind);
+                   shootMass(idx)*Math.pow(1.6,up), kind);
   b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el; b.luck=kind==="golden";
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
@@ -3273,7 +3413,7 @@ function ventBall(){
     haptic(6+up*4);
   }
   VENT.n++;
-  const h=document.getElementById("dockHandle");
+  const h=document.querySelector('.shooter[data-i="'+idx+'"]')||document.getElementById("dockHandle");
   if(h&&h.animate){
     const dir=document.getElementById("dock").classList.contains("min")?-1:1;
     h.animate([
@@ -3961,6 +4101,7 @@ function drawBH(x){
 /* ---- the camera ---- */
 let camBusy=0;
 function goRoom(to){
+  if(to==="wiz") return;            // the tower is closed
   if(room===to) return;
   room=to; camBusy=1; obsChanged();
   app.classList.toggle("wizRoom",to==="wiz");
@@ -4035,7 +4176,7 @@ function measureObstacles(){
   // anything the player can press is something a ball must not hide behind,
   // so both rails are measured whole rather than by a list of class names
   for(const e2 of document.querySelectorAll(
-      "#railL > .orb, #railL > .pw, #railR > .pw, #railR > .prof")){
+      "#railL > .orb, #railL > .pw, #railR > .pw, #railR > .prof, .shooter .barrel")){
     const r=e2.getBoundingClientRect();
     if(!r.width||!r.height) continue;
     OBS.push({x:r.left-a.left, y:r.top-a.top, w:r.width, h:r.height});
@@ -4081,7 +4222,17 @@ function bounceChrome(b){
 function step(dt){
   el+=dt;
   VENT.t-=dt;
-  if(VENT.t<=0){ VENT.t = ventBall() ? rnd(9,11) : rnd(3,5); VENT.max=VENT.t; } G.stat.play+=dt;
+  shootInit();
+  for(let i=0;i<shootCount();i++){
+    const sh=G.shoot[i]; if(!sh) continue;
+    sh.t-=dt;
+    if(sh.t<=0){
+      const gap=shootGap(i);
+      sh.t = ventBall(i) ? gap*rnd(.9,1.1) : Math.min(gap,2.5);
+      sh.max=sh.t;
+    }
+  }
+  G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
 
@@ -4101,7 +4252,7 @@ function step(dt){
     if(f.t<=0){ fuses.splice(i,1); if(!f.b.gone) strike(f.b,f.d,null,true); }
   }
 
-  stepWizards(dt);
+  // stepWizards(dt);   // the tower is closed
 
   // the black hole drifts, drags, and swallows on contact
   bhStep(dt);
@@ -4908,10 +5059,9 @@ function frame(t){
   }
   stepCele(dt); drawCele();
   const showArena = room==="arena" || camBusy>0;
-  if(freeze>0){ freeze-=dt; if(showArena) draw(); drawWizards(); return; }
+  if(freeze>0){ freeze-=dt; if(showArena) draw(); return; }
   step(dt);
-  if(showArena) draw();
-  drawWizards();
+  draw();
 }
 
 /* ---------------------------------------------------------------- UI */
@@ -6267,15 +6417,8 @@ function tickUI(dt){
       if(G.spore<60) G.spore=60;
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
-    syncTop(); syncCards(); syncRails(); syncGoal();
-    const vb=$("vBar");
-    if(vb){
-      const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
-      vb.firstElementChild.style.width=(k*100).toFixed(0)+"%";
-      vb.classList.toggle("full",k>=.999);
-    }
-    if(room==="wiz"){ syncWizGrid(); syncWizPanel(); }
-    else { const up=$("goUp"); if(up) up.classList.toggle("alert",(G.bio>=summonCost()&&wizCount()<PLAY)||anyMerge()); }
+    syncTop(); syncCards(); syncRails(); syncGoal(); syncShooters();
+    // the tower is closed
     if(G.tab==="strain"){
       if(!PC||!PC.card.isConnected){ const cc=$("cards"); cc.innerHTML=""; buildStrainCard(cc); }
       else syncStrainCard();
@@ -6459,7 +6602,7 @@ function setDockMin(min,quiet){
   $("dock").classList.toggle("min",!!G.opt.dockMin);
   $("dockHandle").onclick=()=>setDockMin(!G.opt.dockMin);
 })();
-document.getElementById("goUp").onclick=()=>goRoom("wiz");
+/* the tower is closed: the row of shooters does the producing now */
 document.getElementById("goDown").onclick=()=>goRoom("arena");
 /* swipe down works in the wizard room; the arena keeps swipe for cleaving */
 (function wizSwipe(){
@@ -6475,7 +6618,7 @@ document.getElementById("goDown").onclick=()=>goRoom("arena");
   });
 })();
 
-buildRails(); buildTabs(); syncTop(); syncRails();
+buildRails(); buildTabs(); buildShooters(); syncTop(); syncRails(); syncShooters();
 $("introHint").textContent = G.totalEarned>0
   ? "Banked "+fmt(G.totalEarned)+" · Strain "+ROMAN[G.strain] : "";
 /* ---------------------------------------------------------------- tutorial
