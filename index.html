@@ -2667,7 +2667,7 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const TURRETS=[{fx:.22, lean:-0.30}, {fx:.50, lean:0, ufo:true}, {fx:.78, lean:0.30}];
+const TURRETS=[{off:-1, lean:-0.30}, {off:0, lean:0, ufo:true}, {off:1, lean:0.30}];
 const TUR_R=()=>22*S;
 const TUR_H=()=>Math.round(TUR_R()*1.30);            // how far they stand up
 /* the top edge of the green panel, in the arena's own coordinates */
@@ -2679,7 +2679,11 @@ function panelTopY(){
   if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
   return Math.round(y+fw.offsetTop);
 }
-const turretAt=i=>({x:AR.x0+(AR.x1-AR.x0)*TURRETS[i].fx, y:panelTopY()+2});
+const TUR_GAP=()=>TUR_R()*2.5;                       // shoulder to shoulder
+const turretAt=i=>({x:(AR.x0+AR.x1)*.5 + TURRETS[i].off*TUR_GAP(),
+                    y:panelTopY()+2});
+const ufoAt=()=>{ const i=TURRETS.findIndex(t=>t.ufo);
+                  return i<0?turretAt(0):turretAt(i); };
 function drawTurrets(x){
   for(let i=0;i<TURRETS.length;i++){
     const t=TURRETS[i], p=turretAt(i);
@@ -2780,8 +2784,10 @@ let needles=[];
 function fireNeedle(){
   if(!ready||W<10||NEEDLE.cd>0) return false;
   NEEDLE.cd=NEEDLE.gap;
-  // out of the next gun along the floor, up the way that gun leans
-  const i=(NEEDLE.n++)%TURRETS.length;
+  // the saucer is the ball rig, so the needle only ever leaves a dome
+  const guns=[]; for(let g=0;g<TURRETS.length;g++) if(!TURRETS[g].ufo) guns.push(g);
+  if(!guns.length) return false;
+  const i=guns[(NEEDLE.n++)%guns.length];
   const t=TURRETS[i], p=turretAt(i);
   t.k=1;                                    // it rocks back
   const x=p.x, y=p.y-18*S;
@@ -3980,15 +3986,11 @@ function ventBall(forceTier, plainOnly){
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
   if(!roomFor(rr)) return false;               // it has to fit, not just fit in
-  const mk=document.getElementById("dockHandle");
-  let cx=W*.5;
-  if(mk){
-    const ar=roomArena.getBoundingClientRect(), m=mk.getBoundingClientRect();
-    if(m.width) cx=m.left-ar.left+m.width*.5;
-  }
-  const x=clamp(cx+rnd(-9,9)*S, rr+2, Math.max(rr+3,W-rr-2));
-  // it comes out of the port rather than appearing in the air above it
-  const y=AR.y1-rr*0.35;
+  // out of the saucer, which is the thing sitting directly over the button
+  const u=ufoAt();
+  const x=clamp(u.x+rnd(-7,7)*S, rr+2, Math.max(rr+3,W-rr-2));
+  const y=u.y-TUR_R()*0.9-rr*0.55;
+  const ut=TURRETS.find(t2=>t2.ufo); if(ut) ut.k=1;   // the hull flexes
   const fwp=document.getElementById("fireWrap");
   if(fwp){
     fwp.classList.remove("shot"); void fwp.offsetWidth; fwp.classList.add("shot");
