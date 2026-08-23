@@ -98,3 +98,47 @@ will look better but they're fixed — the cash pile can't grow procedurally, so
 need all five tiers as separate images (which is why the brief asks for them that
 way). If you only want to replace some of them, Sheets 3 and 4 are where hand-drawn
 art wins most; Sheets 1 and 2 the code already does well.
+
+---
+
+# Round 2 — the four that still need art
+
+Same house-style paragraph at the top of every request. Two sheets.
+
+## Sheet 6 — the three replacements
+
+> 3 icons in one row, evenly spaced with clear gaps, transparent background,
+> readable shrunk to 36×36 pixels.
+> 1. CRIT — a round glossy jelly ball taking a hard hit: a big bold four-point
+>    star flashing white-hot at the point of impact on its upper right, a smaller
+>    sparkle below left, and two or three chips flying off. Hot pink and crimson
+>    ball, white and gold star. It must read as "that one hit harder".
+> 2. MAGNET — a classic cartoon horseshoe magnet standing upright, thick red body
+>    with pale silver tips at the bottom of both legs, and one small blue ball
+>    being pulled sideways into the gap between the legs with two short motion
+>    lines behind it.
+> 3. LUCKY — a glossy ball banded in rainbow stripes (red orange yellow green blue
+>    purple wrapping around the sphere), one white highlight top left, and a gold
+>    four-point sparkle at its upper right.
+
+## Sheet 7 — the Upgrades logo, two versions of one mark
+
+> 2 icons. THE SAME mark twice, identical shape and position, different colour.
+> The mark: three chunky rounded bars rising left to right — short, medium, tall —
+> like a bar chart going up, with a bold upward arrow rising behind and above the
+> tallest bar.
+> 1. Solid pure WHITE version on transparent, no background, no shading — it sits
+>    on a coloured button.
+> 2. The same mark in indigo/violet on transparent, with one soft highlight per
+>    bar.
+> Both must read at 24×24 pixels.
+
+## Optional — Idle Cash
+
+The current tile is orange cells with sparkles, which says "cells", not "money
+arriving on its own". If you want it clearer:
+
+> One icon: a stack of green banknotes with a gold coin dropping onto it from
+> above, a small curved motion arc behind the falling coin, and a clock face the
+> size of a coin tucked behind the stack at the lower right. It must read as
+> "money arriving by itself, over time".
