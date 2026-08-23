@@ -501,6 +501,7 @@ input{font:inherit;color:inherit}
   pointer-events:none;                       /* the panel takes the press */
   background:none;border:none;box-shadow:none;
   display:grid;place-items:center;z-index:6;
+  filter:drop-shadow(0 0 8px rgba(124,224,255,.55));
 }
 @keyframes handleBob{50%{translate:0 -4px}}
 #dockHandle .ah{display:grid;place-items:center;line-height:0}
@@ -514,14 +515,14 @@ input{font:inherit;color:inherit}
 }
 #vBar{left:50%;transform:translateX(-50%);width:56px}
 #vBar b{display:block;height:100%;width:0%;border-radius:99px;
-  background:linear-gradient(90deg,#7CB2FF,#2F6BFF);
+  background:linear-gradient(90deg,#2FA3FF,#7CE0FF);
   transition:width .1s linear}
 /* loaded: it goes gold and breathes, so a full chamber is obvious */
-#vBar.full b{background:linear-gradient(90deg,#FFD34D,#F5A300)}
+#vBar.full b{background:linear-gradient(90deg,#7CE0FF,#EAFBFF)}
 #vBar.full{animation:vbFull 1.2s ease-in-out infinite}
 @keyframes vbFull{50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),
                                   0 0 10px rgba(245,163,0,.55)}}
-#dockHandle svg{width:30px;height:30px;stroke:none;fill:#fff;
+#dockHandle svg{width:30px;height:30px;stroke:none;fill:#7CE0FF;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
 #dock{
@@ -541,16 +542,28 @@ input{font:inherit;color:inherit}
 #fireWrap{
   position:absolute;left:12px;right:12px;top:11px;height:62px;
   border-radius:20px;z-index:5;cursor:pointer;
-  background:linear-gradient(180deg,#6BF08A,#33C95A);
-  box-shadow:0 6px 0 #1E9B41, 0 10px 20px rgba(38,170,80,.32),
-             inset 0 1px 0 rgba(255,255,255,.45);
+  background:linear-gradient(180deg,#1C2942,#0B101A);
+  box-shadow:0 6px 0 #050912, 0 10px 20px rgba(11,16,26,.34),
+             inset 0 0 0 1px rgba(124,224,255,.22),
+             inset 0 1px 0 rgba(124,224,255,.30);
   transition:transform .08s cubic-bezier(.2,1.7,.4,1), box-shadow .08s ease;
 }
 #fireWrap:active{
   transform:translateY(4px);
-  box-shadow:0 2px 0 #1E9B41, 0 4px 10px rgba(38,170,80,.3),
-             inset 0 1px 0 rgba(255,255,255,.45);
+  box-shadow:0 2px 0 #050912, 0 4px 10px rgba(11,16,26,.3),
+             inset 0 0 0 1px rgba(124,224,255,.5),
+             inset 0 1px 0 rgba(124,224,255,.42);
 }
+/* the port the ball leaves by, cut into the top edge above the arrow */
+#firePort{
+  position:absolute;left:50%;top:-1px;width:46px;height:9px;
+  margin-left:-23px;border-radius:0 0 12px 12px;z-index:6;pointer-events:none;
+  background:linear-gradient(180deg,rgba(124,224,255,.75),rgba(124,224,255,0));
+  box-shadow:0 0 12px rgba(124,224,255,.5);
+  opacity:.55;transition:opacity .12s ease, transform .12s ease;
+  transform-origin:50% 0;
+}
+#fireWrap.shot #firePort{opacity:1;transform:scaleY(2.1)}
 /* the circle centres itself on the pane rather than on the screen */
 #upBtn{
   position:absolute;right:calc(10px + env(safe-area-inset-right));
@@ -1777,6 +1790,7 @@ input{font:inherit;color:inherit}
       <div id="dock">
         <div id="fireWrap">
           <i id="vBar" title="Next free ball"><b></b></i>
+          <i id="firePort"></i>
           <button id="dockHandle" aria-label="Drop a ball" tabindex="-1">
             <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
           </button>
@@ -3932,8 +3946,14 @@ function ventBall(forceTier, plainOnly){
     const ar=roomArena.getBoundingClientRect(), m=mk.getBoundingClientRect();
     if(m.width) cx=m.left-ar.left+m.width*.5;
   }
-  const x=clamp(cx+rnd(-22,22)*S, rr+2, Math.max(rr+3,W-rr-2));
-  const y=AR.y1-rr*1.05;
+  const x=clamp(cx+rnd(-9,9)*S, rr+2, Math.max(rr+3,W-rr-2));
+  // it comes out of the port rather than appearing in the air above it
+  const y=AR.y1-rr*0.35;
+  const fwp=document.getElementById("fireWrap");
+  if(fwp){
+    fwp.classList.remove("shot"); void fwp.offsetWidth; fwp.classList.add("shot");
+    setTimeout(()=>fwp.classList.remove("shot"),150);
+  }
   // the heavy ones leave slower, or a yellow would be off the top of the dish
   const kick=clamp(1-up*.075,.66,1.12);
   const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S*kick, cls,
