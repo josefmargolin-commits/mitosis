@@ -115,6 +115,13 @@ input{font:inherit;color:inherit}
   font-variant-numeric:tabular-nums;flex:none}
 #goal .bar{position:absolute;left:0;right:0;bottom:0;height:3px;
   background:rgba(15,23,32,.08);overflow:hidden}
+#goal .bar u{position:absolute;top:-2px;width:2px;height:7px;border-radius:2px;
+  background:rgba(15,23,32,.22);transition:background .3s ease, transform .3s ease;
+  transform:translateX(-50%)}
+#goal .bar u.done{background:#FFB020;transform:translateX(-50%) scaleY(1.15)}
+#goal .bar u.now{background:var(--gc2,#C86A9A);
+  animation:gatePulse 1s ease-in-out infinite}
+@keyframes gatePulse{50%{transform:translateX(-50%) scaleY(1.5)}}
 #goal .bar i{display:block;height:100%;width:0%;
   background:linear-gradient(90deg,var(--gc,#F5A3C0),var(--gc2,#C86A9A));
   transition:width .3s ease}
@@ -1812,9 +1819,6 @@ const POWERS=[
      '<circle cx="5.5" cy="5.5" r="1.5" fill="currentColor"/><circle cx="18.5" cy="18.5" r="1.5" fill="currentColor"/>'+
      '<circle cx="18.5" cy="5.5" r="1.5" fill="currentColor"/><circle cx="5.5" cy="18.5" r="1.5" fill="currentColor"/></svg>',
    nm:"Scatter",cd:120,dur:0, cost:0,  d:"Hits every ball in the dish at once. Free, every two minutes."},
-  {id:"crush",  g:"⬤",nm:"Crush",  cd:55, dur:0, cost:4,  d:"Bursts the four largest balls completely.", ad:1},
-  {id:"chain",  g:"⌁",nm:"Chain",  cd:80, dur:10,cost:9,  d:"For ten seconds every split jumps to two neighbours.", ad:1},
-  {id:"storm",  g:"❋︎",nm:"Storm",  cd:110,dur:9, cost:16, d:"For nine seconds the dish tears itself apart.", ad:1},
 ];
 const BOOSTS=[
   {id:"rain",g:"❉︎",nm:"Rain",cd:45, cost:6, d:"Empties the hopper into the dish at once."},
@@ -1899,7 +1903,7 @@ function freshState(){
   // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
   return {
-    v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0,
+    v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0,
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
     pw:{}, boost:{},
@@ -2533,8 +2537,33 @@ function strike(b,dmg,src,forced){
 
   if(b.kind==="unstable"){ detonate(b,0); return; }
 
+  if(b.kind==="boss"&&b.shield){
+    // it rings, it does not break
+    b.sq=.14; b.wob=.16;
+    rings.push({x:b.x,y:b.y,r:b.r*1.0,R:b.r*1.5,t:0,life:.22,col:"#9CC3FF",w:3});
+    for(let i=0;i<2;i++) spark(b.x,b.y,"#9CC3FF");
+    pop(880,{pan:panAt(b.x),vol:.07,wet:.05});
+    thud(150,{pan:panAt(b.x),vol:.06,len:.08});
+    haptic(5);
+    return;
+  }
   b.hp -= b.kind==="boss" ? 1 : (dmg===undefined?val("force"):dmg);
   if(b.kind==="boss"&&b.hp>0){
+    // the hydra sheds a pair of itself every sixth hit it takes
+    const BT=bossType(b);
+    b.hits=(b.hits|0)+1;
+    if(BT.calve && b.hits%6===0){
+      for(let i=0;i<2;i++){
+        const a=rnd(0,TAU), rr=TIER[3].r*S;
+        if(!roomFor(rr)) break;
+        const nb=makeBall(3, b.x+Math.cos(a)*b.r*1.1, b.y+Math.sin(a)*b.r*1.1,
+                          Math.cos(a)*rnd(200,340)*S, Math.sin(a)*rnd(200,340)*S,
+                          WRANK[0], TIER[3].m||1, "plain");
+        clampIn(nb); balls.push(nb);
+        for(let j=0;j<4;j++) spark(nb.x,nb.y,BT.col);
+      }
+      pop(240,{pan:panAt(b.x),vol:.10,wet:.2});
+    }
     // it shudders, the dish jolts, and the ring tightens for a moment
     b.sq=.34; b.wob=.30;
     shake=Math.max(shake, 2.2+(1-b.hp/b.maxHp)*4);
@@ -2562,7 +2591,9 @@ function strike(b,dmg,src,forced){
 
 function divide(b){
   if(b.kind==="boss"){
-    banner("BOSS DOWN");
+    G.bossMark=Math.min(BOSSES.length,(G.bossMark|0)+1);
+    goalSig="";                                   // the strip repaints its pips
+    banner(bossType(b).nm+" DOWN");
     shake=Math.max(shake,14); flash=Math.max(flash,.34); freeze=Math.max(freeze,.07);
     for(let i=0;i<9;i++)
       rings.push({x:b.x,y:b.y,r:b.r*.4,R:b.r*(2+i*.9),t:0,life:.5+i*.06,col:"#FFD34D",w:3});
@@ -2579,7 +2610,6 @@ function divide(b){
     const pip=document.querySelector("#bioWrap .pip");
     if(pip) celebrate({getBoundingClientRect:()=>({left:b.x,top:b.y,width:0,height:0})},
                       64,"#22C55E",pip,false);
-    BOSS.t=rnd(95,125);
     b.kind="plain";                       // what is left of it breaks normally
   }
   if(b.luck){ b.luck=false; luckWindow(b.x,b.y); }
@@ -2862,7 +2892,10 @@ function objProg(k,amt,abs){
 function objLabel(o){ return (OBJPOOL.find(p=>p.k===o.k)||OBJPOOL[0]).t(o.goal); }
 
 /* ---------------------------------------------------------------- prestige */
-function canPrestige(){ return G.strain<SCALES.length-1 && G.earned>=nextScaleCost(); }
+function canPrestige(){
+  return G.strain<SCALES.length-1 && G.earned>=nextScaleCost()
+      && (G.bossMark|0)>=BOSSES.length && !bossAlive();
+}
 /* The ascent, in two beats.
    1. COLLAPSE — every ball in the dish is drawn into one, which swells as it
       swallows them. The metaball layer does the melting for free.
@@ -2948,7 +2981,7 @@ let coreFrom=0, coreTo=0, fromScale=null;
    is already showing the new scale */
 function applyAscent(){
   G.strain++; G.stat.strains++;
-  G.bio=0; G.earned=0;
+  G.bio=0; G.earned=0; G.bossMark=0;
   // every track genuinely starts at zero; both of these read fine at level 0
   const up={}; for(const k of UPK) up[k]=0;
   G.up=up;
@@ -3146,13 +3179,13 @@ const VENT={t:3.5, max:3.5, mass:26, n:0};
    one and takes three taps to open rather than one. Across the whole table
    that is 14.9 mass a drop against the flat 8 it used to be, which matters
    for about the first minute and is noise next to a wizard after that. */
+const VENT_GAP=10;                 // the arrow reloads in ten seconds
 const VENT_ROLL=[
-  {tier:5, p:.20},   // cyan
-  {tier:4, p:.30},   // blue
-  {tier:3, p:.20},   // purple
-  {tier:2, p:.15},   // red
+  {tier:4, p:.44},   // blue, and nothing weaker than blue
+  {tier:3, p:.26},   // purple
+  {tier:2, p:.16},   // red
   {tier:1, p:.10},   // orange
-  {tier:0, p:.05},   // yellow
+  {tier:0, p:.04},   // yellow
 ];
 /* refreshes rather than stacks: a second rainbow inside the window buys you
    two more minutes, not ten times the money */
@@ -3242,25 +3275,59 @@ function setFrenzy(on){
   if(f) f.classList.toggle("on",!!on);
   if(t){ t.classList.toggle("on",!!on); if(!on) t.dataset.s=""; }
 }
-const BOSS={t:70, hp:100};
+const BOSSES=[
+  /* a quarter of the way: small, quick, never where your thumb lands. It
+     barely holds the dish - it is busy running. */
+  {id:"darter", nm:"DARTER", at:.25, hp:40,  r:.125, pull:.34, mass:12,
+   col:"#F0A81E", goo:"#8A5A05", plates:5, dash:1,
+   tip:"It will not hold still. Lead it."},
+  /* halfway: it shutters itself every few seconds and a swipe on a closed
+     shutter does nothing. You have to wait for the opening. */
+  {id:"bulwark",nm:"BULWARK",at:.50, hp:75,  r:.185, pull:1.05, mass:22,
+   col:"#3B82F6", goo:"#123A78", plates:8, shield:1,
+   tip:"Closed is closed. Swipe when it opens."},
+  /* three quarters: every sixth hit it sheds two of itself into the dish,
+     so the longer you take the less room you have to work in. */
+  {id:"hydra",  nm:"HYDRA",  at:.75, hp:95,  r:.20, pull:.88, mass:26,
+   col:"#A855F7", goo:"#4A1173", plates:6, calve:1,
+   tip:"It sheds. Finish it before the dish fills."},
+  /* the line: the big one. Nothing clever, just the whole dish in orbit and
+     a hundred and twenty swipes to get through. */
+  {id:"warden", nm:"WARDEN", at:1.0, hp:120, r:.225, pull:1.30, mass:30,
+   col:"#E8434F", goo:"#8E1220", plates:7,
+   tip:"No tricks. Just outlast it."},
+];
+const BOSS={hp:100};                  // kept for the old ladder maths
 function bossAlive(){ return balls.some(b=>b.kind==="boss"&&!b.gone); }
-function spawnBoss(){
+function bossType(b){ return BOSSES[b&&b.bt!==undefined?b.bt:0]; }
+/* how far up the scale you are, and therefore which gate is next */
+function bossGate(){
+  if(zoomPhase||!ready||bossAlive()) return;
+  if(G.strain>=SCALES.length-1) return;          // nothing above the last one
+  const n=G.bossMark|0; if(n>=BOSSES.length) return;
+  const k=clamp(G.earned/nextScaleCost(),0,1);
+  if(k>=BOSSES[n].at) spawnBoss(n);
+}
+function spawnBoss(which){
   if(bossAlive()||!ready||W<10) return false;
+  const T=BOSSES[clamp(which|0,0,BOSSES.length-1)];
   const cls=WRANK[0];
   const b=makeBall(0, W*.5, AR.y0+(AR.y1-AR.y0)*.40, rnd(-7,7)*S, rnd(-4,4)*S,
-                   cls, VENT.mass*26, "boss");
-  b.r=Math.min(W*.21, TIER[0].r*S*1.35);
-  b.maxHp=BOSS.hp; b.hp=BOSS.hp;
-  b.spin=rnd(0,TAU);
+                   cls, VENT.mass*T.mass, "boss");
+  b.bt=BOSSES.indexOf(T);
+  b.r=Math.min(W*T.r, TIER[0].r*S*(T.r/.21)*1.35);
+  b.maxHp=T.hp; b.hp=T.hp;
+  b.spin=rnd(0,TAU); b.shT=0; b.shield=false; b.hits=0; b.dashT=rnd(.4,1);
   clampIn(b); balls.push(b);
-  banner("BOSS");
+  banner(T.nm);
+  setTimeout(()=>{ if(!b.gone) toast(T.tip); }, 900);
   shake=Math.max(shake,9); flash=Math.max(flash,.20);
   for(let i=0;i<34;i++){
     const a=rnd(0,TAU), sp=rnd(120,520)*S;
-    goo(b.x,b.y,rnd(3,7)*S,"#E8434F",rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
+    goo(b.x,b.y,rnd(3,7)*S,T.col,rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
   }
   for(let i=0;i<5;i++)
-    rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*(2.4+i*.7),t:-0,life:.55+i*.07,col:"#E8434F",w:2.6});
+    rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*(2.4+i*.7),t:-0,life:.55+i*.07,col:T.col,w:2.6});
   thud(46,{vol:.34,len:1.1});
   chime(196,{vol:.16,len:1.6,wet:.6});
   chime(147,{vol:.12,len:1.9,delay:.1,wet:.6});
@@ -3272,15 +3339,37 @@ function spawnBoss(){
 function bossPull(dt){
   for(const B of balls){
     if(B.kind!=="boss"||B.gone) continue;
+    const T=bossType(B);
     B.spin=(B.spin||0)+dt*1.4;
-    const R=Math.min(W*.9, B.r*7);
+    // the shutter, on a five and a half second cycle: open, then closed
+    if(T.shield){
+      B.shT=(B.shT||0)+dt;
+      const was=B.shield, ph=B.shT%5.4;
+      B.shield=ph>3.2;
+      if(B.shield!==was){
+        rings.push({x:B.x,y:B.y,r:B.r*.9,R:B.r*(B.shield?1.5:2.1),t:0,life:.3,
+                    col:B.shield?"#9CC3FF":"#FFE9A8",w:3});
+        pop(B.shield?150:420,{pan:panAt(B.x),vol:.08,wet:.2});
+      }
+    }
+    // the darter will not be pinned: it lunges somewhere new every second
+    if(T.dash){
+      B.dashT=(B.dashT||0)-dt;
+      if(B.dashT<=0){
+        B.dashT=rnd(.75,1.35);
+        const a=rnd(0,TAU);
+        B.vx=Math.cos(a)*rnd(250,430)*S; B.vy=Math.sin(a)*rnd(180,330)*S;
+        for(let i=0;i<4;i++) spark(B.x,B.y,T.col);
+      }
+    }
+    const R=Math.min(W*.9, B.r*7*T.pull);
     for(const b of balls){
       if(b===B||b.gone) continue;
       const dx=B.x-b.x, dy=B.y-b.y, d=Math.hypot(dx,dy);
       if(d>R||d<1) continue;
       const nx=dx/d, ny=dy/d, fall=1-d/R;
       const want=B.r+b.r*1.5+30*S;         // the ring they settle on
-      const spin=470*S*(0.45+0.55*fall);   // about once round every four seconds
+      const spin=470*S*T.pull*(0.45+0.55*fall);
       const close=clamp((d-want)*2.6,-300*S,300*S);
       const wx=-ny*spin+nx*close, wy=nx*spin+ny*close;
       const k=1-Math.pow(0.12,dt);         // ease into it rather than snap
@@ -4143,10 +4232,8 @@ function bounceChrome(b){
 function step(dt){
   el+=dt;
   VENT.t-=dt;
-  VENT.t-=dt;
-  if(VENT.t<=0){ VENT.t = ventBall() ? rnd(9,11) : rnd(3,5); VENT.max=VENT.t; }
-  if(!bossAlive()){ BOSS.t-=dt; if(BOSS.t<=0 && !spawnBoss()) BOSS.t=8; }
-  bossPull(dt);
+  if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? VENT_GAP : 2.5; VENT.max=VENT.t; }
+  bossGate(); bossPull(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
@@ -4740,7 +4827,7 @@ function draw(){
   for(const b of balls){
     xGoo.save();
     ballXform(xGoo,b);
-    const gc=b.kind==="boss"?"#8E1220":(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":pal[b.tier]));
+    const gc=b.kind==="boss"?bossType(b).goo:(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":pal[b.tier]));
     // a floor on the goo radius: below it the blur spreads a small ball so
     // thin that the alpha threshold drops it, and it flickers
     const gr=Math.max(b.r,11*S);
@@ -4769,7 +4856,7 @@ function draw(){
 
   for(const b of balls){
     const r=b.r;
-    const col=b.kind==="boss"?"#C11B33":(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FFE9A8":pal[b.tier]));
+    const col=b.kind==="boss"?bossType(b).col:(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FFE9A8":pal[b.tier]));
     xFx.save();
     ballXform(xFx,b);
     membrane(xFx,b,r);
@@ -4814,14 +4901,30 @@ function draw(){
     if(b.kind==="boss"){
       const left=clamp(b.hp/b.maxHp,0,1);
       const hurt=1-left;
+      // the shutter: solid while it is closed, so a swipe reads as wasted
+      if(b.shield){
+        xFx.save();
+        xFx.rotate(-(b.spin||0)*1.7);
+        xFx.fillStyle="rgba(120,175,255,.30)";
+        xFx.beginPath(); xFx.arc(0,0,r*1.02,0,TAU); xFx.fill();
+        xFx.strokeStyle="#9CC3FF"; xFx.lineWidth=Math.max(2.4,r*.085);
+        xFx.beginPath(); xFx.arc(0,0,r*1.02,0,TAU); xFx.stroke();
+        xFx.strokeStyle="rgba(255,255,255,.55)"; xFx.lineWidth=Math.max(1.2,r*.035);
+        for(let i=0;i<6;i++){
+          const a0=i/6*TAU;
+          xFx.beginPath(); xFx.arc(0,0,r*1.02,a0+.06,a0+TAU/6-.06); xFx.stroke();
+        }
+        xFx.restore();
+      }
       // a shell of plates, and the cracks between them widen as it loses
       xFx.save();
       xFx.rotate(b.spin||0);
+      const NP=bossType(b).plates||7;
       xFx.strokeStyle="rgba(255,255,255,"+(.30+hurt*.34)+")";
       xFx.lineWidth=Math.max(1.4,r*.045); xFx.lineCap="round";
-      for(let i=0;i<7;i++){
-        const a0=i/7*TAU, gap=.10+hurt*.18;
-        xFx.beginPath(); xFx.arc(0,0,r*.80,a0+gap,a0+TAU/7-gap); xFx.stroke();
+      for(let i=0;i<NP;i++){
+        const a0=i/NP*TAU, gap=.10+hurt*.18;
+        xFx.beginPath(); xFx.arc(0,0,r*.80,a0+gap,a0+TAU/NP-gap); xFx.stroke();
       }
       xFx.restore();
       // the core, showing through more as the shell fails
@@ -5549,7 +5652,7 @@ function syncGoal(){
   const nx=last?curScale():SCALES[G.strain+1];
   const k=last?1:clamp(G.earned/nextScaleCost(),0,1);
   const pct=last?"MAX":(k*100<10?(k*100).toFixed(1):Math.floor(k*100))+"%";
-  const sig=nx.n+"|"+pct+"|"+last;
+  const sig=nx.n+"|"+pct+"|"+last+"|"+(G.bossMark|0)+"|"+(canPrestige()?1:0);
   if(sig!==goalSig){
     goalSig=sig;
     g.querySelector(".t").textContent=last?"Cosmic":nx.n;
@@ -5558,10 +5661,29 @@ function syncGoal(){
     g.style.setProperty("--gc",nx.bg[1]);
     g.style.setProperty("--gc2",shade(nx.bg[1],-.28));
     g.style.setProperty("--gcs",shade(nx.bg[1],.55));
-    g.classList.toggle("ready",!last&&k>=1);
+    g.classList.toggle("ready",!last&&k>=1&&canPrestige());
   }
   g.querySelector(".bar i").style.width=(k*100).toFixed(1)+"%";
+  // the four gates, and which of them is the one in front of you
+  const bar=g.querySelector(".bar");
+  if(bar && bar.querySelectorAll("u").length!==BOSSES.length){
+    bar.querySelectorAll("u").forEach(u=>u.remove());
+    for(const T of BOSSES){
+      const u=document.createElement("u");
+      u.style.left=(T.at*100)+"%"; u.title=T.nm; bar.appendChild(u);
+    }
+    goalPip=-1;
+  }
+  const done=last?BOSSES.length:(G.bossMark|0);
+  if(done!==goalPip){
+    goalPip=done;
+    bar.querySelectorAll("u").forEach((u,i)=>{
+      u.classList.toggle("done",i<done);
+      u.classList.toggle("now",i===done);
+    });
+  }
 }
+let goalPip=-1;
 function syncTop(){
   if(G.bio>bioSeen+0.5 && el-twT>0.1){ twT=el; twitchMoney(); }
   bioSeen=G.bio;
@@ -6318,12 +6440,15 @@ function sheetCustomise(){
         toast("+3 mana"); save(); syncTop(); sheetSync&&sheetSync();
       }:null}));
 
-    b.appendChild(lbl("Powers"));
-    for(const p of POWERS){
-      const s=pwState(p);
-      b.appendChild(row({ic:p.g,t:p.nm,s:p.d,
-        btn:s.owned?"Owned":ICO_SPORE+p.cost, btnOn:!s.owned,
-        fn:()=>{ if(!s.owned) firePower(p); }}));
+    const forSale=POWERS.filter(p=>p.cost>0);
+    if(forSale.length){
+      b.appendChild(lbl("Powers"));
+      for(const p of forSale){
+        const st=pwState(p);
+        b.appendChild(row({ic:p.g,t:p.nm,s:p.d,
+          btn:st.owned?"Owned":ICO_SPORE+p.cost, btnOn:!st.owned,
+          fn:()=>{ if(!st.owned) firePower(p); }}));
+      }
     }
   });
 }
@@ -6626,7 +6751,11 @@ if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
 $("goal").onclick=()=>{
   if(canPrestige()) doPrestige();
-  else toast("Bank "+fmt(nextScaleCost()-G.earned)+" more to move up");
+  else if(G.strain>=SCALES.length-1) toast("Nothing above this one yet");
+  else if(G.earned<nextScaleCost())
+    toast("Bank "+fmt(nextScaleCost()-G.earned)+" more to move up");
+  else if(bossAlive()) toast("Put the "+bossType(balls.find(b=>b.kind==="boss"&&!b.gone)).nm+" down first");
+  else toast(BOSSES[clamp(G.bossMark|0,0,BOSSES.length-1)].nm+" is still standing");
 };
 $("wizUpBtn").onclick=sheetWizards;
 $("case").onclick=e=>{ if(e.target.id==="case"&&!caseBusy) $("case").classList.remove("on"); };
