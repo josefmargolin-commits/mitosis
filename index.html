@@ -547,6 +547,13 @@ input{font:inherit;color:inherit}
              inset 0 1px 0 rgba(124,224,255,.30);
   transition:transform .09s ease-out, box-shadow .09s ease-out;
 }
+#fireWrap.nope{animation:fwNope .3s ease-out}
+@keyframes fwNope{
+  0%{transform:translateX(0)}
+  22%{transform:translateX(-5px)} 46%{transform:translateX(5px)}
+  70%{transform:translateX(-3px)} 100%{transform:translateX(0)}}
+#fireWrap.nope{box-shadow:0 6px 0 #7A1220, 0 10px 20px rgba(122,18,32,.34),
+  inset 0 0 0 1px rgba(255,122,138,.5)}
 #fireWrap:active,#fireWrap.down{
   transform:translateY(4px);
   box-shadow:0 2px 0 #050912, 0 4px 10px rgba(11,16,26,.3),
@@ -2975,7 +2982,7 @@ function dropHeld(to){
   rigHeld=null; rigFrom=-1;
   rebuildRig(); save();
 }
-let panelDown=0, panelDownT=0;
+let panelDown=0, panelDownT=0, fullT=-99;
 function stepTurrets(dt){
   panelDown += (panelDownT-panelDown)*(1-Math.pow(0.00002,dt));
   for(const t of TURRETS){
@@ -4343,7 +4350,7 @@ function ventBall(forceTier, plainOnly){
   const t=(forceTier===undefined||forceTier===null)?ventRoll():forceTier;
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
-  if(!roomFor(rr)) return false;               // it has to fit, not just fit in
+  if(!roomFor(rr,plainOnly)) return false;     // a deliberate tap gets more room
   // out of the saucer, which is the thing sitting directly over the button
   const u=ufoAt();
   const x=clamp(u.x+rnd(-7,7)*S, rr+2, Math.max(rr+3,W-rr-2));
@@ -5001,8 +5008,8 @@ function blockedArea(){
 const usableArea=()=>Math.max(1, arenaArea()-blockedArea());
 const dishFill=()=>Math.max(areaSum()/(usableArea()*dishMax()), balls.length/ballCeil());
 /* room for one more of this size, not merely room for one more */
-const roomFor=r=>balls.length<ballCeil() &&
-  areaSum()+Math.PI*r*r <= usableArea()*dishMax();
+const roomFor=(r,manual)=>balls.length<ballCeil()+(manual?12:0) &&
+  areaSum()+Math.PI*r*r <= usableArea()*(dishMax()+(manual?0.06:0));
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
@@ -5689,6 +5696,7 @@ function draw(){
   xFx.setTransform(DPR,0,0,DPR,0,0);
   xFx.clearRect(0,0,W,H);
   xFx.translate(ox,oy);
+  drawTurrets(xFx);                          // under the dish, not over it
 
   if(zoom!==1){ const cy=(AR.y0+AR.y1)/2; xFx.translate(W/2,cy); xFx.scale(zoom,zoom); xFx.translate(-W/2,-cy); }
 
@@ -5818,7 +5826,6 @@ function draw(){
     }
   }
 
-  drawTurrets(xFx);
   drawNeedles(xFx);
   drawShells(xFx);
   drawDrones(xFx);
@@ -7886,10 +7893,19 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
     e.preventDefault();
     panelDownT=1; fw.classList.add("down");
     if(!ready||rigEdit) return;              // rearranging is not firing
-    ventBall(6,true);
+    if(ventBall(6,true)) return;
+    // it refused: say so, rather than doing nothing at all
+    fw.classList.remove("nope"); void fw.offsetWidth; fw.classList.add("nope");
+    setTimeout(()=>fw.classList.remove("nope"),320);
+    pop(120,{vol:.07,len:.12,wet:.05});
+    haptic(18);
+    if(el-fullT>6){ fullT=el; toast("The dish is full — break some down"); }
   },{passive:false});
   for(const ev of ["pointerup","pointercancel","pointerleave"])
     fw.addEventListener(ev,()=>{ panelDownT=0; fw.classList.remove("down"); },{passive:true});
+  // and a release anywhere at all, so it can never be left stuck down
+  for(const ev of ["pointerup","pointercancel","blur"])
+    addEventListener(ev,()=>{ panelDownT=0; fw.classList.remove("down"); },{passive:true});
   const u=$("upBtn");
   if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
   const re=$("rigEdit");
