@@ -2441,7 +2441,7 @@ function actx(){
     comp.attack.value=0.003; comp.release.value=0.16;
     comp.connect(c.destination);
 
-    Sn.master=c.createGain(); Sn.master.gain.value=0.5;
+    Sn.master=c.createGain(); Sn.master.gain.value=0.32;
     Sn.master.connect(comp);
 
     try{
@@ -2650,27 +2650,45 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 
 /* ---------------------------------------------------------------- world */
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
-const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180};
+const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
+/* where the guns stand, across the floor, and which way each one leans */
+const TURRETS=[{fx:.20, lean:-0.42}, {fx:.50, lean:0}, {fx:.80, lean:0.42}];
+const turretAt=i=>({x:AR.x0+(AR.x1-AR.x0)*TURRETS[i].fx, y:AR.y1});
+function drawTurrets(x){
+  for(let i=0;i<TURRETS.length;i++){
+    const t=TURRETS[i], p=turretAt(i);
+    const kick=Math.max(0,(t.k||0));
+    x.save();
+    x.translate(p.x, p.y-1);
+    // the plate it stands on
+    x.fillStyle="#0B101A";
+    x.beginPath(); x.roundRect(-13*S,-4*S,26*S,4.4*S,2*S); x.fill();
+    // and the barrel, which rocks back when it fires
+    x.rotate(t.lean + kick*0.22);
+    x.translate(0, kick*3.4*S);
+    x.fillStyle="#111A2A";
+    x.beginPath(); x.roundRect(-3.1*S,-19*S,6.2*S,17*S,2.4*S); x.fill();
+    x.fillStyle="#26314A";
+    x.beginPath(); x.roundRect(-1.9*S,-17.4*S,3.8*S,7*S,1.6*S); x.fill();
+    x.restore();
+  }
+}
+function stepTurrets(dt){
+  for(const t of TURRETS) if(t.k) t.k=Math.max(0,t.k-dt*4.2);
+}
 let needles=[];
 function fireNeedle(){
   if(!ready||W<10||NEEDLE.cd>0) return false;
   NEEDLE.cd=NEEDLE.gap;
-  const ar=roomArena.getBoundingClientRect();
-  const tile=document.getElementById("pw-needle");
-  // out of its own tile on the rail, angled across the dish
-  let x=W-18, y=(AR.y0+AR.y1)*.42, a=Math.PI+rnd(-.42,.42);
-  if(tile){
-    const r=tile.getBoundingClientRect();
-    x=clamp(r.left-ar.left-6, AR.x0+8, AR.x1-8);
-    y=clamp(r.top-ar.top+r.height*.5, AR.y0+8, AR.y1-8);
-  }
+  // out of the next gun along the floor, up the way that gun leans
+  const i=(NEEDLE.n++)%TURRETS.length;
+  const t=TURRETS[i], p=turretAt(i);
+  t.k=1;                                    // it rocks back
+  const x=p.x, y=p.y-18*S;
+  const a=-Math.PI/2+t.lean+rnd(-.06,.06);
   needles.push({x, y, a, left:NEEDLE.bounces, t:0, hit:0, px:x, py:y});
-  // a kick on the tile so you can see where it came from
-  if(tile&&tile.animate) tile.animate([
-    {transform:"translateX(0)"},{transform:"translateX(5px)",offset:.3},
-    {transform:"translateX(0)"}],{duration:280,easing:"cubic-bezier(.3,1.4,.4,1)"});
-  rings.push({x,y,r:2,R:22*S,t:0,life:.24,col:"#7CE0FF",w:2});
-  pop(1180,{pan:panAt(x),vol:.09,wet:.12});
+  rings.push({x,y,r:2,R:18*S,t:0,life:.2,col:"#8FA0B8",w:1.8});
+  pop(1180,{pan:panAt(x),vol:.05,wet:.12});
   noiseHit(.06,{pan:panAt(x),vol:.05,cut:3200,q:4});
   haptic(9);
   return true;
@@ -2842,7 +2860,7 @@ function bumpCombo(){
   c.style.setProperty("--cg", k<.34?"#E8A200":k<.68?"#FF6B2C":"#FF3B57");
   c.classList.remove("on"); void c.offsetWidth; c.classList.add("on");
 }
-let psFrame=0, psRate=0;
+let psFrame=0, psRate=0, popT=-9;
 const COLONY_POW=1.2;                // bigger balls pay more than their mass
 const COLONY_K=0.34;                 // and the scale is put back afterwards
 let rentAcc=0, rentT=0;
@@ -2857,23 +2875,15 @@ function colonyTick(dt){
   objProg("earn",v);
   // one number every so often, off whichever ball is paying the most
   rentT-=dt;
-  if(rentT<=0){
-    rentT=1.3;
-    if(rentAcc>=0.5){
-      let big=null;
-      for(const b of balls){ if(b.gone||b.kind==="boss") continue;
-        if(!big||b.mass>big.mass) big=b; }
-      if(big) pushPop(big.x, big.y-big.r*.8, "+"+fmt(rentAcc));
-    }
-    rentAcc=0;
-  }
+  if(rentT<=0){ rentT=1.3; rentAcc=0; }
 }
 const perSec=()=>psRate;
 function earn(base,x,y,col){
   const v=base*yieldMul()*comboMul();
   G.bio+=v; G.earned+=v; G.totalEarned+=v; psFrame+=v;
   objProg("earn",v);
-  if(v>=0.5) pushPop(x,y,"+"+fmt(v));
+  // worth looking at, and not more than a few a second
+  if(v>=Math.max(0.5, perSec()*0.9) && el-popT>0.34){ popT=el; pushPop(x,y,"+"+fmt(v)); }
 }
 /* A number was drawn in the colour of the ball that produced it, with a white
    outline, on a white dish — lime and yellow simply vanished. One fixed
@@ -3128,10 +3138,11 @@ function divide(b){
   earn(b.mass*0.06*(b.kind==="golden"?25:1),b.x,b.y,col);
 
   const sp=panAt(b.x);
-  pop(base*2*semi(noteStep()),{pan:sp,vol:.2});
-  noiseHit(.09,{pan:sp,vol:.06,cut:2400,q:3});
-  if(b.tier<=1) thud(58,{pan:sp,vol:.16,len:.18});
-  haptic(b.tier===0?16:10);
+  pop(base*2*semi(noteStep()),{pan:sp,vol:.12});
+  // the noise layer only on the big ones, where it is doing something
+  if(b.tier<=2) noiseHit(.07,{pan:sp,vol:.04,cut:2400,q:3});
+  if(b.tier<=1) thud(58,{pan:sp,vol:.10,len:.18});
+  haptic(b.tier===0?14:8);
 
   if(timers.chain>0) for(const k of kids){   // only the Chain power still jumps
     const n=nearest(k.x,k.y,b.r*3.4,k);
@@ -4608,7 +4619,7 @@ function step(dt){
   psFrame=0;
   VENT.t-=dt;
   if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? val("reload") : 2.5; VENT.max=VENT.t; }
-  bossGate(); bossPull(dt); stepNeedles(dt);
+  bossGate(); bossPull(dt); stepNeedles(dt); stepTurrets(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
@@ -5354,6 +5365,7 @@ function draw(){
     }
   }
 
+  drawTurrets(xFx);
   drawNeedles(xFx);
   drawTrail(xFx,1,.72);
 
@@ -5623,24 +5635,6 @@ function buildRails(){
   };
   // Scatter is the one everybody has; everything else is earned
   add(POWERS[0],false);
-  // the needle sits with it, on its own clock rather than on your thumb
-  {
-    const b=document.createElement("button");
-    b.className="pw ndl"; b.id="pw-needle";
-    b.innerHTML='<span class="g"><svg viewBox="0 0 24 24" aria-hidden="true">'+
-      '<path d="M12 2.4 15.1 9l-3.1 2.1L8.9 9z" fill="currentColor"/>'+
-      '<path d="M12 11.1V21.6" stroke="currentColor" stroke-width="2.2" '+
-        'stroke-linecap="round" fill="none" opacity=".8"/>'+
-      '<path d="M5.4 15.4 8.6 18.6M18.6 15.4 15.4 18.6" stroke="currentColor" '+
-        'stroke-width="2" stroke-linecap="round" fill="none" opacity=".5"/></svg></span>'+
-      '<span class="l">Needle</span>'+
-      '<i class="chg"><b></b></i>';
-    // it fires itself; pressing it only spends a shot that is already there
-    b.onclick=()=>{ if(ready) fireNeedle(); };
-    b.oncontextmenu=e=>{e.preventDefault();
-      toast("Needle — fires on its own. Three walls, then it goes.");};
-    R.appendChild(b);
-  }
   const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned)
     .concat(BOOSTS.filter(b2=>boState(b2).owned));
   const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
@@ -5714,16 +5708,6 @@ function syncRails(){
     if(!s.owned){ cd.style.display="none"; lab.innerHTML=ICO_SPORE+p.cost; }
     else if(s.cd>0){ cd.style.display="grid"; cd.textContent=Math.ceil(s.cd); lab.textContent=p.nm; }
     else { cd.style.display="none"; lab.textContent=p.nm; }
-  }
-  {
-    const b=$("pw-needle");
-    if(b){
-      const k=clamp(1-NEEDLE.cd/NEEDLE.gap,0,1);
-      const bar=b.querySelector(".chg b");
-      if(bar) bar.style.width=(k*100).toFixed(0)+"%";
-      b.classList.toggle("ready",k>=1);
-      b.classList.toggle("charging",k<1);
-    }
   }
   for(const bo of BOOSTS){
     const s=G.boost[bo.id]||{cd:0}, b=$("bo-"+bo.id); if(!b) continue;
