@@ -2659,19 +2659,37 @@ const turretAt=i=>({x:AR.x0+(AR.x1-AR.x0)*TURRETS[i].fx, y:AR.y1});
 function drawTurrets(x){
   for(let i=0;i<TURRETS.length;i++){
     const t=TURRETS[i], p=turretAt(i);
-    const kick=Math.max(0,(t.k||0));
+    const k=Math.max(0,(t.k||0));            // 1 the instant it fires, then decays
+    const R=22*S;
     x.save();
-    x.translate(p.x, p.y-1);
-    // the plate it stands on
-    x.fillStyle="#0B101A";
-    x.beginPath(); x.roundRect(-13*S,-4*S,26*S,4.4*S,2*S); x.fill();
-    // and the barrel, which rocks back when it fires
-    x.rotate(t.lean + kick*0.22);
-    x.translate(0, kick*3.4*S);
+    x.translate(p.x, p.y+2*S);
+    // the dome, squashing down as it lets go
     x.fillStyle="#111A2A";
-    x.beginPath(); x.roundRect(-3.1*S,-19*S,6.2*S,17*S,2.4*S); x.fill();
-    x.fillStyle="#26314A";
-    x.beginPath(); x.roundRect(-1.9*S,-17.4*S,3.8*S,7*S,1.6*S); x.fill();
+    x.beginPath();
+    x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU);
+    x.fill();
+    x.fillStyle="#1C2942";
+    x.beginPath();
+    x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU);
+    x.fill();
+    // the aperture: shut at rest, wide open on the shot
+    const open=0.30+k*0.70;
+    const ar=R*0.34*open;
+    const g=x.createRadialGradient(0,-R*0.30,0,0,-R*0.30,Math.max(1,ar*2.6));
+    g.addColorStop(0,"rgba(255,255,255,"+(0.5+k*0.5).toFixed(2)+")");
+    g.addColorStop(.45,"rgba(124,224,255,"+(0.42+k*0.5).toFixed(2)+")");
+    g.addColorStop(1,"rgba(124,224,255,0)");
+    x.fillStyle=g;
+    x.beginPath(); x.arc(0,-R*0.30,Math.max(1,ar*2.6),0,TAU); x.fill();
+    x.fillStyle="#EAFBFF";
+    x.beginPath(); x.arc(0,-R*0.30,Math.max(.8,ar),0,TAU); x.fill();
+    // a rim round the mouth, so it is the first thing you see on the dome
+    x.strokeStyle="rgba(124,224,255,"+(0.5+k*0.45).toFixed(2)+")";
+    x.lineWidth=Math.max(1.2,1.7*S);
+    x.beginPath(); x.arc(0,-R*0.30,R*0.40,0,TAU); x.stroke();
+    // and a lip along the floor so it reads as standing on something
+    x.fillStyle="#0B101A";
+    x.beginPath(); x.roundRect(-R*1.06,-1.6*S,R*2.12,3.4*S,1.8*S); x.fill();
     x.restore();
   }
 }
@@ -4569,7 +4587,7 @@ function measureObstacles(){
   // anything the player can press is something a ball must not hide behind,
   // so both rails are measured whole rather than by a list of class names
   for(const e2 of document.querySelectorAll(
-      "#railL > .orb, #railL > .pw, #railR > .pw, #railR > .prof")){
+      "#railL > .orb, #railL > .pw, #railR > .orb, #railR > .pw, #upBtn")){
     const r=e2.getBoundingClientRect();
     if(!r.width||!r.height) continue;
     OBS.push({x:r.left-a.left, y:r.top-a.top, w:r.width, h:r.height});
@@ -5626,8 +5644,6 @@ function buildRails(){
   }
   obsChanged();
   const R=$("railR"); R.innerHTML="";
-  // Scatter lives under the drawer on the left now
-  const SR=L;
   const add=(p,isBoost,into)=>{
     const b=document.createElement("button");
     b.className="pw"; b.id=(isBoost?"bo-":"pw-")+p.id;
@@ -5637,8 +5653,7 @@ function buildRails(){
     b.oncontextmenu=e=>{e.preventDefault(); toast(p.nm+" — "+p.d);};
     (into||R).appendChild(b);
   };
-  // Scatter is the one everybody has; everything else is earned
-  add(POWERS[0],false,SR);
+  // Scatter is off the board for now
   const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned)
     .concat(BOOSTS.filter(b2=>boState(b2).owned));
   const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
