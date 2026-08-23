@@ -522,7 +522,11 @@ input{font:inherit;color:inherit}
   background:none;border:none;box-shadow:none;pointer-events:none;
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
-#dockHandle,#upBtn{pointer-events:auto}
+#dockHandle,#upBtn{
+  pointer-events:auto;-webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
 /* the way in to the five, standing on the strip beside the trigger */
 #upBtn{
   position:absolute;left:16px;top:14px;
@@ -699,7 +703,7 @@ input{font:inherit;color:inherit}
 #sheetBody::-webkit-scrollbar{width:4px}
 #sheetBody::-webkit-scrollbar-thumb{background:rgba(15,23,32,.16);border-radius:9px}
 #sheetBody::-webkit-scrollbar-track{background:transparent}
-#sheetBody{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(15,23,32,.16) transparent;
+#sheetBody{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(15,23,32,.16) transparent;
   padding:14px 16px 22px;display:flex;flex-direction:column;gap:9px;-webkit-overflow-scrolling:touch}
 
 #sheetBody > *{flex:0 0 auto}
@@ -720,7 +724,8 @@ input{font:inherit;color:inherit}
 }
 .bchestArt .chShut,.bchestArt .chOpen{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  -webkit-user-drag:none;user-select:none;
+  -webkit-user-drag:none;-webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none;pointer-events:none;
 }
 .bchestArt .chOpen{opacity:0;transform:scale(.9)}
 .bchestArt .chGlow{
@@ -745,6 +750,7 @@ input{font:inherit;color:inherit}
   100%{opacity:.62;transform:scale(1.12)}}
 .crate{
   position:relative;width:100%;overflow:hidden;border-radius:16px;
+  touch-action:pan-y;overscroll-behavior-x:contain;
   background:var(--surface);padding:10px 0;
   box-shadow:inset 0 0 0 1px rgba(15,23,32,.05);
 }
@@ -758,7 +764,7 @@ input{font:inherit;color:inherit}
   background:linear-gradient(180deg,#FFC24D,#F0A81E);border-radius:99px;
   box-shadow:0 0 10px rgba(240,168,30,.7);
 }
-.crStrip{display:flex;will-change:transform}
+.crStrip{display:flex;will-change:transform;-webkit-transform:translateZ(0)}
 .crC{
   flex:0 0 84px;margin-right:8px;height:96px;border-radius:13px;
   background:var(--panel);box-shadow:0 1px 3px rgba(15,23,32,.07);
@@ -789,9 +795,7 @@ input{font:inherit;color:inherit}
   position:absolute;inset:-6px -14px;z-index:9;pointer-events:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   opacity:0;visibility:hidden;
-  background:radial-gradient(120% 78% at 50% 44%,
-    color-mix(in srgb, var(--rc) 22%, var(--panel)) 0%,
-    var(--panel) 62%, var(--panel) 100%);
+  background:var(--panel);
   transition:opacity .22s ease, visibility .22s;
 }
 .crRev.on{opacity:1;visibility:visible}
@@ -808,11 +812,11 @@ input{font:inherit;color:inherit}
 @keyframes crSpin{to{transform:rotate(360deg)}}
 .crRev .halo{
   position:absolute;top:38%;left:50%;width:170px;height:170px;margin:-85px 0 0 -85px;
-  border-radius:50%;background:radial-gradient(closest-side,
-    color-mix(in srgb, var(--rc) 42%, transparent), transparent 72%);
+  border-radius:50%;opacity:.46;
+  background:radial-gradient(closest-side, var(--rc), transparent 72%);
   animation:crPulse 2.2s ease-in-out infinite;
 }
-@keyframes crPulse{50%{transform:scale(1.14);opacity:.75}}
+@keyframes crPulse{50%{transform:scale(1.14);opacity:.34}}
 .crRev .rIco{
   position:relative;width:118px;height:118px;display:grid;place-items:center;
   transform:scale(.35);opacity:0;
@@ -859,6 +863,9 @@ input{font:inherit;color:inherit}
 .prize.on{opacity:1;transform:none}
 .chestGo{
   width:100%;padding:14px;border:none;border-radius:16px;
+  -webkit-appearance:none;appearance:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;
   font:800 15px/1 var(--font);letter-spacing:.02em;color:#fff;
   background:linear-gradient(180deg,#FFC24D,#F0A81E);
   box-shadow:0 5px 0 #B4791A, 0 9px 18px rgba(240,168,30,.3);
@@ -870,7 +877,8 @@ input{font:inherit;color:inherit}
 /* the five upgrade icons are drawn, and they carry the panel colour */
 .upR .ic{background:var(--ub);color:var(--uc)}
 .ai{display:block;width:100%;height:100%;object-fit:contain;
-  -webkit-user-drag:none;user-select:none}
+  -webkit-user-drag:none;-webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none;pointer-events:none}
 /* a hairline of the track own colour down the leading edge, so the six
    read as six even when the icons are small */
 .upR{position:relative;overflow:hidden}
