@@ -2534,7 +2534,19 @@ function strike(b,dmg,src,forced){
 
   if(b.kind==="unstable"){ detonate(b,0); return; }
 
-  b.hp-=(dmg===undefined?val("force"):dmg);
+  b.hp -= b.kind==="boss" ? 1 : (dmg===undefined?val("force"):dmg);
+  if(b.kind==="boss"&&b.hp>0){
+    // it shudders, the dish jolts, and the ring tightens for a moment
+    b.sq=.34; b.wob=.30;
+    shake=Math.max(shake, 2.2+(1-b.hp/b.maxHp)*4);
+    rings.push({x:b.x,y:b.y,r:b.r*.86,R:b.r*1.16,t:0,life:.2,col:"#FF7A8A",w:2.4});
+    for(let i=0;i<3;i++) spark(b.x,b.y,"#FF7A8A");
+    const p=panAt(b.x);
+    pop(120+ (1-b.hp/b.maxHp)*260,{pan:p,vol:.09,wet:.1});
+    thud(54,{pan:p,vol:.10,len:.12});
+    haptic(9);
+    return;
+  }
   if(b.hp>0){
     // a glancing hit: the membrane snaps back but the ball holds
     shake=Math.max(shake,1.5);
@@ -2550,6 +2562,27 @@ function strike(b,dmg,src,forced){
 }
 
 function divide(b){
+  if(b.kind==="boss"){
+    banner("BOSS DOWN");
+    shake=Math.max(shake,14); flash=Math.max(flash,.34); freeze=Math.max(freeze,.07);
+    for(let i=0;i<9;i++)
+      rings.push({x:b.x,y:b.y,r:b.r*.4,R:b.r*(2+i*.9),t:0,life:.5+i*.06,col:"#FFD34D",w:3});
+    for(let i=0;i<48;i++){
+      const a=rnd(0,TAU), sp=rnd(140,760)*S;
+      goo(b.x,b.y,rnd(3,8)*S,i%2?"#FFD34D":"#E8434F",rnd(.35,.75),Math.cos(a)*sp,Math.sin(a)*sp);
+    }
+    for(let i=0;i<4;i++) chime(392*semi(LADDER[i*2]),{vol:.16,len:1.8,delay:i*.08,wet:.62});
+    thud(40,{vol:.4,len:1.4});
+    haptic([26,60,26,60,40]);
+    const purse=b.mass*22;
+    earn(purse,b.x,b.y,"#FFD34D");
+    pushPop(b.x,b.y-b.r*.5,"+"+fmt(purse*yieldMul()*comboMul()));
+    const pip=document.querySelector("#bioWrap .pip");
+    if(pip) celebrate({getBoundingClientRect:()=>({left:b.x,top:b.y,width:0,height:0})},
+                      64,"#22C55E",pip,false);
+    BOSS.t=rnd(95,125);
+    b.kind="plain";                       // what is left of it breaks normally
+  }
   if(b.luck){ b.luck=false; luckWindow(b.x,b.y); }
   remove(b);
   const col=b.kind==="golden"?rbIdx(b,0):PAL()[b.tier];
@@ -3209,6 +3242,52 @@ function setFrenzy(on){
   const f=$("frenzy"), t=$("fzTag");
   if(f) f.classList.toggle("on",!!on);
   if(t){ t.classList.toggle("on",!!on); if(!on) t.dataset.s=""; }
+}
+const BOSS={t:70, hp:100};
+function bossAlive(){ return balls.some(b=>b.kind==="boss"&&!b.gone); }
+function spawnBoss(){
+  if(bossAlive()||!ready||W<10) return false;
+  const cls=WRANK[0];
+  const b=makeBall(0, W*.5, AR.y0+(AR.y1-AR.y0)*.40, rnd(-7,7)*S, rnd(-4,4)*S,
+                   cls, VENT.mass*26, "boss");
+  b.r=Math.min(W*.21, TIER[0].r*S*1.35);
+  b.maxHp=BOSS.hp; b.hp=BOSS.hp;
+  b.spin=rnd(0,TAU);
+  clampIn(b); balls.push(b);
+  banner("BOSS");
+  shake=Math.max(shake,9); flash=Math.max(flash,.20);
+  for(let i=0;i<34;i++){
+    const a=rnd(0,TAU), sp=rnd(120,520)*S;
+    goo(b.x,b.y,rnd(3,7)*S,"#E8434F",rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
+  }
+  for(let i=0;i<5;i++)
+    rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*(2.4+i*.7),t:-0,life:.55+i*.07,col:"#E8434F",w:2.6});
+  thud(46,{vol:.34,len:1.1});
+  chime(196,{vol:.16,len:1.6,wet:.6});
+  chime(147,{vol:.12,len:1.9,delay:.1,wet:.6});
+  haptic([22,50,22,50,30]);
+  return true;
+}
+/* everything within reach is caught in a ring around it: pulled toward the
+   ring rather than into the middle, and pushed around it, so the dish turns */
+function bossPull(dt){
+  for(const B of balls){
+    if(B.kind!=="boss"||B.gone) continue;
+    B.spin=(B.spin||0)+dt*1.4;
+    const R=Math.min(W*.9, B.r*7);
+    for(const b of balls){
+      if(b===B||b.gone) continue;
+      const dx=B.x-b.x, dy=B.y-b.y, d=Math.hypot(dx,dy);
+      if(d>R||d<1) continue;
+      const nx=dx/d, ny=dy/d, fall=1-d/R;
+      const want=B.r+b.r*1.5+30*S;         // the ring they settle on
+      const spin=470*S*(0.45+0.55*fall);   // about once round every four seconds
+      const close=clamp((d-want)*2.6,-300*S,300*S);
+      const wx=-ny*spin+nx*close, wy=nx*spin+ny*close;
+      const k=1-Math.pow(0.12,dt);         // ease into it rather than snap
+      b.vx+=(wx-b.vx)*k; b.vy+=(wy-b.vy)*k;
+    }
+  }
 }
 function ventRoll(){
   let r=Math.random();
@@ -3886,7 +3965,7 @@ function bhStep(dt){
   if(BH.eatT<=0){
     const maxT=bhTier(); let best=null, bd=1e9;
     for(const b of balls){
-      if(b.tier<maxT||b.gone) continue;          // smaller index = bigger ball
+      if(b.tier<maxT||b.gone||b.kind==="boss") continue;   // smaller index = bigger
       // its mouth is wider than its body, or a lime-sized hole would need a
       // ball centred inside 9px and would never actually catch anything
       const d=Math.hypot(b.x-BH.x,b.y-BH.y);
@@ -4067,6 +4146,8 @@ function step(dt){
   VENT.t-=dt;
   VENT.t-=dt;
   if(VENT.t<=0){ VENT.t = ventBall() ? rnd(9,11) : rnd(3,5); VENT.max=VENT.t; }
+  if(!bossAlive()){ BOSS.t-=dt; if(BOSS.t<=0 && !spawnBoss()) BOSS.t=8; }
+  bossPull(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
@@ -4660,7 +4741,7 @@ function draw(){
   for(const b of balls){
     xGoo.save();
     ballXform(xGoo,b);
-    const gc=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":pal[b.tier]);
+    const gc=b.kind==="boss"?"#8E1220":(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":pal[b.tier]));
     // a floor on the goo radius: below it the blur spreads a small ball so
     // thin that the alpha threshold drops it, and it flickers
     const gr=Math.max(b.r,11*S);
@@ -4689,7 +4770,7 @@ function draw(){
 
   for(const b of balls){
     const r=b.r;
-    const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FFE9A8":pal[b.tier]);
+    const col=b.kind==="boss"?"#C11B33":(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FFE9A8":pal[b.tier]));
     xFx.save();
     ballXform(xFx,b);
     membrane(xFx,b,r);
@@ -4731,6 +4812,43 @@ function draw(){
       }
     }
     if(b.kind==="golden") rbShine(xFx,b,r);
+    if(b.kind==="boss"){
+      const left=clamp(b.hp/b.maxHp,0,1);
+      const hurt=1-left;
+      // a shell of plates, and the cracks between them widen as it loses
+      xFx.save();
+      xFx.rotate(b.spin||0);
+      xFx.strokeStyle="rgba(255,255,255,"+(.30+hurt*.34)+")";
+      xFx.lineWidth=Math.max(1.4,r*.045); xFx.lineCap="round";
+      for(let i=0;i<7;i++){
+        const a0=i/7*TAU, gap=.10+hurt*.18;
+        xFx.beginPath(); xFx.arc(0,0,r*.80,a0+gap,a0+TAU/7-gap); xFx.stroke();
+      }
+      xFx.restore();
+      // the core, showing through more as the shell fails
+      xFx.globalAlpha=.35+hurt*.5;
+      const cg=xFx.createRadialGradient(0,0,r*.05,0,0,r*.62);
+      cg.addColorStop(0,"#FFE9A8"); cg.addColorStop(.5,"#FF6A3D"); cg.addColorStop(1,"rgba(255,60,40,0)");
+      xFx.fillStyle=cg; xFx.beginPath(); xFx.arc(0,0,r*.62,0,TAU); xFx.fill();
+      xFx.globalAlpha=1;
+      // and the hundred, as a ring that empties
+      xFx.save(); xFx.rotate(-Math.PI/2);
+      xFx.lineCap="butt";
+      xFx.strokeStyle="rgba(9,13,22,.30)"; xFx.lineWidth=Math.max(3,r*.10);
+      xFx.beginPath(); xFx.arc(0,0,r*1.13,0,TAU); xFx.stroke();
+      xFx.strokeStyle=left>.35?"#FFD34D":"#FF4B6E";
+      xFx.beginPath(); xFx.arc(0,0,r*1.13,0,TAU*left); xFx.stroke();
+      xFx.restore();
+      // how many swipes are left, in the middle of it
+      xFx.save();
+      xFx.rotate(FORM.oval!==1?-b.rot:0);
+      xFx.font="800 "+Math.round(r*.42)+"px Poppins,system-ui,sans-serif";
+      xFx.textAlign="center"; xFx.textBaseline="middle";
+      xFx.lineWidth=Math.max(2,r*.055); xFx.strokeStyle="rgba(9,13,22,.55)";
+      xFx.strokeText(b.hp,0,0);
+      xFx.fillStyle="#FFF3C4"; xFx.fillText(b.hp,0,0);
+      xFx.restore();
+    }
     xFx.restore();
 
     // toughness, read as pips around the rim — one segment per remaining hit
