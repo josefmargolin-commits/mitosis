@@ -1948,9 +1948,14 @@ function save(){ if(!G) return; G.t=Date.now(); try{ localStorage.setItem(SAVE_K
 const lv=k=>G.up[k]|0;
 const val=k=>UP[k].v(lv(k));
 const GRX=1.35;          // every upgrade's growth rate, raised to this power
-/* measured: a built-out scale earns about 1.65M a minute in its own units,
-   whatever scale that is, since every price now carries the multiplier too */
-const SCALE_INCOME=1.65e6, SCALE_MINUTES=115;
+/* Measured after the merge and split rules changed: a working board earns
+   about 82K a minute in whatever scale it is standing on. The ladder was cut
+   against 1.65M, which is why everything above was hours further away than
+   it read. The rungs are written as minutes of that income now, so the
+   number means something you can check. The first is deliberately short —
+   nobody waits two hours to find out whether a game is worth playing. */
+const SCALE_INCOME=8.2e4;
+const SCALE_MINUTES=[10, 30, 55, 80, 100];
 const scaleMul=()=>curScale().mult;
 const cost=k=>Math.ceil(UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
 const maxed=k=>lv(k)>=UP[k].max;
@@ -1974,7 +1979,8 @@ const comboMul=()=>Math.min(comboCap(), 1+combo*comboStep());
 /* what the player actually earns, and what the popup shows: the streak caps
    at 2x, 5x inside a rainbow window, and the ad doubles on top of either */
 const totalMul=()=>comboMul()*(x2On()?2:1);
-const nextScaleCost=()=>SCALE_INCOME*SCALE_MINUTES*scaleMul();
+const nextScaleCost=()=>SCALE_INCOME*scaleMul()*
+  SCALE_MINUTES[Math.min(G.strain,SCALE_MINUTES.length-1)];
 const PAL=()=>(PALETTES.find(p=>p.id===G.pal)||PALETTES[0]).c;
 
 
