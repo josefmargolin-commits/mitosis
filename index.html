@@ -508,7 +508,31 @@ input{font:inherit;color:inherit}
   background:none;border:none;box-shadow:none;pointer-events:none;
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
-#dockHandle{pointer-events:auto}
+#dockHandle,#upBtn{pointer-events:auto}
+/* the way in to the five, standing on the strip beside the trigger */
+#upBtn{
+  position:absolute;left:16px;top:14px;
+  width:52px;height:52px;border-radius:18px;padding:0;border:none;
+  background:linear-gradient(180deg,#7C8DF7,#4F5FE0);
+  box-shadow:0 5px 0 #3A47B8, 0 9px 18px rgba(70,86,215,.30);
+  display:grid;place-items:center;z-index:6;
+  transition:transform .09s cubic-bezier(.2,1.7,.4,1), box-shadow .09s ease;
+}
+#upBtn:active{transform:translateY(3px);
+  box-shadow:0 2px 0 #3A47B8, 0 4px 9px rgba(70,86,215,.26)}
+#upBtn svg{width:23px;height:23px;fill:#fff;display:block}
+#upBtn .dot{
+  position:absolute;top:-3px;right:-3px;width:13px;height:13px;border-radius:50%;
+  background:#FFB020;border:2px solid #fff;opacity:0;transform:scale(.4);
+  transition:opacity .2s ease, transform .2s cubic-bezier(.2,1.7,.4,1);
+}
+#upBtn.can .dot{opacity:1;transform:scale(1);animation:upDot 1.4s ease-in-out infinite}
+@keyframes upDot{50%{box-shadow:0 0 0 5px rgba(255,176,32,.24)}}
+/* a row in the panel: what it is, what it does now, what the next one costs */
+.upR .lvT{font:800 11px/1 Poppins,system-ui,sans-serif;color:var(--ink-3);
+  letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.upR .claim{min-width:74px}
+.upR.max .claim{opacity:.5}
 #tabs{display:flex;height:var(--tab-h,38px);flex:none;border-bottom:1px solid var(--edge);
   overflow-x:auto;scrollbar-width:none;
   transition:opacity .26s ease,visibility .26s}
@@ -666,6 +690,9 @@ input{font:inherit;color:inherit}
   background:var(--panel);border:1px solid var(--edge);box-shadow:0 1px 2px rgba(15,23,32,.04)}
 .row .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:14px;
   background:var(--surface);flex:none}
+/* the five upgrade icons are drawn, and they carry the panel colour */
+.upR .ic{background:#EEF0FE;color:#4F5FE0}
+.upR .ic svg{width:17px;height:17px;display:block}
 .row .l{flex:1;min-width:0}
 .row .t{font-size:12px;line-height:1.35}
 .row .s{font-size:9.5px;color:var(--ink-3);line-height:1.45;margin-top:2px}
@@ -1533,6 +1560,13 @@ input{font:inherit;color:inherit}
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
       <div id="dock">
+        <button id="upBtn" aria-label="Upgrades">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.4" y="13.6" width="4.2" height="7" rx="1.4"/>
+            <rect x="9.9" y="9.2"  width="4.2" height="11.4" rx="1.4"/>
+            <rect x="16.4" y="4.4" width="4.2" height="16.2" rx="1.4"/>
+          </svg><span class="dot"></span>
+        </button>
         <button id="dockHandle" aria-label="Fire the arrow">
           <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
           <i id="vBar"><b></b></i>
@@ -1774,8 +1808,12 @@ const UP={
   force:  {tab:"touch",g:"✥",nm:"Damage", base:12, gr:1.42, max:24,
            d:"Damage every tap deals. Tougher balls need more of it.",
            v:l=>1+Math.floor(l/4), fmt:l=>(1+Math.floor(l/4))+" dmg"},
-  reach:  {tab:"touch",g:"◜",nm:"Size", base:10, gr:1.16, max:60,
-           d:"How wide your swipe cuts.",
+  reach:  {tab:"touch",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<path d="M4.4 19.6 19.2 4.8" stroke="currentColor" stroke-width="2.6" '+
+               'stroke-linecap="round" fill="none"/>'+
+             '<path d="M7.8 16.2 5 19.6l4.4-.9zM16 8l3.2-3.2-.7 4.2z" fill="currentColor" opacity=".5"/></svg>',
+           nm:"Blade", base:10, gr:1.16, max:60,
+           d:"How wide a path your swipe cuts through the dish.",
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
   cascade:{tab:"touch",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
              '<circle cx="12" cy="4.6" r="3.1" fill="currentColor"/>'+
@@ -1806,14 +1844,37 @@ const UP={
   // a global multiplier on every source of income cannot also be the cheapest
   // and longest track in the game. Diminishing returns, steeper cost, half the
   // levels: it still ends up the biggest single buy, without eclipsing the rest.
-  yield:  {tab:"arena",g:"◉",nm:"Payout", base:70, gr:1.28, max:70,
+  yield:  {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="12" cy="12" r="8.4" fill="currentColor"/>'+
+             '<path d="M12 7.1v9.8M14.6 9.4c-.5-.8-1.5-1.2-2.6-1.2-1.5 0-2.7.7-2.7 1.9 0 2.6 5.4 1.3 5.4 3.9 0 1.2-1.2 2-2.7 2-1.2 0-2.2-.5-2.7-1.3" '+
+               'stroke="#fff" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>',
+           nm:"Payout", base:70, gr:1.28, max:70,
            d:"Cash you get from every split and pop.",
            v:l=>1+0.5*Math.pow(l,0.72), fmt:l=>"×"+(1+0.5*Math.pow(l,0.72)).toFixed(2)},
+  reload: {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<path d="M12 3.6 18.6 13h-4V20h-5.2v-7h-4z" fill="currentColor"/></svg>',
+           nm:"Reload", base:400, gr:1.22, max:30,
+           d:"How long the arrow takes to load its next free ball.",
+           v:l=>Math.max(3.5, 10-l*0.22), fmt:l=>Math.max(3.5,10-l*0.22).toFixed(1)+"s"},
+  payload:{tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="8" cy="15" r="4" fill="currentColor" opacity=".45"/>'+
+             '<circle cx="16" cy="10" r="6" fill="currentColor"/></svg>',
+           nm:"Payload", base:260, gr:1.20, max:30,
+           d:"Chance the arrow sends a ball one whole rung bigger than it rolled.",
+           v:l=>Math.min(.84,l*.028), fmt:l=>Math.round(Math.min(84,l*2.8))+"%"},
+  dish:   {tab:"arena",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
+             '<circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="2"/>'+
+             '<path d="M12 6.2v11.6M6.2 12h11.6" stroke="currentColor" stroke-width="1.6" '+
+               'stroke-linecap="round"/></svg>',
+           nm:"Dish", base:500, gr:1.30, max:20,
+           d:"How much of the screen you are allowed to fill before the arrow stops feeding it.",
+           v:l=>0.80+Math.min(.12,l*.006), fmt:l=>Math.round((0.80+Math.min(.12,l*.006))*100)+"%"},
   magnet: {tab:"field",g:"◐",nm:"Magnet",base:90, gr:1.19, max:40,
            d:"Balls drift toward your finger while you hold it down.",
            v:l=>l*11, fmt:l=>l?Math.round(l*11)+"px":"—"},
 };
 const UPK=Object.keys(UP);
+const SHOP_UP=["reach","reload","payload","dish","yield"];
 
 const POWERS=[
   {id:"scatter",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
@@ -3193,7 +3254,7 @@ const VENT={t:3.5, max:3.5, mass:26, n:0};
    one and takes three taps to open rather than one. Across the whole table
    that is 14.9 mass a drop against the flat 8 it used to be, which matters
    for about the first minute and is noise next to a wizard after that. */
-const VENT_GAP=10;                 // the arrow reloads in ten seconds
+const VENT_GAP=10;                 // the arrow's reload before any Reload levels
 const VENT_ROLL=[
   {tier:4, p:.44},   // blue, and nothing weaker than blue
   {tier:3, p:.26},   // purple
@@ -3392,9 +3453,11 @@ function bossPull(dt){
   }
 }
 function ventRoll(){
-  let r=Math.random();
-  for(const v of VENT_ROLL){ r-=v.p; if(r<=0) return v.tier; }
-  return VENT_ROLL[0].tier;
+  let r=Math.random(), t=VENT_ROLL[0].tier;
+  for(const v of VENT_ROLL){ r-=v.p; if(r<=0){ t=v.tier; break; } }
+  // Payload buys a chance at the rung above whatever came up
+  if(Math.random()<val("payload")) t=Math.max(0,t-1);
+  return t;
 }
 function ventBall(forceTier, plainOnly){
   if(!ready||W<10) return false;
@@ -4167,7 +4230,8 @@ function arenaArea(){
    third of the speed, so it stops well short. */
 const BALL_SOFT=300;
 const ballCeil=()=>app.classList.contains("lowfx")?260:BALL_SOFT;
-const DISH_MAX=0.80;
+const DISH_MAX=0.80;                 // the floor; Dish raises it toward .92
+const dishMax=()=>val("dish");
 /* each icon costs its own rectangle plus a working margin, because the strip
    right beside one is ground no ball of any size can settle in */
 let blockedA=0, blockedFor=-1;
@@ -4179,10 +4243,10 @@ function blockedArea(){
   return blockedA=Math.min(a, arenaArea()*0.34);
 }
 const usableArea=()=>Math.max(1, arenaArea()-blockedArea());
-const dishFill=()=>Math.max(areaSum()/(usableArea()*DISH_MAX), balls.length/ballCeil());
+const dishFill=()=>Math.max(areaSum()/(usableArea()*dishMax()), balls.length/ballCeil());
 /* room for one more of this size, not merely room for one more */
 const roomFor=r=>balls.length<ballCeil() &&
-  areaSum()+Math.PI*r*r <= usableArea()*DISH_MAX;
+  areaSum()+Math.PI*r*r <= usableArea()*dishMax();
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
@@ -4246,7 +4310,7 @@ function bounceChrome(b){
 function step(dt){
   el+=dt;
   VENT.t-=dt;
-  if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? VENT_GAP : 2.5; VENT.max=VENT.t; }
+  if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? val("reload") : 2.5; VENT.max=VENT.t; }
   bossGate(); bossPull(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
@@ -5441,7 +5505,7 @@ function holdBuy(b,k){
     }
     if(maxed(k)||G.bio<cost(k)){ buy(k); return false; }
     buy(k); syncRails();
-    return true;
+    return !maxed(k) && G.bio>=cost(k);      // stop the run the moment it cannot
   });
 }
 /* Press and it acts once; keep pressing and it keeps going, faster and a
@@ -5533,8 +5597,9 @@ function buy(k){
   if(G.bio<c){ toast("Needs "+fmt(c)+" cash"); return; }
   G.bio-=c; G.up[k]++;
   buySound(lv(k));
-  haptic(9); save(); syncCards();
-  const card=document.querySelector('#cards .card[data-k="'+k+'"]');
+  haptic(9); save(); syncCards(); syncUpRows();
+  const card=(upRows&&upRows[k]&&upRows[k].el)||
+             document.querySelector('#cards .card[data-k="'+k+'"]');
   buyFx(card);
   cashBurst(card, buyRun>0 ? (buyRun%3===0?4:0) : 7);
   if(k==="pulse"&&lv(k)===1) toast("Idle hits are on — they keep going while you are away");
@@ -5767,6 +5832,48 @@ function stgRow(o){
   return d;
 }
 /* the drawer: three destinations, each with the colour it had on the rail */
+let upRows=null;
+function syncUpRows(){
+  if(!upRows) return;
+  for(const k of SHOP_UP){
+    const r=upRows[k]; if(!r||!r.el.isConnected){ upRows=null; return; }
+    const m=maxed(k), c=cost(k), can=!m&&G.bio>=c;
+    r.lvT.textContent=m?"Fully developed":"Level "+lv(k);
+    r.v.textContent=UP[k].fmt(lv(k));
+    r.btn.innerHTML=m?"Max":fmt(c);
+    r.btn.classList.toggle("no",!can);
+    r.el.classList.toggle("max",m);
+  }
+  syncUpBtn();
+}
+/* the badge on the button: something down there is affordable */
+function syncUpBtn(){
+  const b=document.getElementById("upBtn"); if(!b) return;
+  b.classList.toggle("can", SHOP_UP.some(k=>!maxed(k)&&G.bio>=cost(k)));
+}
+function sheetUpgrades(){
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#4F5FE0">'+
+      '<rect x="3.4" y="13.6" width="4.2" height="7" rx="1.4" fill="currentColor"/>'+
+      '<rect x="9.9" y="9.2" width="4.2" height="11.4" rx="1.4" fill="currentColor"/>'+
+      '<rect x="16.4" y="4.4" width="4.2" height="16.2" rx="1.4" fill="currentColor"/></svg>',
+    "Upgrades","Hold a price to keep buying",b=>{
+    upRows={};
+    for(const k of SHOP_UP){
+      const u=UP[k];
+      const d=row({ic:u.g, t:u.nm, s:u.d, v:u.fmt(lv(k)), btn:fmt(cost(k)), btnOn:false});
+      d.classList.add("upR");
+      const lt=document.createElement("div");
+      lt.className="lvT"; lt.textContent="Level "+lv(k);
+      d.querySelector(".l").appendChild(lt);
+      const btn=d.querySelector(".claim");
+      btn.onclick=null;                       // the hold handler owns it now
+      holdBuy(btn,k);
+      upRows[k]={el:d, lvT:lt, v:d.querySelector(".v"), btn};
+      b.appendChild(d);
+    }
+    syncUpRows();
+  });
+}
 function sheetMore(){
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#3A4A5E">'+ICONS.dots+'</svg>',
     "More","Everything else",b=>{
@@ -6510,7 +6617,7 @@ function tickUI(dt){
       if(G.spore<60) G.spore=60;
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
-    syncTop(); syncRails(); syncGoal();
+    syncTop(); syncRails(); syncGoal(); syncUpBtn();
     const vb=$("vBar");
     if(vb){
       const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
@@ -6696,6 +6803,8 @@ function setDockMin(min,quiet){
 (function arrowButton(){
   const h=$("dockHandle");
   h.onclick=()=>{ if(!ready) return; ventBall(6,true); };
+  const u=$("upBtn");
+  if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
 })();
 /* the tower is closed */
 document.getElementById("goDown").onclick=()=>goRoom("arena");
