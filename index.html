@@ -403,6 +403,18 @@ input{font:inherit;color:inherit}
 .pw.ready{background:linear-gradient(180deg,#FFF6DE 0%,#FFEFC4 48%,#FFE39A 100%);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #D9A518,0 5px 11px rgba(180,120,0,.24)}
 .pw.ready .l{color:var(--yellow)}
+/* the needle keeps its own colour so it does not read as a power you own */
+.pw.ndl .g{color:#2FA3FF}
+.pw.ndl.ready{background:linear-gradient(180deg,#EAF7FF 0%,#D6EEFF 48%,#BFE4FF 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #4E9FD6,0 5px 11px rgba(30,110,180,.22)}
+.pw.ndl.ready .l{color:#1E6EB4}
+.pw.ndl .chg{
+  position:absolute;left:9px;right:9px;bottom:6px;height:3px;border-radius:99px;
+  background:rgba(15,23,32,.10);overflow:hidden;
+}
+.pw.ndl .chg b{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#8FE3FF,#2FA3FF);transition:width .1s linear}
+.pw.ndl.ready .chg{opacity:0}
 .pw.active{background:linear-gradient(180deg,#E6FCF3 0%,#CFF7E6 48%,#A9EDD2 100%);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),0 3px 0 #0FB981,0 5px 11px rgba(15,185,129,.26)}
 .pw.locked{opacity:.7}
@@ -495,19 +507,13 @@ input{font:inherit;color:inherit}
 #dockHandle .ah{display:grid;place-items:center;line-height:0}
 /* how long until the next one is loaded. It fills as the chamber does and
    drains the instant it fires. */
-#vBar,#nBar{
+#vBar{
   position:absolute;top:-11px;z-index:2;
   width:46px;height:6px;border-radius:99px;overflow:hidden;
   background:rgba(15,23,32,.10);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.72);
 }
-#vBar{left:50%;transform:translateX(-52px)}
-#nBar{left:50%;transform:translateX(6px)}
-#nBar b{display:block;height:100%;width:0%;border-radius:99px;
-  background:linear-gradient(90deg,#8FE3FF,#2FA3FF);
-  transition:width .1s linear}
-#nBar.full b{background:linear-gradient(90deg,#BFF0FF,#7CE0FF)}
-#nBar.full{animation:vbFull 1.2s ease-in-out infinite}
+#vBar{left:50%;transform:translateX(-50%);width:56px}
 #vBar b{display:block;height:100%;width:0%;border-radius:99px;
   background:linear-gradient(90deg,#7CB2FF,#2F6BFF);
   transition:width .1s linear}
@@ -1783,7 +1789,6 @@ input{font:inherit;color:inherit}
         </button>
         <div id="fireWrap">
           <i id="vBar" title="Next free ball"><b></b></i>
-          <i id="nBar" title="Next needle"><b></b></i>
           <button id="dockHandle" aria-label="Drop a ball" tabindex="-1">
             <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
           </button>
@@ -2664,13 +2669,21 @@ let needles=[];
 function fireNeedle(){
   if(!ready||W<10||NEEDLE.cd>0) return false;
   NEEDLE.cd=NEEDLE.gap;
-  const fw=document.getElementById("fireWrap");
   const ar=roomArena.getBoundingClientRect();
-  let x=W*.5;
-  if(fw){ const r=fw.getBoundingClientRect(); x=r.left-ar.left+r.width*.5; }
-  needles.push({x:clamp(x,12,W-12), y:AR.y1-4,
-    a:-Math.PI/2+rnd(-.30,.30), left:NEEDLE.bounces, t:0, hit:0,
-    px:x, py:AR.y1-4});
+  const tile=document.getElementById("pw-needle");
+  // out of its own tile on the rail, angled across the dish
+  let x=W-18, y=(AR.y0+AR.y1)*.42, a=Math.PI+rnd(-.42,.42);
+  if(tile){
+    const r=tile.getBoundingClientRect();
+    x=clamp(r.left-ar.left-6, AR.x0+8, AR.x1-8);
+    y=clamp(r.top-ar.top+r.height*.5, AR.y0+8, AR.y1-8);
+  }
+  needles.push({x, y, a, left:NEEDLE.bounces, t:0, hit:0, px:x, py:y});
+  // a kick on the tile so you can see where it came from
+  if(tile&&tile.animate) tile.animate([
+    {transform:"translateX(0)"},{transform:"translateX(5px)",offset:.3},
+    {transform:"translateX(0)"}],{duration:280,easing:"cubic-bezier(.3,1.4,.4,1)"});
+  rings.push({x,y,r:2,R:22*S,t:0,life:.24,col:"#7CE0FF",w:2});
   pop(1180,{pan:panAt(x),vol:.09,wet:.12});
   noiseHit(.06,{pan:panAt(x),vol:.05,cut:3200,q:4});
   haptic(9);
@@ -5622,6 +5635,24 @@ function buildRails(){
   };
   // Scatter is the one everybody has; everything else is earned
   add(POWERS[0],false);
+  // the needle sits with it, on its own clock rather than on your thumb
+  {
+    const b=document.createElement("button");
+    b.className="pw ndl"; b.id="pw-needle";
+    b.innerHTML='<span class="g"><svg viewBox="0 0 24 24" aria-hidden="true">'+
+      '<path d="M12 2.4 15.1 9l-3.1 2.1L8.9 9z" fill="currentColor"/>'+
+      '<path d="M12 11.1V21.6" stroke="currentColor" stroke-width="2.2" '+
+        'stroke-linecap="round" fill="none" opacity=".8"/>'+
+      '<path d="M5.4 15.4 8.6 18.6M18.6 15.4 15.4 18.6" stroke="currentColor" '+
+        'stroke-width="2" stroke-linecap="round" fill="none" opacity=".5"/></svg></span>'+
+      '<span class="l">Needle</span>'+
+      '<i class="chg"><b></b></i>';
+    // it fires itself; pressing it only spends a shot that is already there
+    b.onclick=()=>{ if(ready) fireNeedle(); };
+    b.oncontextmenu=e=>{e.preventDefault();
+      toast("Needle — fires on its own. Three walls, then it goes.");};
+    R.appendChild(b);
+  }
   const bought=POWERS.filter(p=>p.cost>0&&pwState(p).owned)
     .concat(BOOSTS.filter(b2=>boState(b2).owned));
   const adp=POWERS.filter(p=>p.cost>0 && !pwState(p).owned);
@@ -5703,6 +5734,16 @@ function syncRails(){
     if(!s.owned){ cd.style.display="none"; lab.innerHTML=ICO_SPORE+p.cost; }
     else if(s.cd>0){ cd.style.display="grid"; cd.textContent=Math.ceil(s.cd); lab.textContent=p.nm; }
     else { cd.style.display="none"; lab.textContent=p.nm; }
+  }
+  {
+    const b=$("pw-needle");
+    if(b){
+      const k=clamp(1-NEEDLE.cd/NEEDLE.gap,0,1);
+      const bar=b.querySelector(".chg b");
+      if(bar) bar.style.width=(k*100).toFixed(0)+"%";
+      b.classList.toggle("ready",k>=1);
+      b.classList.toggle("charging",k<1);
+    }
   }
   for(const bo of BOOSTS){
     const s=G.boost[bo.id]||{cd:0}, b=$("bo-"+bo.id); if(!b) continue;
@@ -7166,12 +7207,6 @@ function tickUI(dt){
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
     syncTop(); syncRails(); syncGoal(); syncUpBtn();
-    const nb=$("nBar");
-    if(nb){
-      const k=clamp(1-NEEDLE.cd/NEEDLE.gap,0,1);
-      nb.firstElementChild.style.width=(k*100).toFixed(0)+"%";
-      nb.classList.toggle("full",k>=.999);
-    }
     const vb=$("vBar");
     if(vb){
       const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
