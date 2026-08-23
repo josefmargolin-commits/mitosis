@@ -377,7 +377,7 @@ input{font:inherit;color:inherit}
   box-shadow:0 1.5px 4px rgba(16,22,37,.35)}
 .orb.pill-epic .pill{display:block;background:linear-gradient(180deg,#F472B6,#DB2777)}
 .orb.pill-deal .pill{display:block;background:linear-gradient(180deg,#38BDF8,#0284C7)}
-.orb.alert .dot{display:block}
+.orb .dot{display:none}
 .pw{
   --c:#FFFFFF;
   width:46px;height:46px;border-radius:15px;position:relative;
@@ -547,7 +547,7 @@ input{font:inherit;color:inherit}
              inset 0 1px 0 rgba(124,224,255,.30);
   transition:transform .08s cubic-bezier(.2,1.7,.4,1), box-shadow .08s ease;
 }
-#fireWrap:active{
+#fireWrap:active,#fireWrap.down{
   transform:translateY(4px);
   box-shadow:0 2px 0 #050912, 0 4px 10px rgba(11,16,26,.3),
              inset 0 0 0 1px rgba(124,224,255,.5),
@@ -2685,6 +2685,8 @@ const turretAt=i=>({x:(AR.x0+AR.x1)*.5 + TURRETS[i].off*TUR_GAP(),
 const ufoAt=()=>{ const i=TURRETS.findIndex(t=>t.ufo);
                   return i<0?turretAt(0):turretAt(i); };
 function drawTurrets(x){
+  x.save();
+  x.translate(0, panelDown*4);              // the same four pixels the CSS moves
   for(let i=0;i<TURRETS.length;i++){
     const t=TURRETS[i], p=turretAt(i);
     const k=Math.max(0,(t.k||0));            // 1 the instant it fires, then decays
@@ -2752,8 +2754,11 @@ function drawTurrets(x){
     x.beginPath(); x.arc(0,cy+R*0.06,R*(t.ufo?0.34:0.46),0,TAU); x.stroke();
     x.restore();
   }
+  x.restore();
 }
+let panelDown=0, panelDownT=0;              // where the press is, and where it is going
 function stepTurrets(dt){
+  panelDown += (panelDownT-panelDown)*(1-Math.pow(0.00002,dt));
   for(let i=0;i<TURRETS.length;i++){
     const t=TURRETS[i];
     if(t.k) t.k=Math.max(0,t.k-dt*4.2);
@@ -5800,12 +5805,7 @@ function syncRails(){
     if(ok){ cd.style.display="none"; lab.textContent=p.nm; }
     else  { cd.style.display="grid"; cd.textContent=adWait(k); lab.textContent=p.nm; }
   }
-  // a dot is a claim waiting, and nothing else. Derived, never remembered.
-  const more=document.getElementById("orb-more");
-  if(more) more.classList.toggle("alert", !!(achAny&&achAny()));
-  const mis=document.getElementById("orb-mis");
-  if(mis) mis.classList.toggle("alert",
-    !!(G.obj&&G.obj.some(o=>o.done&&!o.claimed)));
+
   for(const p of POWERS){
     const s=pwState(p), b=$("pw-"+p.id); if(!b) continue;
     const cd=b.querySelector(".cd"), lab=b.querySelector(".l");
@@ -7466,9 +7466,12 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
   fw.addEventListener("pointerdown",e=>{
     if(e.button) return;
     e.preventDefault();
+    panelDownT=1; fw.classList.add("down");
     if(!ready) return;
     ventBall(6,true);
   },{passive:false});
+  for(const ev of ["pointerup","pointercancel","pointerleave"])
+    fw.addEventListener(ev,()=>{ panelDownT=0; fw.classList.remove("down"); },{passive:true});
   const u=$("upBtn");
   if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
 
