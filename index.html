@@ -494,9 +494,10 @@ input{font:inherit;color:inherit}
   position:absolute;z-index:5;left:0;right:0;bottom:0;
   height:calc(var(--dock-h) + env(safe-area-inset-bottom));
   transition:height .26s cubic-bezier(.3,.8,.3,1);
-  background:var(--panel);border-top:1px solid var(--edge);box-shadow:var(--shadow-up);
+  background:none;border:none;box-shadow:none;pointer-events:none;
   display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
 }
+#dockHandle{pointer-events:auto}
 #tabs{display:flex;height:var(--tab-h,38px);flex:none;border-bottom:1px solid var(--edge);
   overflow-x:auto;scrollbar-width:none;
   transition:opacity .26s ease,visibility .26s}
