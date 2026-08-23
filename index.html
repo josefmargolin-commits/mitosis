@@ -485,15 +485,19 @@ input{font:inherit;color:inherit}
 /* how long until the next one is loaded. It fills as the chamber does and
    drains the instant it fires. */
 #vBar{
-  position:absolute;left:50%;transform:translateX(-50%);bottom:-10px;
-  transition:bottom .26s cubic-bezier(.3,.8,.3,1), top .26s cubic-bezier(.3,.8,.3,1);
-  width:30px;height:3px;border-radius:99px;overflow:hidden;
-  background:rgba(15,23,32,.13);
+  position:absolute;left:50%;transform:translateX(-50%);top:-13px;
+  width:52px;height:6px;border-radius:99px;overflow:hidden;
+  background:rgba(15,23,32,.10);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
 }
 #vBar b{display:block;height:100%;width:0%;border-radius:99px;
   background:linear-gradient(90deg,#7CB2FF,#2F6BFF);
   transition:width .1s linear}
-#vBar.full b{background:linear-gradient(90deg,#8FE3FF,#2F6BFF)}
+/* loaded: it goes gold and breathes, so a full chamber is obvious */
+#vBar.full b{background:linear-gradient(90deg,#FFD34D,#F5A300)}
+#vBar.full{animation:vbFull 1.2s ease-in-out infinite}
+@keyframes vbFull{50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),
+                                  0 0 10px rgba(245,163,0,.55)}}
 #dockHandle svg{width:27px;height:27px;stroke:none;fill:#fff;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
@@ -1784,7 +1788,7 @@ const UP={
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
   purity: {tab:"arena",g:"✦",nm:"Income",base:130,gr:1.24, max:40,
            d:"Chance the arrow sends up a rainbow ball. It pops for twenty-five times its worth and opens a two minute ×5 window.",
-           v:l=>Math.min(.09,l*.00225), fmt:l=>(1.2+Math.min(9,l*.225)).toFixed(1)+"%"},
+           v:l=>Math.min(.09,l*.00225), fmt:l=>(0.5+Math.min(9,l*.225)).toFixed(1)+"%"},
 
   pulse:  {tab:"lysis",g:"◍",nm:"Speed", base:70, gr:1.175,max:80,
            d:"How fast Chompy moves and how quickly he can swallow the next one. Buy the first level and he appears.",
@@ -2390,14 +2394,16 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
     hp:maxHp,maxHp,mate:null,fuseT:0,born:el,bead:0,luck:false,rot:rnd(0,TAU),
     wob:.019,wp:rnd(0,TAU),ws:rnd(.5,.9),sq:0,sqA:0,hit:0,pulse:rnd(0,TAU),lastHit:0};
 }
+const P_VIRUS=0.02;                  // one ball in fifty
+const P_RAINBOW=0.005;               // one ball in two hundred
 function dropKind(bonus){
   const p=val("purity")+(bonus||0);
   const r=Math.random();
   if(r<p) return "golden";
-  if(r<p+0.06) return "unstable";
+  if(r<p+P_VIRUS) return "unstable";
   return "plain";
 }
-const VENT_LUCKY=0.012;
+const VENT_LUCKY=P_RAINBOW;
 function bumpCombo(){
   combo++; comboT=1.55;   // Streak used to stretch this
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
@@ -3382,9 +3388,9 @@ function ventRoll(){
   for(const v of VENT_ROLL){ r-=v.p; if(r<=0) return v.tier; }
   return VENT_ROLL[0].tier;
 }
-function ventBall(forceTier){
+function ventBall(forceTier, plainOnly){
   if(!ready||W<10) return false;
-  const cls=WRANK[0], kind=dropKind(VENT_LUCKY);
+  const cls=WRANK[0], kind=plainOnly?"plain":dropKind(VENT_LUCKY);
   const t=(forceTier===undefined||forceTier===null)?ventRoll():forceTier;
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
@@ -6681,7 +6687,7 @@ function setDockMin(min,quiet){
 /* press it and it fires: a green one, straight up, every time */
 (function arrowButton(){
   const h=$("dockHandle");
-  h.onclick=()=>{ if(!ready) return; ventBall(6); };
+  h.onclick=()=>{ if(!ready) return; ventBall(6,true); };
 })();
 /* the tower is closed */
 document.getElementById("goDown").onclick=()=>goRoom("arena");
