@@ -2804,7 +2804,19 @@ function drawOneTurret(x,t,p,lifted){
   const R=turR(t), C=TUR_TYPES[t.type]?TUR_TYPES[t.type].col:"#7CE0FF";
   x.save();
   x.translate(p.x, p.y);
-  if(lifted){ x.globalAlpha=.92; x.scale(1.12,1.12); }
+  if(lifted){
+    // it comes up off the rig and takes a shadow with it
+    x.save();
+    x.globalAlpha=.28; x.fillStyle="#0B101A";
+    x.beginPath(); x.ellipse(0,10*S,R*1.15,R*0.34,0,0,TAU); x.fill();
+    x.restore();
+    x.translate(0,-9*S); x.scale(1.18,1.18);
+  } else {
+    x.save();
+    x.globalAlpha=.22; x.fillStyle="#0B101A";
+    x.beginPath(); x.ellipse(0,2.5*S,R*0.95,R*0.16,0,0,TAU); x.fill();
+    x.restore();
+  }
   // the collar across the join
   x.fillStyle="#0B101A";
   x.beginPath(); x.roundRect(-R*(t.ufo?1.34:1.06),-1.5*S,R*(t.ufo?2.68:2.12),8*S,3*S); x.fill();
@@ -2832,23 +2844,50 @@ function drawOneTurret(x,t,p,lifted){
     x.beginPath(); x.arc(0,-R*1.45,R*0.17,0,TAU); x.fill();
     x.restore();
   } else if(t.type==="hive"){
-    // a squat pod with cells in it
-    x.fillStyle="#111A2A";
-    x.beginPath(); x.ellipse(0,0,R*(1+k*0.12),R*(0.92-k*0.14),0,Math.PI,TAU); x.fill();
-    x.fillStyle="#1C2942";
-    x.beginPath(); x.ellipse(0,0,R*0.74,R*0.68,0,Math.PI,TAU); x.fill();
+    // a hexagon, which is the only angular thing on the whole rig
+    const hex=(cx,cy,rr)=>{
+      x.beginPath();
+      for(let q=0;q<6;q++){
+        const a=-Math.PI/2+q*TAU/6;
+        const px=cx+Math.cos(a)*rr, py=cy+Math.sin(a)*rr*0.92;
+        q?x.lineTo(px,py):x.moveTo(px,py);
+      }
+      x.closePath();
+    };
+    const bg=x.createLinearGradient(0,-R*1.5,0,0);
+    bg.addColorStop(0,"#24314D");
+    bg.addColorStop(1,"#0E1626");
+    x.fillStyle=bg;
+    hex(0,-R*0.74,R*1.02*(1+k*0.08)); x.fill();
+    // the comb: three cells cut into the face
     for(let q=0;q<3;q++){
-      const a=Math.PI+ (q+0.5)/3*Math.PI;
-      x.fillStyle="rgba(141,247,196,"+(0.42+k*0.5).toFixed(2)+")";
-      x.beginPath(); x.arc(Math.cos(a)*R*0.42,Math.sin(a)*R*0.34,R*0.15,0,TAU); x.fill();
+      const a=-Math.PI/2+q*TAU/3;
+      const cx2=Math.cos(a)*R*0.42, cy2=-R*0.74+Math.sin(a)*R*0.40;
+      x.fillStyle="#0A121F";
+      hex(cx2,cy2,R*0.30); x.fill();
+      x.strokeStyle=hexA(C,0.30+k*0.4); x.lineWidth=Math.max(1,1.2*S);
+      hex(cx2,cy2,R*0.30); x.stroke();
     }
+    // one of them has a drone in it, ready to leave
+    x.fillStyle=hexA(C,0.75+k*0.25);
+    x.beginPath(); x.arc(0,-R*1.14,R*0.17,0,TAU); x.fill();
+    x.strokeStyle=hexA(C,0.55+k*0.45); x.lineWidth=Math.max(1.2,1.6*S);
+    hex(0,-R*0.74,R*1.02*(1+k*0.08)); x.stroke();
   } else {
     x.fillStyle="#111A2A";
     x.beginPath(); x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU); x.fill();
     x.fillStyle="#1C2942";
     x.beginPath(); x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU); x.fill();
   }
-  if(t.type!=="sniper"){
+  if(t.type!=="hive"){
+    // a rim light along the crown, so it is lit rather than filled
+    x.strokeStyle="rgba(190,230,255,.20)";
+    x.lineWidth=Math.max(1,1.3*S);
+    x.beginPath();
+    x.ellipse(0,t.ufo?-R*0.16:0,R*(t.ufo?1.20:0.92),R*(t.ufo?0.34:0.80),0,Math.PI*1.14,Math.PI*1.86);
+    x.stroke();
+  }
+  if(t.type!=="sniper"&&t.type!=="hive"){
     const aim=(t.aim===undefined?-Math.PI/2:t.aim);
     const cy=t.ufo? -R*0.52 : -R*0.14;
     const ex=Math.cos(aim)*R*(t.ufo?0.22:0.30), ey=cy+Math.sin(aim)*R*0.18+R*0.06;
@@ -2888,7 +2927,7 @@ function slotHit(x,y){
   let best=-1, bd=1e9;
   for(let i=0;i<RIG_N;i++){
     const p=slotAt(i), d=Math.hypot(x-p.x, y-(p.y-p.r*0.7));
-    if(d<bd&&d<p.r*2.1){ bd=d; best=i; }
+    if(d<bd&&d<p.r*2.8){ bd=d; best=i; }
   }
   return best;
 }
