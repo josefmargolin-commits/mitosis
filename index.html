@@ -706,21 +706,37 @@ input{font:inherit;color:inherit}
    The lid hinges back on its own transform so the box under it can stay
    still, which is what makes it read as opening rather than as growing. */
 .chestWrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0 2px}
-.bchestArt{width:150px;height:114px;display:grid;place-items:center;
-  filter:drop-shadow(0 8px 16px rgba(180,121,26,.28))}
-.bchestArt svg{width:150px;height:113px;overflow:visible}
-.bchestArt .box{fill:#B4791A}
-.bchestArt .lid{fill:#D69A2C;transform-origin:32px 20px;
-  transition:transform .5s cubic-bezier(.3,1.5,.5,1)}
-.bchestArt .band{fill:#8A5A05}
-.bchestArt .lock{fill:#FFD34D;transition:opacity .3s ease}
-.bchestArt.open .lid{transform:rotate(-108deg) translateY(-2px)}
-.bchestArt.open .lock{opacity:0}
-.bchestArt.open{animation:chJump .5s cubic-bezier(.3,1.6,.4,1)}
-@keyframes chJump{40%{transform:translateY(-9px) scale(1.05)}}
 /* the strip, and the line it stops under. Only the strip moves; the window
    clips it and the marker stays put, which is what makes it read as a case
    rather than as four things taking turns lighting up. */
+.bchestArt{
+  position:relative;width:168px;height:132px;margin:0 auto;
+  filter:drop-shadow(0 10px 18px rgba(122,78,8,.28));
+}
+/* body and lid are separate elements so the lid can hinge in three
+   dimensions; an SVG group cannot carry its own perspective */
+.bchestArt .chBody{position:absolute;left:0;right:0;bottom:0;height:78px}
+.bchestArt .chLid{
+  position:absolute;left:0;right:0;bottom:66px;height:66px;
+  transform-origin:50% 100%;                 /* the hinge is its bottom edge */
+  transform:perspective(420px) rotateX(0deg);
+  transition:transform .62s cubic-bezier(.34,1.42,.5,1);
+}
+.bchestArt .chBody svg,.bchestArt .chLid svg{width:100%;height:100%;display:block}
+/* what is inside, once there is a gap for it to come out of */
+.bchestArt .chGlow{
+  position:absolute;left:16%;right:16%;bottom:58px;height:34px;border-radius:50%;
+  background:radial-gradient(closest-side,#FFF3C4,rgba(255,211,77,.55),transparent 76%);
+  opacity:0;transform:scaleY(.4);
+  transition:opacity .3s ease .12s, transform .5s cubic-bezier(.2,1.5,.4,1) .12s;
+}
+.bchestArt.open .chLid{transform:perspective(420px) rotateX(-124deg)}
+.bchestArt.open .chGlow{opacity:1;transform:scaleY(1.5)}
+.bchestArt.open .chBody{animation:chSquash .5s cubic-bezier(.3,1.5,.4,1)}
+@keyframes chSquash{
+  30%{transform:scaleY(.9) scaleX(1.06)}
+  60%{transform:scaleY(1.04) scaleX(.98)}
+  100%{transform:none}}
 .crate{
   position:relative;width:100%;overflow:hidden;border-radius:16px;
   background:var(--surface);padding:10px 0;
@@ -821,11 +837,18 @@ input{font:inherit;color:inherit}
   0%{opacity:1;transform:translate(-50%,-50%) scale(.4)}
   100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.15)}}
 /* the crate rattles before the lid gives */
-.bchestArt.rattle{animation:crRattle .55s cubic-bezier(.36,.07,.19,.97)}
+.bchestArt.rattle{animation:crRattle .56s cubic-bezier(.36,.07,.19,.97)}
 @keyframes crRattle{
-  10%,30%,50%,70%{transform:translateX(-3px) rotate(-2.2deg)}
-  20%,40%,60%,80%{transform:translateX(3px) rotate(2.2deg)}
-  90%{transform:translateX(-1.5px)} 100%{transform:none}}
+  10%,30%,50%,70%{transform:translateX(-4px) rotate(-2.4deg)}
+  20%,40%,60%,80%{transform:translateX(4px) rotate(2.4deg)}
+  90%{transform:translateX(-2px)} 100%{transform:none}}
+/* the lid knocks against the lip while it rattles, as if something inside
+   is trying to get out */
+.bchestArt.rattle .chLid{animation:crKnock .56s ease-in-out}
+@keyframes crKnock{
+  0%,100%{transform:perspective(420px) rotateX(0deg)}
+  15%,45%,75%{transform:perspective(420px) rotateX(-13deg)}
+  30%,60%,90%{transform:perspective(420px) rotateX(-2deg)}}
 .prize{font:800 15px/1.2 var(--font);color:var(--ink);text-align:center;min-height:19px;
   opacity:0;transform:translateY(4px);transition:opacity .3s ease, transform .3s ease}
 .prize.on{opacity:1;transform:none}
@@ -840,7 +863,14 @@ input{font:inherit;color:inherit}
 .chestGo:disabled{filter:saturate(.5) brightness(1.06)}
 
 /* the five upgrade icons are drawn, and they carry the panel colour */
-.upR .ic{background:#EEF0FE;color:#4F5FE0}
+.upR .ic{background:var(--ub);color:var(--uc)}
+/* a hairline of the track own colour down the leading edge, so the six
+   read as six even when the icons are small */
+.upR{position:relative;overflow:hidden}
+.upR::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--uc);opacity:.85}
+.upR .v{color:var(--uc)}
+.upR.max .ic{filter:grayscale(.55)}
 .upR .ic{width:36px;height:36px;border-radius:11px}
 .upR .ic svg{width:23px;height:23px;display:block}
 .row .l{flex:1;min-width:0}
@@ -2043,6 +2073,14 @@ const UP_GROUPS=[
   {t:"Passive",   keys:["colony"]},
 ];
 const SHOP_UP=UP_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
+const UP_HUE={
+  reach:  {c:"#E8434F", bg:"#FFE8EA"},
+  reload: {c:"#2F6BFF", bg:"#E5EEFF"},
+  payload:{c:"#7C3AED", bg:"#F3E8FF"},
+  dish:   {c:"#0E9488", bg:"#DDF6F2"},
+  yield:  {c:"#16A34A", bg:"#DCFCE7"},
+  colony: {c:"#D98209", bg:"#FFF1D6"},
+};
 
 const POWERS=[
   {id:"scatter",g:'<svg viewBox="0 0 24 24" aria-hidden="true">'+
@@ -6061,11 +6099,46 @@ function cratePay(p){
   } else if(p.item&&p.item.go) p.item.go();
   save(); syncTop(); syncRails(); syncUpBtn();
 }
-const CHEST_SVG='<svg viewBox="0 0 64 48" aria-hidden="true">'+
-  '<path class="lid" d="M6 20V15A10 10 0 0 1 16 5h32a10 10 0 0 1 10 10v5z"/>'+
-  '<rect class="box" x="6" y="20" width="52" height="24" rx="3"/>'+
-  '<rect class="band" x="27" y="5" width="10" height="39" rx="2"/>'+
-  '<circle class="lock" cx="32" cy="26" r="4.6"/></svg>';
+const CHEST_SVG=
+  // the glow that lives inside it, seen once the lid is off the lip
+  '<div class="chGlow"></div>'+
+  '<div class="chLid"><svg viewBox="0 0 72 34" aria-hidden="true">'+
+    '<path d="M4 32V20A16 16 0 0 1 20 4h32a16 16 0 0 1 16 16v12z" fill="#C98A20"/>'+
+    '<path d="M4 32V20A16 16 0 0 1 20 4h16v28z" fill="#D89A2E"/>'+
+    // staves
+    '<path d="M17 6.6V32M27 4.6V32M45 4.6V32M55 6.6V32" stroke="#A96E12" '+
+      'stroke-width="1.4" opacity=".55" fill="none"/>'+
+    // the iron band round the crown, and the one at the lip
+    '<path d="M4 24.5h64" stroke="#7A4E08" stroke-width="3.2" fill="none"/>'+
+    '<rect x="2.5" y="29" width="67" height="5" rx="2.2" fill="#8A5A05"/>'+
+    // the strap down the middle
+    '<rect x="31" y="4" width="10" height="30" fill="#8A5A05"/>'+
+    '<rect x="33.4" y="4" width="1.5" height="30" fill="#A06A10" opacity=".7"/>'+
+    // and a highlight along the top of the dome
+    '<path d="M18 10.5A15 15 0 0 1 36 6.5" stroke="#F0C15C" stroke-width="2.6" '+
+      'stroke-linecap="round" fill="none" opacity=".75"/>'+
+  '</svg></div>'+
+  '<div class="chBody"><svg viewBox="0 0 72 40" aria-hidden="true">'+
+    // the lip the lid comes down on
+    '<rect x="1.5" y="0" width="69" height="6.5" rx="2.4" fill="#8A5A05"/>'+
+    '<rect x="4" y="6" width="64" height="30" rx="3.4" fill="#B4791A"/>'+
+    '<path d="M4 9.4h64v26.6a3.4 3.4 0 0 1-3.4 3.4H7.4A3.4 3.4 0 0 1 4 36z" fill="#A96E12"/>'+
+    // staves down the body
+    '<path d="M17 7.5V36M27 7.5V36M45 7.5V36M55 7.5V36" stroke="#8A5A05" '+
+      'stroke-width="1.4" opacity=".5" fill="none"/>'+
+    // the band along the foot
+    '<rect x="2.5" y="31" width="67" height="5.6" rx="2.4" fill="#8A5A05"/>'+
+    // corner brackets
+    '<path d="M4 9.4h5.6v27H7.4A3.4 3.4 0 0 1 4 33z" fill="#7A4E08" opacity=".75"/>'+
+    '<path d="M62.4 9.4H68V33a3.4 3.4 0 0 1-3.4 3.4h-2.2z" fill="#7A4E08" opacity=".75"/>'+
+    // the strap, and the lock plate on it
+    '<rect x="31" y="0" width="10" height="36.6" fill="#8A5A05"/>'+
+    '<rect x="28.6" y="1.5" width="14.8" height="13" rx="3" fill="#F5C33B"/>'+
+    '<rect x="28.6" y="1.5" width="14.8" height="13" rx="3" fill="none" '+
+      'stroke="#C9931B" stroke-width="1.2"/>'+
+    '<circle cx="36" cy="6.6" r="2.5" fill="#8A5A05"/>'+
+    '<path d="M34.9 7.4h2.2l-.7 4h-.8z" fill="#8A5A05"/>'+
+  '</svg></div>';
 let icoN=0;                          // gradients need ids of their own
 const RIDX={common:0,uncommon:1,rare:2,epic:3,legendary:4};
 /* a stack of notes, one taller and one coin richer per rarity */
@@ -6301,6 +6374,8 @@ function sheetUpgrades(){
       const u=UP[k];
       const d=row({ic:u.g, t:u.nm, s:u.d, v:u.fmt(lv(k)), btn:fmt(cost(k)), btnOn:false});
       d.classList.add("upR");
+      const hue=UP_HUE[k]||{c:"#4F5FE0",bg:"#EEF0FE"};
+      d.style.setProperty("--uc",hue.c); d.style.setProperty("--ub",hue.bg);
       const lt=document.createElement("div");
       lt.className="lvT"; lt.textContent="Level "+lv(k);
       d.querySelector(".l").appendChild(lt);
