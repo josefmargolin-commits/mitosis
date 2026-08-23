@@ -545,7 +545,7 @@ input{font:inherit;color:inherit}
   box-shadow:0 6px 0 #050912, 0 10px 20px rgba(11,16,26,.34),
              inset 0 0 0 1px rgba(124,224,255,.22),
              inset 0 1px 0 rgba(124,224,255,.30);
-  transition:transform .08s cubic-bezier(.2,1.7,.4,1), box-shadow .08s ease;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;
 }
 #fireWrap:active,#fireWrap.down{
   transform:translateY(4px);
@@ -576,21 +576,7 @@ input{font:inherit;color:inherit}
   opacity:.55;transition:opacity .12s ease, transform .12s ease;
   transform-origin:50% 0;
 }
-#fireWrap.shot #rigEdit{
-  position:absolute;right:9px;top:50%;margin-top:-17px;
-  width:34px;height:34px;border-radius:11px;padding:0;border:none;z-index:7;
-  background:rgba(124,224,255,.12);
-  box-shadow:inset 0 0 0 1px rgba(124,224,255,.30);
-  display:grid;place-items:center;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  transition:background .14s ease, box-shadow .14s ease;
-}
-#rigEdit svg{width:17px;height:17px;fill:#7CE0FF;display:block}
-#rigEdit.on{background:#7CE0FF;box-shadow:0 0 14px rgba(124,224,255,.6)}
-#rigEdit.on svg{fill:#08121E}
-/* while it is open the dish stops taking swipes, so a drag is only a drag */
-.rigEditing #fx{touch-action:none}
-#firePort{opacity:1;transform:scaleY(2.1)}
+#fireWrap.shot #firePort{opacity:1;transform:scaleY(1.45)}
 /* the circle centres itself on the pane rather than on the screen */
 #upBtn{
   position:absolute;right:calc(10px + env(safe-area-inset-right));
@@ -2780,17 +2766,31 @@ function drawSlots(x){
       x.fillStyle="rgba(124,224,255,.20)";
       x.beginPath(); x.roundRect(-p.r*1.1,-p.r*1.7,p.r*2.2,p.r*1.9,4*S); x.fill();
     }
-    x.strokeStyle=lit?"rgba(124,224,255,.95)"
-                    :(taken?"rgba(124,224,255,.26)":"rgba(124,224,255,.5)");
-    x.setLineDash(taken||lit?[]:[3*S,3*S]);
-    x.lineWidth=Math.max(1,(lit?2:1.4)*S);
-    x.beginPath(); x.roundRect(-p.r,-p.r*1.5,p.r*2,p.r*1.6,3*S); x.stroke();
-    x.setLineDash([]);
-    // the plus: what an empty slot is for, and the thing you press
+    if(taken){
+      x.strokeStyle=lit?"rgba(124,224,255,.95)":"rgba(124,224,255,.22)";
+      x.lineWidth=Math.max(1,(lit?2:1.2)*S);
+      x.beginPath(); x.roundRect(-p.r,-p.r*1.5,p.r*2,p.r*1.6,3*S); x.stroke();
+    }
+    // an empty socket: a dark plate set into the rig with a plus in it
     if(!taken){
-      const a=p.r*0.52, cy=-p.r*0.7;
-      x.strokeStyle="rgba(124,224,255,"+(lit?.95:.72)+")";
-      x.lineWidth=Math.max(1.6,2.1*S); x.lineCap="round";
+      const cy=-p.r*0.72, w=p.r*0.92, hh=p.r*0.80;
+      const g=x.createLinearGradient(0,cy-hh,0,cy+hh);
+      g.addColorStop(0,"rgba(6,11,20,.88)");
+      g.addColorStop(1,"rgba(18,28,46,.72)");
+      x.fillStyle=g;
+      x.beginPath(); x.roundRect(-w,cy-hh,w*2,hh*2,4*S); x.fill();
+      // the lip along the top, so it reads as cut in rather than sat on
+      x.strokeStyle="rgba(150,200,240,.20)";
+      x.lineWidth=Math.max(1,1.2*S);
+      x.beginPath(); x.moveTo(-w+3*S,cy-hh+0.6*S); x.lineTo(w-3*S,cy-hh+0.6*S); x.stroke();
+      if(lit){
+        x.strokeStyle="rgba(124,224,255,.85)";
+        x.lineWidth=Math.max(1.4,1.8*S);
+        x.beginPath(); x.roundRect(-w,cy-hh,w*2,hh*2,4*S); x.stroke();
+      }
+      const a=p.r*0.42;
+      x.strokeStyle="rgba(124,224,255,"+(lit?.98:.66)+")";
+      x.lineWidth=Math.max(1.8,2.3*S); x.lineCap="round";
       x.beginPath();
       x.moveTo(-a,cy); x.lineTo(a,cy);
       x.moveTo(0,cy-a); x.lineTo(0,cy+a);
@@ -2823,16 +2823,41 @@ function drawOneTurret(x,t,p,lifted){
   x.fillStyle="rgba(124,224,255,.30)";
   x.beginPath(); x.roundRect(-R*(t.ufo?1.18:0.90),-0.5*S,R*(t.ufo?2.36:1.80),1.6*S,1*S); x.fill();
   if(t.ufo){
-    x.fillStyle="#111A2A";
-    x.beginPath(); x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.40*(1-k*0.14),0,Math.PI,TAU); x.fill();
-    x.beginPath(); x.ellipse(0,-R*0.16,R*1.28*(1+k*0.10),R*0.30,0,0,Math.PI); x.fill();
-    x.fillStyle="#1C2942";
-    x.beginPath(); x.ellipse(0,-R*0.22,R*0.98,R*0.24,0,Math.PI,TAU); x.fill();
-    x.fillStyle="#16223A";
-    x.beginPath(); x.ellipse(0,-R*0.42,R*0.56*(1+k*0.08),R*0.50*(1-k*0.12),0,Math.PI,TAU); x.fill();
+    const w=R*1.30*(1+k*0.08), hy=-R*0.30;
+    // the underside, darker, so the hull has a bottom
+    x.fillStyle="#080E18";
+    x.beginPath(); x.ellipse(0,hy+R*0.10,w,R*0.30,0,0,Math.PI); x.fill();
+    // the hull
+    const hg=x.createLinearGradient(0,hy-R*0.34,0,hy+R*0.22);
+    hg.addColorStop(0,"#2A3854");
+    hg.addColorStop(1,"#10192B");
+    x.fillStyle=hg;
+    x.beginPath(); x.ellipse(0,hy,w,R*0.34*(1-k*0.10),0,Math.PI,TAU); x.fill();
+    x.beginPath(); x.ellipse(0,hy,w,R*0.20,0,0,Math.PI); x.fill();
+    // the seam round the widest part
+    x.strokeStyle="rgba(124,224,255,.20)"; x.lineWidth=Math.max(1,1.1*S);
+    x.beginPath(); x.ellipse(0,hy,w*0.99,R*0.19,0,0,TAU); x.stroke();
+    // running lights, dimmer at the edges
     for(let q=-2;q<=2;q++){ if(!q) continue;
-      x.fillStyle="rgba(124,224,255,"+(0.34+k*0.5).toFixed(2)+")";
-      x.beginPath(); x.arc(q*R*0.44,-R*0.10,R*0.075,0,TAU); x.fill(); }
+      x.fillStyle="rgba(124,224,255,"+(0.26+k*0.55-Math.abs(q)*0.05).toFixed(2)+")";
+      x.beginPath(); x.arc(q*R*0.46,hy+R*0.06,R*0.072,0,TAU); x.fill(); }
+    // the canopy
+    const cg=x.createLinearGradient(0,hy-R*0.86,0,hy);
+    cg.addColorStop(0,"#3B4C70"); cg.addColorStop(1,"#141F35");
+    x.fillStyle=cg;
+    x.beginPath(); x.ellipse(0,hy-R*0.04,R*0.60*(1+k*0.06),R*0.62*(1-k*0.10),0,Math.PI,TAU); x.fill();
+    x.strokeStyle="rgba(190,230,255,.26)"; x.lineWidth=Math.max(1,1.2*S);
+    x.beginPath(); x.ellipse(0,hy-R*0.04,R*0.60,R*0.62,0,Math.PI*1.10,Math.PI*1.90); x.stroke();
+    // and the port at the top, which is where your ball comes out
+    const py=hy-R*0.66, pr=R*0.24*(1+k*0.9);
+    const pg=x.createRadialGradient(0,py,0,0,py,Math.max(1,pr*3));
+    pg.addColorStop(0,"rgba(255,255,255,"+(0.72+k*0.28).toFixed(2)+")");
+    pg.addColorStop(.4,"rgba(124,224,255,"+(0.5+k*0.5).toFixed(2)+")");
+    pg.addColorStop(1,"rgba(124,224,255,0)");
+    x.fillStyle=pg;
+    x.beginPath(); x.arc(0,py,Math.max(1,pr*3),0,TAU); x.fill();
+    x.fillStyle="#EAFBFF";
+    x.beginPath(); x.ellipse(0,py,pr,pr*0.72,0,0,TAU); x.fill();
   } else if(t.type==="sniper"){
     // a long low body with a raised sight, so it reads as the patient one
     x.fillStyle="#111A2A";
@@ -4361,26 +4386,13 @@ function ventBall(forceTier, plainOnly){
     haptic(6+up*4);
   }
   VENT.n++;
+  // one short pulse, no overshoot and no blink, so hammering it stays smooth
   const h=document.getElementById("dockHandle");
-  if(h&&h.animate){
-    const dir=document.getElementById("dock").classList.contains("min")?-1:1;
-    h.animate([
-      {transform:"translateY(0) scale(1,1)"},
-      {transform:"translateY("+(3*dir)+"px) scale(1.16,.80)",offset:.22},   // squeeze
-      {transform:"translateY("+(-5*dir)+"px) scale(.86,1.20)",offset:.52},  // release
-      {transform:"translateY("+(1*dir)+"px) scale(1.05,.95)",offset:.78},
-      {transform:"translateY(0) scale(1,1)"}
-    ],{duration:520,easing:"cubic-bezier(.3,1.2,.4,1)"});
-    const ah=h.querySelector(".ah");
-    const d=document.getElementById("dock").classList.contains("min")?-1:1;
-    if(ah&&ah.animate) ah.animate([
-      {transform:"translateY(0) scale(1)",             opacity:1},
-      {transform:"translateY("+(3*d)+"px) scale(.86,1.14)",opacity:1,offset:.16}, // loads
-      {transform:"translateY("+(-9*d)+"px) scale(1.1,.8)",opacity:0, offset:.42}, // fires
-      {transform:"translateY("+(7*d)+"px) scale(1)",   opacity:0,    offset:.44}, // returns
-      {transform:"translateY(0) scale(1)",             opacity:1}
-    ],{duration:540,easing:"cubic-bezier(.3,1.15,.4,1)"});
-  }
+  if(h&&h.animate) h.animate([
+    {transform:"scale(1)"},
+    {transform:"scale(.88)",offset:.35},
+    {transform:"scale(1)"}
+  ],{duration:180,easing:"ease-out"});
   return true;
 }
 function castBall(i){
