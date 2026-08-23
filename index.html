@@ -33,7 +33,7 @@
   --orange:#FF6B2C;
   --shadow:0 1px 2px rgba(15,23,32,.05), 0 4px 14px rgba(15,23,32,.07);
   --shadow-up:0 -2px 10px rgba(15,23,32,.05), 0 -16px 44px rgba(15,23,32,.09);
-  --dock-h:152px;
+  --dock-h:78px;
   --top-h:calc(58px + env(safe-area-inset-top));
   --sym:"Segoe UI Symbol","Apple Symbols";
   /* one family, five weights: 800 page titles, 700 section titles and numbers,
@@ -460,34 +460,36 @@ input{font:inherit;color:inherit}
 
 /* ============ dock ============ */
 #dockHandle{
-  position:absolute;top:-52px;left:0;right:0;margin-inline:auto;
-  width:40px;height:40px;border-radius:50%;padding:0;
-  background:var(--panel);border:1px solid var(--edge);
-  box-shadow:var(--shadow);
+  position:absolute;top:11px;left:0;right:0;margin-inline:auto;
+  width:62px;height:62px;border-radius:50%;padding:0;
+  background:linear-gradient(180deg,#6BF08A,#33C95A);
+  border:none;
+  box-shadow:0 6px 0 #1E9B41, 0 10px 20px rgba(38,170,80,.34);
   display:grid;place-items:center;z-index:6;
   animation:handleBob 3.6s ease-in-out infinite;
-  transition:transform .12s cubic-bezier(.2,1.7,.4,1);
+  transition:transform .09s cubic-bezier(.2,1.7,.4,1), box-shadow .09s ease;
+}
+#dockHandle:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 #1E9B41, 0 4px 10px rgba(38,170,80,.3);
 }
 @keyframes handleBob{50%{translate:0 -4px}}
 #dockHandle .ah{display:grid;place-items:center;line-height:0}
 /* how long until the next one is loaded. It fills as the chamber does and
    drains the instant it fires. */
 #vBar{
-  position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;
+  position:absolute;left:50%;transform:translateX(-50%);bottom:-10px;
   transition:bottom .26s cubic-bezier(.3,.8,.3,1), top .26s cubic-bezier(.3,.8,.3,1);
-  width:24px;height:3px;border-radius:99px;overflow:hidden;
-  background:rgba(15,23,32,.11);
+  width:30px;height:3px;border-radius:99px;overflow:hidden;
+  background:rgba(15,23,32,.13);
 }
 #vBar b{display:block;height:100%;width:0%;border-radius:99px;
   background:linear-gradient(90deg,#7CB2FF,#2F6BFF);
   transition:width .1s linear}
 #vBar.full b{background:linear-gradient(90deg,#8FE3FF,#2F6BFF)}
-#dockHandle svg{width:19px;height:19px;stroke:var(--ink-2);fill:none;
+#dockHandle svg{width:27px;height:27px;stroke:none;fill:#fff;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
-#dock.min #dockHandle svg{transform:rotate(180deg)}
-#dock.min #vBar{bottom:auto;top:-8px}
-#dockHandle:active{transform:scale(.9)}
 #dock{
   position:absolute;z-index:5;left:0;right:0;bottom:0;
   height:calc(var(--dock-h) + env(safe-area-inset-bottom));
@@ -500,8 +502,6 @@ input{font:inherit;color:inherit}
   transition:opacity .26s ease,visibility .26s}
 /* collapsed leaves the tabs standing, so the upgrades fold into the tab
    they belong to rather than the whole shelf disappearing */
-#dock.min{height:calc(var(--tab-h,38px) + env(safe-area-inset-bottom))}
-#dock.min #cards{opacity:0;visibility:hidden;pointer-events:none}
 #cards{transition:opacity .26s ease,visibility .26s}
 #tabs::-webkit-scrollbar{display:none}
 .tab{
@@ -766,7 +766,7 @@ input{font:inherit;color:inherit}
 
 @media (prefers-reduced-motion:reduce){ *{animation:none!important} }
 @media (max-height:680px){
-  :root{--dock-h:146px}
+  :root{--dock-h:70px}
   .card{flex-basis:78px;padding:7px 5px 6px;gap:2px}
   .card .gw{width:27px;height:27px}
   .card .nm{font-size:9.5px}
@@ -775,7 +775,7 @@ input{font:inherit;color:inherit}
 }
 /* short windows still need a playable dish, so the dock gives ground */
 @media (max-height:540px){
-  :root{--dock-h:122px}
+  :root{--dock-h:62px}
   :root{--tab-h:32px}
   .tab{font-size:10.5px;padding:0 5px}
   .card{flex-basis:70px;padding:5px 4px 5px;gap:1px}
@@ -1521,12 +1521,10 @@ input{font:inherit;color:inherit}
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
       <div id="dock">
-        <button id="dockHandle" aria-label="Show or hide upgrades">
-          <span class="ah"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></span>
+        <button id="dockHandle" aria-label="Fire the arrow">
+          <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
           <i id="vBar"><b></b></i>
         </button>
-        <nav id="tabs"></nav>
-        <div id="cards"></div>
       </div>
     </section>
 
@@ -3294,10 +3292,10 @@ function ventRoll(){
   for(const v of VENT_ROLL){ r-=v.p; if(r<=0) return v.tier; }
   return VENT_ROLL[0].tier;
 }
-function ventBall(){
+function ventBall(forceTier){
   if(!ready||W<10) return false;
   const cls=WRANK[0], kind=dropKind(VENT_LUCKY);
-  const t=ventRoll();
+  const t=(forceTier===undefined||forceTier===null)?ventRoll():forceTier;
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
   if(!roomFor(rr)) return false;               // it has to fit, not just fit in
@@ -5247,7 +5245,8 @@ function syncRails(){
 }
 
 function buildTabs(){
-  const n=$("tabs"); n.innerHTML="";
+  const n=$("tabs"); if(!n) return;      // no shelf any more
+  n.innerHTML="";
   for(const t of TABS){
     const b=document.createElement("button");
     b.className="tab"+(G.tab===t.id?" on":"");
@@ -5263,7 +5262,8 @@ function buildTabs(){
   buildCards();
 }
 function buildCards(){
-  const c=$("cards"); c.innerHTML="";
+  const c=$("cards"); if(!c) return;
+  c.innerHTML="";
   if(G.tab==="strain"){ buildStrainCard(c); return; }
   for(const k of UPK){
     if(UP[k].tab!==G.tab) continue;
@@ -5289,7 +5289,7 @@ function buildCards(){
 }
 const RINGC=2*Math.PI*17;   // the ring path length, for dash maths
 function syncCards(){
-  const c=$("cards");
+  const c=$("cards"); if(!c) return;
   for(const b of c.children){
     const k=b.dataset.k;
     if(k){
@@ -6370,7 +6370,7 @@ function tickUI(dt){
       if(G.spore<60) G.spore=60;
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
-    syncTop(); syncCards(); syncRails(); syncGoal();
+    syncTop(); syncRails(); syncGoal();
     const vb=$("vBar");
     if(vb){
       const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
@@ -6378,11 +6378,6 @@ function tickUI(dt){
       vb.classList.toggle("full",k>=.999);
     }
     // the tower is closed
-    if(G.tab==="strain"){
-      if(!PC||!PC.card.isConnected){ const cc=$("cards"); cc.innerHTML=""; buildStrainCard(cc); }
-      else syncStrainCard();
-    }
-    const t=$("tabs").children[5]; if(t) t.classList.toggle("hot",canPrestige());
 
   }
 }
@@ -6557,9 +6552,10 @@ function setDockMin(min,quiet){
   };
   requestAnimationFrame(track);
 }
-(function dockToggle(){
-  $("dock").classList.toggle("min",!!G.opt.dockMin);
-  $("dockHandle").onclick=()=>setDockMin(!G.opt.dockMin);
+/* press it and it fires: a green one, straight up, every time */
+(function arrowButton(){
+  const h=$("dockHandle");
+  h.onclick=()=>{ if(!ready) return; ventBall(6); };
 })();
 /* the tower is closed */
 document.getElementById("goDown").onclick=()=>goRoom("arena");
@@ -6577,7 +6573,7 @@ document.getElementById("goDown").onclick=()=>goRoom("arena");
   });
 })();
 
-buildRails(); buildTabs(); syncTop(); syncRails();
+buildRails(); syncTop(); syncRails();
 $("introHint").textContent = G.totalEarned>0
   ? "Banked "+fmt(G.totalEarned)+" · Strain "+ROMAN[G.strain] : "";
 /* ---------------------------------------------------------------- tutorial
@@ -6627,7 +6623,10 @@ $("howto").onclick=tutStart;
 
 if(G.totalEarned>0) $("begin").textContent="Resume";
 $("sporeWrap").onclick=()=>{ if(!ready) return; G.stTab="cos"; sheetShop(); };
-$("goal").onclick=()=>{ G.tab="strain"; buildTabs(); save(); if(G.opt.dockMin) setDockMin(false); };
+$("goal").onclick=()=>{
+  if(canPrestige()) doPrestige();
+  else toast("Bank "+fmt(nextScaleCost()-G.earned)+" more to move up");
+};
 $("wizUpBtn").onclick=sheetWizards;
 $("case").onclick=e=>{ if(e.target.id==="case"&&!caseBusy) $("case").classList.remove("on"); };
 holdRepeat($("summonBtn"),function(){
