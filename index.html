@@ -1126,9 +1126,17 @@ input{font:inherit;color:inherit}
 .card .ad{display:none;font-size:10px;font-weight:600;color:#16A34A;
   align-items:center;gap:3px;margin-top:1px}
 .card.canAd .ad{display:flex}
+/* the watch replaces what the level does, rather than being added to it */
+.card.canAd .ef{display:none}
+/* and it sits a hair tighter, since the ad row is a step taller than the
+   line it replaced */
+.card.canAd{gap:2px}
+.card.canAd .ad{font-size:9.5px;line-height:1.15}
 .card.canAd{border-color:rgba(34,197,94,.5);background:#F6FDF8}
 .card .alt{display:none;font-size:9px;font-weight:500;color:var(--yellow);margin-top:1px}
-.card.canAd .alt{display:block}
+/* the price is already on the card in bigger type, so this was saying it
+   twice and costing a line to do it */
+.card.canAd .alt{display:none}
 .card.locked{border-style:dashed;background:transparent;opacity:.5}
 .card.locked .ct{color:var(--ink-3);font-size:9px;font-weight:500}
 
@@ -2024,7 +2032,8 @@ function resize(){
   // measure the real chrome, so notches and safe areas never clip the dish
   const topEl=document.getElementById("top"), dockEl=document.getElementById("dock");
   AR.x0=0; AR.x1=W;
-  AR.y0=(topEl?topEl.offsetHeight:58)+34;   // room for the up arrow
+  const gEl=document.getElementById("goal");
+  AR.y0=(topEl?topEl.offsetHeight:58)+(gEl?gEl.offsetHeight+4:34);
   AR.y1=H-(dockEl?dockEl.offsetHeight:152);
   layoutWizards();
   drawBg();
@@ -5183,7 +5192,6 @@ function syncCards(){
       // the reference offers an ad on a card you cannot reach yet
       const canAd=!m && !af && adReady("up_"+k);
       b.classList.toggle("canAd",canAd);
-      if(canAd) b.querySelector(".alt").textContent="or $"+fmt(cost(k));
       // every purchase closes the ring a little further; it completes at max
       const ring=b.querySelector(".rfg");
       if(ring) ring.style.strokeDashoffset=(RINGC*(1-(u.max?clamp(lv(k)/u.max,0,1):0))).toFixed(2);
