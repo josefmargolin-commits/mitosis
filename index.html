@@ -2019,7 +2019,7 @@ const UP={
            v:l=>11+l*2.1, fmt:l=>Math.round(11+l*2.1)+"px"},
   cascade:{tab:"touch",g:aimg("up_dish"),
            nm:"Double", base:90, gr:1.24, max:50,
-           d:"Chance a slice bursts into twice as many balls, and those can double again.",
+           d:"Chance a slice bursts into four balls instead of two.",
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
   purity: {tab:"arena",g:aimg("up_purity"),
            nm:"Lucky", base:130,gr:1.24, max:40,
@@ -2930,16 +2930,28 @@ function divide(b){
   const share=[a1/(a1+a2), a2/(a1+a2)];
   const ax=rnd(0,TAU), kick=52+b.r*2.0;
   const kids=[];
-  for(let i=0;i<2;i++){
+  // one roll for the whole slice, and only if there is somewhere to put them
+  const dbl = b.kind==="plain" && Math.random()<val("cascade")
+              && roomFor(tierRadius(t2,b.cls));
+  for(let i=0;i<(dbl?4:2);i++){
     if(balls.length>=hard) break;
-    const ct=i?t2:t1, cr=tierRadius(ct,b.cls);
-    const a=ax+i*Math.PI+rnd(-.14,.14), off=(b.r-cr)*.55;
+    const j=i&1;
+    const ct=j?t2:t1, cr=tierRadius(ct,b.cls);
+    // the second pair leaves on its own angle so they do not stack up
+    const a=ax+j*Math.PI+rnd(-.14,.14)+(i>1?rnd(.7,1.15):0), off=(b.r-cr)*.55;
+    const sp=kick*(j?1.18:.86)*(i>1?1.22:1);
     const nb=makeBall(ct,b.x+Math.cos(a)*off,b.y+Math.sin(a)*off,
-      b.vx*.55+Math.cos(a)*kick*(i?1.18:.86), b.vy*.55+Math.sin(a)*kick*(i?1.18:.86),
-      b.cls, b.mass*share[i], "plain");
+      b.vx*.55+Math.cos(a)*sp, b.vy*.55+Math.sin(a)*sp,
+      b.cls, b.mass*share[j], "plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
     clampIn(nb);
     balls.push(nb); kids.push(nb);
+  }
+  if(dbl){
+    // it has to be legible or it is just occasionally more mess
+    rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*3.1,t:0,life:.32,col:"#0E9488",w:2.6});
+    for(let i=0;i<5;i++) spark(b.x,b.y,"#3FD6C4");
+    pop(660,{pan:panAt(b.x),vol:.07,wet:.18});
   }
 
   for(let i=0;i<7+b.tier*2;i++){
@@ -2961,13 +2973,9 @@ function divide(b){
   if(b.tier<=1) thud(58,{pan:sp,vol:.16,len:.18});
   haptic(b.tier===0?16:10);
 
-  const casc=val("cascade");
-  for(const k of kids){
-    if(Math.random()<casc) fuses.push({b:k,t:.05+Math.random()*.04,d:999});
-    else if(timers.chain>0){                 // now only the Chain power does this
-      const n=nearest(k.x,k.y,b.r*3.4,k);
-      if(n) fuses.push({b:n,t:.06+Math.random()*.06,d:999});
-    }
+  if(timers.chain>0) for(const k of kids){   // only the Chain power still jumps
+    const n=nearest(k.x,k.y,b.r*3.4,k);
+    if(n) fuses.push({b:n,t:.06+Math.random()*.06,d:999});
   }
 }
 
