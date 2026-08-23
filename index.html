@@ -89,7 +89,7 @@ input{font:inherit;color:inherit}
 #roomWiz{top:0}
 #roomArena{top:50%}
 /* ============ room arrows ============ */
-#goUp,#goDown{
+#goDown{
   position:absolute;left:0;right:0;margin-inline:auto;width:max-content;z-index:6;
   display:flex;align-items:center;gap:6px;
   padding:7px 15px 7px 12px;border-radius:999px;
@@ -97,7 +97,6 @@ input{font:inherit;color:inherit}
   font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);
   white-space:nowrap;
 }
-#goUp{top:calc(var(--top-h) + 40px)}
 /* ---- the goal bar ---- */
 #goal{
   position:absolute;left:0;right:0;top:var(--top-h);z-index:6;
@@ -137,15 +136,9 @@ input{font:inherit;color:inherit}
 #goDown svg{width:15px!important;height:15px!important;stroke:#fff!important}
 #goDown:active{transform:translateY(3px);
   box-shadow:inset 0 1.5px 0 rgba(255,255,255,.34),0 0 0 #1A47A8,0 2px 6px rgba(37,99,235,.34)}
-#goUp svg,#goDown svg{width:14px;height:14px;flex:none;stroke:var(--ink);fill:none;
+#goDown svg{width:14px;height:14px;flex:none;stroke:var(--ink);fill:none;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-#goUp:active{transform:scale(.94)}
 #goDown:active{transform:scale(.94)}
-#goUp .dot{
-  position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;
-  background:var(--red);border:2px solid var(--panel);display:none;
-}
-#goUp.alert .dot{display:block}
 
 /* ============ wizard stage ============ */
 #wizStage{
@@ -1523,11 +1516,6 @@ input{font:inherit;color:inherit}
         <span class="l"><span class="k">Becoming</span><span class="t">Cellular</span></span>
         <span class="p">0%</span>
         <span class="bar"><i></i></span>
-      </button>
-      <button id="goUp" aria-label="Up to the wizards" hidden>
-        <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        <span>Wizards</span>
-        <i class="dot"></i>
       </button>
       <div class="rail" id="railL"></div>
       <div class="rail" id="railR"></div>
@@ -3083,8 +3071,6 @@ function syncWizGrid(){
       lvEl.textContent="Lv "+L;
     } else { pipEl.innerHTML=""; pipEl.dataset.r=""; lvEl.style.display="none"; }
   }
-  const up=document.getElementById("goUp");
-  if(up) up.classList.toggle("alert",(can&&hasRoom)||anyMerge());
   layoutWizards();
   const fill=clamp(dishFill(),0,1);
   const bar=document.getElementById("apBar");
