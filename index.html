@@ -718,24 +718,48 @@ input{font:inherit;color:inherit}
 .bchestArt.open .lock{opacity:0}
 .bchestArt.open{animation:chJump .5s cubic-bezier(.3,1.6,.4,1)}
 @keyframes chJump{40%{transform:translateY(-9px) scale(1.05)}}
-/* the four kinds, running past under the lid */
-.reel{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;width:100%}
-.reel .cell{
-  background:var(--surface);border-radius:14px;padding:11px 4px 9px;
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  opacity:.42;transform:scale(.93);
-  transition:opacity .12s linear, transform .12s linear, background .12s linear;
+/* the strip, and the line it stops under. Only the strip moves; the window
+   clips it and the marker stays put, which is what makes it read as a case
+   rather than as four things taking turns lighting up. */
+.crate{
+  position:relative;width:100%;overflow:hidden;border-radius:16px;
+  background:var(--surface);padding:10px 0;
+  box-shadow:inset 0 0 0 1px rgba(15,23,32,.05);
 }
-.reel .cell span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
-  font-size:15px;font-weight:800;background:#fff;color:var(--ink-3)}
-.reel .cell b{font:800 10px/1 var(--font);letter-spacing:.05em;text-transform:uppercase;
-  color:var(--ink-3)}
-.reel .cell.on{opacity:1;transform:scale(1.04);background:var(--cb)}
-.reel .cell.on span{background:#fff;color:var(--cf)}
-.reel .cell.on b{color:var(--cf)}
-.reel .cell.won{transform:scale(1.1);box-shadow:0 0 0 2px var(--cf) inset;
-  animation:chWon 1.1s ease-in-out infinite}
-@keyframes chWon{50%{box-shadow:0 0 0 2px var(--cf) inset, 0 0 16px rgba(255,176,32,.5)}}
+.crate::before,.crate::after{
+  content:"";position:absolute;top:0;bottom:0;width:44px;z-index:3;pointer-events:none;
+}
+.crate::before{left:0;background:linear-gradient(90deg,var(--surface),rgba(0,0,0,0))}
+.crate::after{right:0;background:linear-gradient(270deg,var(--surface),rgba(0,0,0,0))}
+.crMark{
+  position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;z-index:4;
+  background:linear-gradient(180deg,#FFC24D,#F0A81E);border-radius:99px;
+  box-shadow:0 0 10px rgba(240,168,30,.7);
+}
+.crStrip{display:flex;will-change:transform}
+.crC{
+  flex:0 0 84px;margin-right:8px;height:96px;border-radius:13px;
+  background:var(--panel);box-shadow:0 1px 3px rgba(15,23,32,.07);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  padding:8px 5px 0;position:relative;overflow:hidden;
+  border-bottom:4px solid var(--rc);
+}
+.crC .ic{
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  background:var(--rb);color:var(--rc);font:800 16px/1 var(--font);flex:none;
+}
+.crC b{font:800 10.5px/1.2 var(--font);color:var(--ink);text-align:center;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crC i{font:800 8px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--rc);font-style:normal}
+/* the good ones glow inside the strip, so a Legendary is visible coming */
+.crC.r-epic,.crC.r-legendary{background:linear-gradient(180deg,var(--panel),var(--rb))}
+.crC.r-legendary{box-shadow:0 1px 3px rgba(15,23,32,.07), 0 0 14px rgba(240,168,30,.35)}
+.crC.won{animation:crWon .5s cubic-bezier(.3,1.6,.4,1)}
+@keyframes crWon{40%{transform:translateY(-7px) scale(1.07)}}
+.prize .pr{display:block;font:800 9.5px/1 var(--font);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:5px}
+.prize .pn{display:block;font:800 16px/1.2 var(--font);color:var(--ink)}
 .prize{font:800 15px/1.2 var(--font);color:var(--ink);text-align:center;min-height:19px;
   opacity:0;transform:translateY(4px);transition:opacity .3s ease, transform .3s ease}
 .prize.on{opacity:1;transform:none}
@@ -5828,48 +5852,121 @@ function syncUpBtn(){
   const b=document.getElementById("upBtn"); if(!b) return;
   b.classList.toggle("can", SHOP_UP.some(k=>!maxed(k)&&G.bio>=cost(k)));
 }
-const CHEST_ODDS=[
-  {k:"cash",  w:42, nm:"Cash",  ic:"$", bg:"#DCFCE7", fg:"#16A34A"},
-  {k:"mana",  w:26, nm:"Mana",  ic:"●", bg:"#E5EEFF", fg:"#2563EB"},
-  {k:"power", w:17, nm:"Power", ic:"✦", bg:"#FFF3D6", fg:"#B4791A"},
-  {k:"cos",   w:15, nm:"Skin",  ic:"◎", bg:"#F5E8FF", fg:"#7C3AED"},
-];
-/* what is left on the shelves, so the reel never promises a skin you own */
-function chestCosPool(){
+/* ======================================================== the boss crate
+   Twenty things behind one lid, on five rarities, and the strip scrolls
+   past them the way a case does: fast, then slower, then one notch at a
+   time, and it stops with the winner under the line.
+
+   Everything it pays is priced off where you actually are rather than off
+   a constant. chestUnit is the bigger of a minute of your current income,
+   a hundredth of the scale you are climbing, a twentieth of what you are
+   holding, and a floor that grows with the scale itself - so a Legendary
+   is a Legendary at Cellular and still one six scales later, and cash can
+   never be worth less than the mana sitting beside it. */
+const RARITY={
+  common:    {nm:"Common",    w:52, c:"#8FA0B8", bg:"#EEF1F5"},
+  uncommon:  {nm:"Uncommon",  w:27, c:"#3B82F6", bg:"#E5EEFF"},
+  rare:      {nm:"Rare",      w:14, c:"#7C3AED", bg:"#F3E8FF"},
+  epic:      {nm:"Epic",      w:5.4,c:"#EC4899", bg:"#FFE7F3"},
+  legendary: {nm:"Legendary", w:1.6,c:"#F0A81E", bg:"#FFF3D6"},
+};
+function chestUnit(){
+  const sc=nextScaleCost();
+  return Math.min(
+    Math.max(
+      perSec()*45,               // three quarters of a minute of your income
+      sc*0.002,                  // a five hundredth of the climb ahead
+      G.bio*0.02,                // a fiftieth of what you are holding
+      200*scaleMul()             // and a floor that grows with the scale
+    ),
+    sc*0.005                     // but never a runaway share of the rung
+  );
+}
+const manaUnit=()=>1+G.strain*0.55;
+/* the cosmetics still on the shelf, cheapest first */
+function cosPool(){
   const out=[];
   for(const t of TRAILS) if(!G.ownTrail.includes(t.id)) out.push({kind:"trail",o:t});
   for(const k of SKINS)  if(!G.ownSkin.includes(k.id))  out.push({kind:"skin", o:k});
-  return out;
+  return out.sort((a,b)=>a.o.cost-b.o.cost);
 }
-function chestRoll(){
-  const pool=chestCosPool();
-  const odds=CHEST_ODDS.filter(o=>o.k!=="cos"||pool.length);
-  let tot=0; for(const o of odds) tot+=o.w;
-  let r=Math.random()*tot, pick=odds[0];
-  for(const o of odds){ r-=o.w; if(r<=0){ pick=o; break; } }
-  if(pick.k==="cash"){
-    // a chest is worth a couple of minutes of whatever you are making now
-    const base=Math.max(120, perSec()*rnd(70,150), nextScaleCost()*0.012);
-    return {k:"cash", amt:Math.round(base), label:fmt(Math.round(base))+" cash"};
-  }
-  if(pick.k==="mana"){
-    const n=Math.round(rnd(3,9)+G.strain*2);
-    return {k:"mana", amt:n, label:n+" mana"};
-  }
-  if(pick.k==="power"){
-    return {k:"power", label:"Scatter, ready now"};
-  }
-  const c=pool[(Math.random()*pool.length)|0];
-  return {k:"cos", item:c, label:c.o.nm+(c.kind==="skin"?" skin":" cleave")};
+const cosTake=(lo,hi)=>{
+  const p=cosPool(); if(!p.length) return null;
+  const slice=p.slice(Math.floor(p.length*lo), Math.max(1,Math.ceil(p.length*hi)));
+  const use=slice.length?slice:p;
+  return use[(Math.random()*use.length)|0];
+};
+const CRATE=[
+  // ---- common ------------------------------------------------------------
+  {id:"change", nm:"Loose Change", r:"common", t:"cash", ic:"$", m:0.4},
+  {id:"petty",  nm:"Petty Cash",   r:"common", t:"cash", ic:"$", m:0.8},
+  {id:"dust",   nm:"Mana Dust",    r:"common", t:"mana", ic:"●", m:3},
+  {id:"ready",  nm:"Scatter Ready",r:"common", t:"power",ic:"✦",
+   d:"Scatter off cooldown", go(){ const st=pwState(POWERS[0]); st.owned=true; st.cd=0; }},
+  // ---- uncommon ----------------------------------------------------------
+  {id:"payday", nm:"Payday",       r:"uncommon", t:"cash", ic:"$", m:1.7},
+  {id:"vial",   nm:"Mana Vial",    r:"uncommon", t:"mana", ic:"●", m:9},
+  {id:"rapid",  nm:"Rapid Load",   r:"uncommon", t:"power",ic:"✦",
+   d:"Three balls, now", go(){ for(let i=0;i<3;i++) ventBall(ventRoll()); VENT.t=0; }},
+  {id:"cleave", nm:"Cleave Colour",r:"uncommon", t:"skin", ic:"◎",
+   pick:()=>cosTake(0,.5)},
+  // ---- rare --------------------------------------------------------------
+  {id:"wind",   nm:"Windfall",     r:"rare", t:"cash", ic:"$", m:4},
+  {id:"cache",  nm:"Mana Cache",   r:"rare", t:"mana", ic:"●", m:24},
+  {id:"frenzy", nm:"Frenzy",       r:"rare", t:"power",ic:"✦",
+   d:"×5 money, thirty seconds", go(){ luckWindow(W*.5,(AR.y0+AR.y1)*.5); }},
+  {id:"fulld",  nm:"Full Dish",    r:"rare", t:"power",ic:"✦",
+   d:"Eight balls, now", go(){ for(let i=0;i<8;i++) ventBall(ventRoll()); VENT.t=0; }},
+  {id:"bskin",  nm:"Ball Skin",    r:"rare", t:"skin", ic:"◎",
+   pick:()=>cosTake(.3,.8)},
+  // ---- epic --------------------------------------------------------------
+  {id:"vault",  nm:"Vault",        r:"epic", t:"cash", ic:"$", m:11},
+  {id:"hoard",  nm:"Mana Hoard",   r:"epic", t:"mana", ic:"●", m:60},
+  {id:"colony", nm:"Colony Boost", r:"epic", t:"power",ic:"✦",
+   d:"Two free levels of Colony",
+   go(){ G.up.colony=Math.min(UP.colony.max,(G.up.colony|0)+2); syncUpRows(); }},
+  {id:"prize",  nm:"Prize Skin",   r:"epic", t:"skin", ic:"◎",
+   pick:()=>cosTake(.6,1)},
+  // ---- legendary ---------------------------------------------------------
+  {id:"jack",   nm:"Jackpot",      r:"legendary", t:"cash", ic:"$", m:26},
+  {id:"mother", nm:"Motherlode",   r:"legendary", t:"mana", ic:"●", m:160},
+  {id:"bang",   nm:"Big Bang",     r:"legendary", t:"power",ic:"✦",
+   d:"Frenzy, a full dish and a free Scatter",
+   go(){ for(let i=0;i<10;i++) ventBall(ventRoll()); VENT.t=0;
+         luckWindow(W*.5,(AR.y0+AR.y1)*.5);
+         const st=pwState(POWERS[0]); st.owned=true; st.cd=0; }},
+];
+/* an item can only come up if it has something to give */
+function crateLive(){
+  const pool=cosPool();
+  return CRATE.filter(i=>i.t!=="skin"||pool.length);
 }
-function chestPay(p){
-  if(p.k==="cash"){ G.bio+=p.amt; G.earned+=p.amt; G.totalEarned+=p.amt; psFrame+=p.amt; }
-  else if(p.k==="mana"){ G.spore+=p.amt; }
-  else if(p.k==="power"){ const st=pwState(POWERS[0]); st.owned=true; st.cd=0; }
-  else if(p.k==="cos"){
-    if(p.item.kind==="skin") G.ownSkin.push(p.item.o.id);
-    else G.ownTrail.push(p.item.o.id);
+function crateRoll(){
+  const live=crateLive();
+  let tot=0; for(const i of live) tot+=RARITY[i.r].w/CRATE.filter(x=>x.r===i.r).length;
+  let r=Math.random()*tot, pick=live[0];
+  for(const i of live){
+    r-=RARITY[i.r].w/CRATE.filter(x=>x.r===i.r).length;
+    if(r<=0){ pick=i; break; }
   }
+  return crateDraw(pick);
+}
+function crateDraw(i){
+  const p={id:i.id, nm:i.nm, r:i.r, t:i.t, ic:i.ic, item:i};
+  if(i.t==="cash"){ p.amt=Math.max(1,Math.round(chestUnit()*i.m)); p.sub=fmt(p.amt)+" cash"; }
+  else if(i.t==="mana"){ p.amt=Math.max(1,Math.round(i.m*manaUnit())); p.sub=p.amt+" mana"; }
+  else if(i.t==="skin"){
+    const c=i.pick(); if(!c) return crateDraw(CRATE[0]);
+    p.cos=c; p.sub=c.o.nm; p.nm=c.o.nm;
+  } else p.sub=i.d;
+  return p;
+}
+function cratePay(p){
+  if(p.t==="cash"){ G.bio+=p.amt; G.earned+=p.amt; G.totalEarned+=p.amt; psFrame+=p.amt; }
+  else if(p.t==="mana"){ G.spore+=p.amt; }
+  else if(p.t==="skin"){
+    if(p.cos.kind==="skin") G.ownSkin.push(p.cos.o.id); else G.ownTrail.push(p.cos.o.id);
+  } else if(p.item&&p.item.go) p.item.go();
   save(); syncTop(); syncRails(); syncUpBtn();
 }
 const CHEST_SVG='<svg viewBox="0 0 64 48" aria-hidden="true">'+
@@ -5877,26 +5974,36 @@ const CHEST_SVG='<svg viewBox="0 0 64 48" aria-hidden="true">'+
   '<rect class="box" x="6" y="20" width="52" height="24" rx="3"/>'+
   '<rect class="band" x="27" y="5" width="10" height="39" rx="2"/>'+
   '<circle class="lock" cx="32" cy="26" r="4.6"/></svg>';
+const CELL_W=92;                       // one card plus its gutter
+function crateCell(p){
+  const R=RARITY[p.r];
+  return '<div class="crC r-'+p.r+'" style="--rc:'+R.c+';--rb:'+R.bg+'">'+
+    '<span class="ic">'+p.ic+'</span>'+
+    '<b>'+p.nm+'</b>'+
+    '<i>'+R.nm+'</i></div>';
+}
 function sheetChest(){
   if((G.chests|0)<=0) return;
   let spun=false;
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#B4791A">'+
       '<path d="M3 9V7.5A4.5 4.5 0 0 1 7.5 3h9A4.5 4.5 0 0 1 21 7.5V9z" fill="currentColor"/>'+
       '<rect x="3" y="9" width="18" height="10" rx="1.6" fill="currentColor"/></svg>',
-    "Boss chest", (G.chests|0)>1?(G.chests|0)+" waiting":"One for the boss you put down", b=>{
+    "Boss crate", (G.chests|0)>1?(G.chests|0)+" waiting":"One for the boss you put down", b=>{
     const wrap=document.createElement("div");
     wrap.className="chestWrap";
     wrap.innerHTML='<div class="bchestArt" id="chArt">'+CHEST_SVG+'</div>'+
-      '<div class="reel" id="chReel">'+
-        CHEST_ODDS.map(o=>'<div class="cell" data-k="'+o.k+'" '+
-          'style="--cb:'+o.bg+';--cf:'+o.fg+'"><span>'+o.ic+'</span><b>'+o.nm+'</b></div>').join("")+
-      '</div>'+
+      '<div class="crate"><div class="crMark"></div>'+
+        '<div class="crStrip" id="chStrip"></div></div>'+
       '<div class="prize" id="chPrize"></div>'+
-      '<button class="chestGo" id="chGo">Claim</button>';
+      '<button class="chestGo" id="chGo">Open</button>';
     b.appendChild(wrap);
-    const go=wrap.querySelector("#chGo"), reel=wrap.querySelector("#chReel"),
+    const go=wrap.querySelector("#chGo"), strip=wrap.querySelector("#chStrip"),
           art=wrap.querySelector("#chArt"), pz=wrap.querySelector("#chPrize");
-    const cells=[...reel.querySelectorAll(".cell")];
+    // a resting strip of what is in there, so you can see the twenty
+    const rest=[]; for(let i=0;i<9;i++) rest.push(crateDraw(CRATE[(i*7)%CRATE.length]));
+    strip.innerHTML=rest.map(crateCell).join("");
+    strip.style.transform="translateX(0px)";
+
     go.onclick=()=>{
       if(spun) return;
       spun=true; go.disabled=true; go.textContent="…";
@@ -5904,32 +6011,66 @@ function sheetChest(){
       const n=G.chests|0;
       $("sheetSub").textContent = n>1 ? n+" more waiting"
                                 : n ? "One more waiting" : "The last one";
-      const prize=chestRoll();
-      const end=CHEST_ODDS.findIndex(o=>o.k===prize.k);
-      // twenty-odd steps, easing out, finishing on the drawn prize
-      const steps=20+((4-((20-end)%4))%4)+8;
-      let i=0;
-      const tick=()=>{
-        cells.forEach((c,n)=>c.classList.toggle("on", n===(i%4)));
-        pop(360+(i%4)*90,{vol:.05,wet:.15});
-        i++;
-        if(i<=steps){ setTimeout(tick, 55+Math.pow(i/steps,3)*230); return; }
-        const win=cells[end];
-        cells.forEach((c,n)=>c.classList.toggle("on", n===end));
-        win.classList.add("won");
-        art.classList.add("open");
-        chestPay(prize);
-        pz.textContent=prize.label; pz.classList.add("on");
-        banner("CHEST");
-        shake=Math.max(shake,5); flash=Math.max(flash,.18);
-        cashBurst(win, 12);
-        for(let n=0;n<4;n++) chime(392*semi(LADDER[n*2]),{vol:.15,len:1.5,delay:n*.07,wet:.6});
-        thud(52,{vol:.3,len:.9}); haptic([18,44,18,44,30]);
-        go.disabled=false;
-        go.textContent=(G.chests|0)>0 ? "Next chest" : "Collect";
-        go.onclick=()=>{ closeSheet(); if((G.chests|0)>0) setTimeout(sheetChest,260); };
+      const prize=crateRoll();
+      // fifty-odd cards of filler, the winner near the end, and enough after
+      // it that the strip never runs out from under the marker
+      const WIN=52, TOTAL=WIN+6;
+      const cards=[];
+      for(let i=0;i<TOTAL;i++) cards.push(i===WIN?prize:crateRoll());
+      strip.innerHTML=cards.map(crateCell).join("");
+      const cells=[...strip.children];
+      cells[WIN].classList.add("winner");
+      // land the winner under the marker, a few pixels off centre so it does
+      // not look mechanically perfect
+      const box=strip.parentElement.getBoundingClientRect();
+      const end=-(WIN*CELL_W + CELL_W/2 - box.width/2 + rnd(-16,16));
+      strip.style.transition="none";
+      strip.style.transform="translateX(0px)";
+      void strip.offsetWidth;
+      const DUR=5.2;
+      strip.style.transition="transform "+DUR+"s cubic-bezier(.09,.62,.14,1)";
+      strip.style.transform="translateX("+end+"px)";
+      // the ticks: one per card as it crosses the marker, which means their
+      // spacing has to follow the same easing the strip does
+      const ease=t=>{ // cubic-bezier(.09,.62,.14,1) sampled by bisection on x
+        let lo=0,hi=1,u=t;
+        for(let k=0;k<18;k++){
+          u=(lo+hi)/2;
+          const x=3*u*(1-u)*(1-u)*.09+3*u*u*(1-u)*.14+u*u*u;
+          if(x<t) lo=u; else hi=u;
+        }
+        return 3*u*(1-u)*(1-u)*.62+3*u*u*(1-u)*1+u*u*u;
       };
-      tick();
+      for(let c=1;c<=WIN;c++){
+        const frac=c/WIN;
+        let lo=0,hi=1;
+        for(let k=0;k<22;k++){ const mid=(lo+hi)/2; if(ease(mid)<frac) lo=mid; else hi=mid; }
+        const tSec=((lo+hi)/2)*DUR;
+        if(tSec>DUR-0.02) continue;
+        setTimeout(()=>{ pop(520+(c%5)*40,{vol:c>WIN-8?.09:.05,wet:.12});
+                         if(c>WIN-5) haptic(6); }, tSec*1000);
+      }
+      setTimeout(()=>{
+        const R=RARITY[prize.r];
+        art.classList.add("open");
+        cells[WIN].classList.add("won");
+        cratePay(prize);
+        pz.innerHTML='<span class="pr" style="color:'+R.c+'">'+R.nm+'</span>'+
+                     '<span class="pn">'+(prize.sub||prize.nm)+'</span>';
+        pz.classList.add("on");
+        banner(prize.r==="legendary"?"LEGENDARY":(prize.r==="epic"?"EPIC":"CRATE"));
+        const big=prize.r==="legendary"||prize.r==="epic";
+        shake=Math.max(shake,big?11:5); flash=Math.max(flash,big?.3:.18);
+        cashBurst(cells[WIN], big?22:11);
+        const notes=big?[0,2,4,7]:[0,2,4];
+        for(let n=0;n<notes.length;n++)
+          chime(392*semi(LADDER[notes[n]]),{vol:.15,len:1.6,delay:n*.07,wet:.6});
+        thud(52,{vol:.3,len:.9});
+        haptic(big?[22,50,22,50,34]:[16,40,16]);
+        go.disabled=false;
+        go.textContent=(G.chests|0)>0 ? "Next crate" : "Collect";
+        go.onclick=()=>{ closeSheet(); if((G.chests|0)>0) setTimeout(sheetChest,280); };
+      }, DUR*1000+60);
     };
   });
 }
