@@ -613,6 +613,21 @@ input{font:inherit;color:inherit}
 #upBtn.can .dot{opacity:1;transform:scale(1);animation:upDot 1.4s ease-in-out infinite}
 @keyframes upDot{50%{box-shadow:0 0 0 5px rgba(255,176,32,.24)}}
 /* a row in the panel: what it is, what it does now, what the next one costs */
+.turTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:2px}
+.turTab{
+  border:none;padding:9px 4px 8px;border-radius:13px;background:var(--surface);
+  font:800 10px/1 var(--font);letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ink-3);display:flex;flex-direction:column;align-items:center;gap:4px;
+  position:relative;transition:background .12s ease, color .12s ease;
+}
+.turTab span{font-size:15px;line-height:1}
+.turTab i{font-style:normal;font-size:8.5px;letter-spacing:0;opacity:.8}
+.turTab i.none{opacity:.35}
+.turTab.on{background:var(--panel);color:var(--tc);
+  box-shadow:inset 0 0 0 1.5px var(--tc), 0 2px 6px rgba(15,23,32,.10)}
+.turHead{display:flex;align-items:baseline;gap:8px;padding:2px 3px 0}
+.turHead b{font:800 13px/1 var(--font);color:var(--ink)}
+.turHead span{font-size:9.5px;color:var(--ink-3)}
 .upR .lvT{font:800 11px/1 Poppins,system-ui,sans-serif;color:var(--ink-3);
   letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
 .upR .claim{min-width:74px}
@@ -2235,6 +2250,7 @@ function freshState(){
   return {
     v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0, chests:0,
     rig:[null,null,null,null,"eye","eye",null,null,null,null],
+    turUp:{eye:{},sniper:{},hive:{}},
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
     pw:{}, boost:{},
@@ -2717,6 +2733,55 @@ const TUR_TYPES={
   hive:  {nm:"Hive",   gap:13, cost:110000,col:"#8DF7C4",
           d:"Releases three drones that steer to whatever is closest and go off when they arrive."},
 };
+const TUR_UP={
+  eye:[
+    {k:"rate", nm:"Fire rate", base:9000,  gr:1.30, max:14,
+     d:"How often it looses a needle.",
+     v:l=>Math.max(2.4, 9-l*0.48), fmt:l=>Math.max(2.4,9-l*0.48).toFixed(1)+"s"},
+    {k:"bounce",nm:"Ricochet", base:26000, gr:1.55, max:7,
+     d:"How many walls a needle takes before it goes.",
+     v:l=>3+l, fmt:l=>(3+l)+" walls"},
+    {k:"life",  nm:"Stamina",  base:14000, gr:1.34, max:10,
+     d:"How long a needle stays in the air, and how fast it travels.",
+     v:l=>1+l*0.11, fmt:l=>"\u00D7"+(1+l*0.11).toFixed(2)},
+  ],
+  sniper:[
+    {k:"rate", nm:"Fire rate", base:34000, gr:1.32, max:12,
+     d:"How often it takes a shot.",
+     v:l=>Math.max(5,17-l*1.05), fmt:l=>Math.max(5,17-l*1.05).toFixed(1)+"s"},
+    {k:"blast",nm:"Blast",     base:48000, gr:1.40, max:12,
+     d:"How wide the detonation reaches.",
+     v:l=>74+l*13, fmt:l=>Math.round(74+l*13)+"px"},
+    {k:"aim",  nm:"Guidance",  base:30000, gr:1.36, max:8,
+     d:"How hard the shell steers to stay on what it was sent for.",
+     v:l=>0.25-l*0.024, fmt:l=>Math.round((1-(0.25-l*0.024)/0.25)*100+10)+"%"},
+  ],
+  hive:[
+    {k:"rate", nm:"Fire rate", base:40000, gr:1.32, max:12,
+     d:"How often it opens.",
+     v:l=>Math.max(4,13-l*0.78), fmt:l=>Math.max(4,13-l*0.78).toFixed(1)+"s"},
+    {k:"swarm",nm:"Swarm",     base:70000, gr:1.62, max:6,
+     d:"How many drones leave at once.",
+     v:l=>3+l, fmt:l=>(3+l)+" drones"},
+    {k:"speed",nm:"Urgency",   base:26000, gr:1.34, max:10,
+     d:"How hard a drone accelerates at what it has chosen.",
+     v:l=>1+l*0.15, fmt:l=>"\u00D7"+(1+l*0.15).toFixed(2)},
+  ],
+};
+const turLv=(ty,k)=>((G.turUp&&G.turUp[ty]&&G.turUp[ty][k])|0);
+function turVal(ty,k){
+  const spec=(TUR_UP[ty]||[]).find(u=>u.k===k);
+  return spec?spec.v(turLv(ty,k)):0;
+}
+const turUpCost=(ty,k)=>{
+  const spec=(TUR_UP[ty]||[]).find(u=>u.k===k);
+  if(!spec) return Infinity;
+  return Math.ceil(spec.base*scaleMul()*Math.pow(spec.gr,turLv(ty,k)));
+};
+const turUpMaxed=(ty,k)=>{
+  const spec=(TUR_UP[ty]||[]).find(u=>u.k===k);
+  return !spec||turLv(ty,k)>=spec.max;
+};
 const TUR_R=()=>22*S;                                // the saucer
 const TUR_H=()=>Math.round(TUR_R()*1.30);            // how far the rig stands up
 function panelTopY(){
@@ -3026,11 +3091,12 @@ function stepTurrets(dt){
     // and its own trigger
     if(t.ufo||rigEdit) continue;
     const spec=TUR_TYPES[t.type]; if(!spec) continue;
-    if(t.cd===undefined) t.cd=spec.gap;
+    const gap=turVal(t.type,"rate")||spec.gap;
+    if(t.cd===undefined) t.cd=gap;
     t.cd-=dt;
     if(t.cd<=0){
       if(!ready||zoomPhase||!best){ t.cd=Math.min(t.cd+0.5,0.5); continue; }
-      t.cd=spec.gap;
+      t.cd=gap;
       if(t.type==="eye") fireNeedle(t);
       else if(t.type==="sniper") fireShell(t,best);
       else if(t.type==="hive") fireDrones(t);
@@ -3059,7 +3125,7 @@ function stepShells(dt){
     if(sh.tgt&&!sh.tgt.gone){
       let want=Math.atan2(sh.tgt.y-sh.y,sh.tgt.x-sh.x), d=want-sh.a;
       while(d>Math.PI) d-=TAU; while(d<-Math.PI) d+=TAU;
-      sh.a+=d*(1-Math.pow(0.25,dt));
+      sh.a+=d*(1-Math.pow(Math.max(0.05,0.25-turLv("sniper","aim")*0.024),dt));
     }
     sh.x+=Math.cos(sh.a)*sh.sp*dt; sh.y+=Math.sin(sh.a)*sh.sp*dt;
     let hit=null;
@@ -3076,7 +3142,7 @@ function stepShells(dt){
   }
 }
 function burstShell(x,y){
-  const R=74*S;
+  const R=(74+turLv("sniper","blast")*13)*S;
   rings.push({x,y,r:4,R:R*1.5,t:0,life:.42,col:"#FF7A8A",w:3});
   rings.push({x,y,r:2,R:R*0.8,t:0,life:.28,col:"#FFE9A8",w:2.2});
   for(let i=0;i<16;i++){
@@ -3109,7 +3175,8 @@ function drawShells(x){
 /* HIVE: three small ones that pick their own target and go off on arrival */
 function fireDrones(t){
   const p=turretAt(t); t.k=1;
-  for(let i=0;i<3;i++){
+  const swarm=3+turLv("hive","swarm");
+  for(let i=0;i<swarm;i++){
     const a=-Math.PI/2+rnd(-.9,.9);
     drones.push({x:p.x+rnd(-4,4)*S, y:p.y-turR(t)*0.9,
       vx:Math.cos(a)*rnd(90,150)*S, vy:Math.sin(a)*rnd(90,150)*S, t:0});
@@ -3130,7 +3197,7 @@ function stepDrones(dt){
     }
     if(best){
       const dx=best.x-d.x, dy=best.y-d.y, L=Math.max(1,Math.hypot(dx,dy));
-      const acc=760*S*dt;
+      const acc=760*(1+turLv("hive","speed")*0.15)*S*dt;
       d.vx+=dx/L*acc; d.vy+=dy/L*acc;
     }
     const sp=Math.hypot(d.vx,d.vy), cap=330*S;
@@ -3175,7 +3242,7 @@ function fireNeedle(t){
   t.k=1;                                    // it rocks back
   const x=p.x, y=p.y-turR(t)*1.1;
   const a=(t.aim===undefined?-Math.PI/2+t.lean:t.aim)+rnd(-.04,.04);
-  needles.push({x, y, a, left:NEEDLE.bounces, t:0, hit:0, px:x, py:y});
+  needles.push({x, y, a, left:3+turLv("eye","bounce"), t:0, hit:0, px:x, py:y});
   rings.push({x,y,r:2,R:18*S,t:0,life:.2,col:"#8FA0B8",w:1.8});
   pop(1180,{pan:panAt(x),vol:.05,wet:.12});
   noiseHit(.06,{pan:panAt(x),vol:.05,cut:3200,q:4});
@@ -3188,8 +3255,9 @@ function stepNeedles(dt){
   for(let i=needles.length-1;i>=0;i--){
     const n=needles[i];
     n.t+=dt;
-    if(n.t>NEEDLE.life||n.left<=0){ burstNeedle(n); needles.splice(i,1); continue; }
-    const dist=NEEDLE.speed*S*dt;
+    const stam=1+turLv("eye","life")*0.11;
+    if(n.t>NEEDLE.life*stam||n.left<=0){ burstNeedle(n); needles.splice(i,1); continue; }
+    const dist=NEEDLE.speed*stam*S*dt;
     const steps=Math.max(1,Math.ceil(dist/(9*S)));
     const sd=dist/steps;
     n.px=n.x; n.py=n.y;
@@ -6923,6 +6991,61 @@ const GUN_ICO=k=>{
 const gunPrice=k=>Math.ceil(TUR_TYPES[k].cost*scaleMul()
                   *Math.pow(2.5,(G.rig||[]).filter(v=>v===k).length));
 /* pressing a slot: a plus asks what goes in it, a gun asks if it should go */
+let turTab="eye";
+function sheetTurrets(type){
+  if(type&&TUR_TYPES[type]&&type!=="ufo") turTab=type;
+  const ICO=k=>'<span style="color:'+TUR_TYPES[k].col+'">'+
+    (k==="sniper"?"\u25C6":k==="hive"?"\u2B22":"\u25C9")+'</span>';
+  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
+      '<circle cx="12" cy="13" r="7.2" fill="none" stroke="currentColor" stroke-width="2"/>'+
+      '<circle cx="12" cy="13" r="2.4" fill="currentColor"/>'+
+      '<path d="M12 2v3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    "Turrets","Upgrades apply to every gun of that kind",b=>{
+    // the three sub tabs
+    const subs=document.createElement("div");
+    subs.className="turTabs";
+    for(const k of Object.keys(TUR_TYPES)){
+      const n=(G.rig||[]).filter(v=>v===k).length;
+      const t=document.createElement("button");
+      t.className="turTab"+(turTab===k?" on":"");
+      t.style.setProperty("--tc",TUR_TYPES[k].col);
+      t.innerHTML='<span>'+ICO(k)+'</span>'+TUR_TYPES[k].nm+
+                  (n?'<i>'+n+'</i>':'<i class="none">0</i>');
+      t.onclick=()=>{ turTab=k; sheetSync&&sheetSync(); };
+      subs.appendChild(t);
+    }
+    b.appendChild(subs);
+
+    const owned=(G.rig||[]).filter(v=>v===turTab).length;
+    const head=document.createElement("div");
+    head.className="turHead";
+    head.innerHTML='<b>'+TUR_TYPES[turTab].nm+'</b><span>'+
+      (owned?owned+" on the rig":"none on the rig \u2014 upgrades still stick")+'</span>';
+    b.appendChild(head);
+
+    for(const u of TUR_UP[turTab]){
+      const lv=turLv(turTab,u.k), maxed=turUpMaxed(turTab,u.k), price=turUpCost(turTab,u.k);
+      const can=!maxed&&G.bio>=price;
+      const d=row({ic:ICO(turTab), t:u.nm, s:u.d, v:u.fmt(lv),
+        btn:maxed?"Max":fmt(price), btnOn:can,
+        fn:function(){
+          if(maxed) return;
+          if(G.bio<price){ toast("Needs "+fmt(price)+" cash"); return; }
+          G.bio-=price;
+          G.turUp[turTab]=G.turUp[turTab]||{};
+          G.turUp[turTab][u.k]=lv+1;
+          buySound(lv+1); haptic(9); save(); syncTop();
+        }});
+      d.classList.add("upR");
+      d.style.setProperty("--uc",TUR_TYPES[turTab].col);
+      d.style.setProperty("--ub","rgba(124,224,255,.10)");
+      const lt=document.createElement("div");
+      lt.className="lvT"; lt.textContent=maxed?"Fully developed":"Level "+lv;
+      d.querySelector(".l").appendChild(lt);
+      b.appendChild(d);
+    }
+  });
+}
 function sheetSlot(slot){
   const here=G.rig&&G.rig[slot];
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
@@ -6931,7 +7054,9 @@ function sheetSlot(slot){
     here?TUR_TYPES[here].nm:"Empty slot",
     here?"Slot "+(slot+1)+" of "+RIG_N:"Pick what stands here", b=>{
     if(here){
-      b.appendChild(row({ic:GUN_ICO(here), t:TUR_TYPES[here].nm, s:TUR_TYPES[here].d}));
+      b.appendChild(row({ic:GUN_ICO(here), t:TUR_TYPES[here].nm, s:TUR_TYPES[here].d,
+        btn:"Upgrade", btnOn:true,
+        fn:()=>{ closeSheet(); setTimeout(()=>sheetTurrets(here),200); }}));
       b.appendChild(row({ic:"\u2715", t:"Take it off", s:"Frees the slot. You do not get the cash back.",
         btn:"Remove", btnOn:true,
         fn:()=>{ G.rig[slot]=null; rebuildRig(); save(); haptic(10); closeSheet(); }}));
@@ -7875,10 +8000,17 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
                 return {x:e.clientX-r.left, y:e.clientY-r.top-panelDown*4}; };
   let downAt=null, moved=0;
   c.addEventListener("pointerdown",e=>{
-    if(!rigEdit||e.button) return;
+    if(e.button) return;
     const p=at(e);
     const slot=slotHit(p.x,p.y);
     if(slot<0) return;
+    if(!rigEdit){
+      // not rearranging: a press on a gun is a press on its upgrades
+      if(!G.rig[slot]||!ready) return;
+      e.preventDefault(); e.stopPropagation();
+      sheetTurrets(G.rig[slot]);
+      return;
+    }
     downAt={x:p.x,y:p.y,slot}; moved=0;
     e.preventDefault(); e.stopPropagation();
     try{ c.setPointerCapture(e.pointerId); }catch(err){}
