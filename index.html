@@ -521,7 +521,7 @@ input{font:inherit;color:inherit}
 #vBar.full{animation:vbFull 1.2s ease-in-out infinite}
 @keyframes vbFull{50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),
                                   0 0 10px rgba(245,163,0,.55)}}
-#dockHandle svg{width:30px;height:30px;stroke:none;fill:#7CE0FF;
+#dockHandle svg{width:33px;height:33px;color:#7CE0FF;fill:#7CE0FF;
   stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
   transition:transform .26s cubic-bezier(.3,.8,.3,1)}
 #dock{
@@ -585,6 +585,40 @@ input{font:inherit;color:inherit}
 }
 #fireWrap.shot #firePort{opacity:1;transform:scaleY(1.45)}
 /* the circle centres itself on the pane rather than on the screen */
+/* the bubble, with a tail down onto whatever it is about */
+#callout{
+  position:absolute;z-index:14;left:0;top:0;
+  min-width:150px;padding:9px 10px 10px;border-radius:15px;
+  background:linear-gradient(180deg,#33496F,#1A2740);
+  box-shadow:0 6px 0 #0B1220, 0 12px 24px rgba(4,8,18,.5),
+             inset 0 0 0 1px rgba(124,224,255,.42);
+  opacity:0;visibility:hidden;transform:translate(-50%,-6px) scale(.9);
+  transform-origin:50% 100%;pointer-events:none;
+  transition:opacity .13s ease, transform .16s cubic-bezier(.2,1.5,.4,1), visibility .16s;
+}
+#callout.on{opacity:1;visibility:visible;transform:translate(-50%,0) scale(1);
+  pointer-events:auto}
+#callout .cTail{
+  position:absolute;left:50%;bottom:-7px;margin-left:-7px;
+  width:14px;height:14px;background:#1A2740;transform:rotate(45deg);
+  box-shadow:2px 2px 0 rgba(124,224,255,.28);
+}
+#callout .cHead{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+#callout .cIc{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;
+  background:rgba(124,224,255,.14);font-size:12px;flex:none}
+#callout .cName{font:800 12.5px/1 var(--font);color:#EAF4FF}
+#callout .cSub{font:600 9px/1 var(--font);font-style:normal;color:#8FB2D8;
+  margin-left:auto;letter-spacing:.05em;text-transform:uppercase}
+#callout .cBtns{display:grid;grid-template-columns:1fr auto;gap:6px}
+#callout button{
+  border:none;border-radius:10px;padding:9px 12px;font:800 11px/1 var(--font);
+  letter-spacing:.04em;text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+#callout .cGo{background:linear-gradient(180deg,#7CE0FF,#2FA3FF);color:#06121F;
+  box-shadow:0 3px 0 #1B6FA8}
+#callout .cGo:active{transform:translateY(2px);box-shadow:0 1px 0 #1B6FA8}
+#callout .cNo{background:rgba(255,255,255,.10);color:#A8C4E0}
 #upBtn{
   position:absolute;right:calc(10px + env(safe-area-inset-right));
   top:calc(var(--top-h) + 42px);
@@ -765,8 +799,19 @@ input{font:inherit;color:inherit}
   border-radius:22px 22px 0 0;box-shadow:var(--shadow-up);
   transform:translateY(102%);transition:transform .3s cubic-bezier(.2,.9,.25,1);
   padding-bottom:env(safe-area-inset-bottom);
+  touch-action:pan-y;
 }
 #sheet.on{transform:translateY(0)}
+#sheet.drag{transition:none}
+/* the bar you pull down on */
+#sheetGrab{
+  flex:none;height:18px;display:grid;place-items:center;cursor:grab;
+  -webkit-tap-highlight-color:transparent;
+}
+#sheetGrab::before{
+  content:"";width:38px;height:4px;border-radius:99px;
+  background:var(--edge);margin-top:7px;
+}
 #sheetHead{display:flex;align-items:center;gap:11px;padding:16px 16px 12px;flex:none;
   border-bottom:1px solid var(--edge)}
 #sheetHead .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
@@ -1819,6 +1864,14 @@ input{font:inherit;color:inherit}
       <div class="rail" id="railL"></div>
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
+      <div id="callout" aria-hidden="true">
+        <div class="cHead"><span class="cIc"></span><b class="cName"></b><i class="cSub"></i></div>
+        <div class="cBtns">
+          <button class="cGo">Upgrade</button>
+          <button class="cNo">Cancel</button>
+        </div>
+        <span class="cTail"></span>
+      </div>
       <button id="upBtn" aria-label="Upgrades">
         <i class="mk"></i><b>Upgrades</b><span class="dot"></span>
       </button>
@@ -1833,7 +1886,7 @@ input{font:inherit;color:inherit}
             </svg>
           </button>
           <button id="dockHandle" aria-label="Drop a ball" tabindex="-1">
-            <span class="ah"><svg viewBox="0 0 24 24"><path d="M12 3.6 20.4 15h-5.1v5.4H8.7V15H3.6z"/></svg></span>
+            <span class="ah"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.9" r="4.4"/><circle cx="10.3" cy="4.2" r="1.45" fill="#EAFBFF" opacity=".9"/><path d="M6.4 16.5 12 13.6l5.6 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/><path d="M6.4 21.6 12 18.7l5.6 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".42"/></svg></span>
           </button>
         </div>
       </div>
@@ -1868,6 +1921,7 @@ input{font:inherit;color:inherit}
     <button class="cgo">Open</button>
   </div></div>
   <div id="sheet">
+    <div id="sheetGrab"></div>
     <div id="sheetHead">
       <div class="ic" id="sheetIcon">◆</div>
       <div class="tx"><div id="sheetTitle">Title</div><div id="sheetSub">Sub</div></div>
@@ -2250,7 +2304,7 @@ function freshState(){
   return {
     v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0, chests:0,
     rig:[null,null,null,null,"eye","eye",null,null,null,null],
-    turUp:{eye:{},sniper:{},hive:{}},
+    turUp:{eye:{},sniper:{},hive:{},ufo:{}},
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
     pw:{}, boost:{},
@@ -2724,46 +2778,51 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const RIG_N=10;                     // ten slots, five each side
+const RIG_N=8;                      // eight slots, four each side
 const TUR_TYPES={
-  eye:   {nm:"Eye",    gap:9,  cost:15000, col:"#7CE0FF",
+  eye:   {nm:"Eye",    gap:9,  cost:5000,  col:"#7CE0FF",
           d:"Turns to the nearest ball and fires a needle that ricochets three times."},
-  sniper:{nm:"Sniper", gap:17, cost:60000, col:"#FF7A8A",
+  sniper:{nm:"Sniper", gap:17, cost:18000, col:"#FF7A8A",
           d:"Charges slowly, picks the biggest ball on the dish and lobs a shell that detonates."},
-  hive:  {nm:"Hive",   gap:13, cost:110000,col:"#8DF7C4",
+  hive:  {nm:"Hive",   gap:13, cost:32000, col:"#8DF7C4",
           d:"Releases three drones that steer to whatever is closest and go off when they arrive."},
 };
 const TUR_UP={
   eye:[
-    {k:"rate", nm:"Fire rate", base:9000,  gr:1.30, max:14,
+    {k:"rate", nm:"Fire rate", base:3000,  gr:1.22, max:14,
      d:"How often it looses a needle.",
      v:l=>Math.max(2.4, 9-l*0.48), fmt:l=>Math.max(2.4,9-l*0.48).toFixed(1)+"s"},
-    {k:"bounce",nm:"Ricochet", base:26000, gr:1.55, max:7,
+    {k:"bounce",nm:"Ricochet", base:8000,  gr:1.38, max:7,
      d:"How many walls a needle takes before it goes.",
      v:l=>3+l, fmt:l=>(3+l)+" walls"},
-    {k:"life",  nm:"Stamina",  base:14000, gr:1.34, max:10,
+    {k:"life",  nm:"Stamina",  base:4500,  gr:1.24, max:10,
      d:"How long a needle stays in the air, and how fast it travels.",
      v:l=>1+l*0.11, fmt:l=>"\u00D7"+(1+l*0.11).toFixed(2)},
   ],
   sniper:[
-    {k:"rate", nm:"Fire rate", base:34000, gr:1.32, max:12,
+    {k:"rate", nm:"Fire rate", base:11000, gr:1.23, max:12,
      d:"How often it takes a shot.",
      v:l=>Math.max(5,17-l*1.05), fmt:l=>Math.max(5,17-l*1.05).toFixed(1)+"s"},
-    {k:"blast",nm:"Blast",     base:48000, gr:1.40, max:12,
+    {k:"blast",nm:"Blast",     base:15000, gr:1.28, max:12,
      d:"How wide the detonation reaches.",
      v:l=>74+l*13, fmt:l=>Math.round(74+l*13)+"px"},
-    {k:"aim",  nm:"Guidance",  base:30000, gr:1.36, max:8,
+    {k:"aim",  nm:"Guidance",  base:9500,  gr:1.25, max:8,
      d:"How hard the shell steers to stay on what it was sent for.",
      v:l=>0.25-l*0.024, fmt:l=>Math.round((1-(0.25-l*0.024)/0.25)*100+10)+"%"},
   ],
+  ufo:[
+    {k:"twin", nm:"Twin drop", base:9000, gr:1.42, max:12,
+     d:"Chance a press drops two balls instead of one.",
+     v:l=>Math.min(.84,l*.07), fmt:l=>Math.round(Math.min(84,l*7))+"%"},
+  ],
   hive:[
-    {k:"rate", nm:"Fire rate", base:40000, gr:1.32, max:12,
+    {k:"rate", nm:"Fire rate", base:13000, gr:1.23, max:12,
      d:"How often it opens.",
      v:l=>Math.max(4,13-l*0.78), fmt:l=>Math.max(4,13-l*0.78).toFixed(1)+"s"},
-    {k:"swarm",nm:"Swarm",     base:70000, gr:1.62, max:6,
+    {k:"swarm",nm:"Swarm",     base:22000, gr:1.42, max:6,
      d:"How many drones leave at once.",
      v:l=>3+l, fmt:l=>(3+l)+" drones"},
-    {k:"speed",nm:"Urgency",   base:26000, gr:1.34, max:10,
+    {k:"speed",nm:"Urgency",   base:8500,  gr:1.24, max:10,
      d:"How hard a drone accelerates at what it has chosen.",
      v:l=>1+l*0.15, fmt:l=>"\u00D7"+(1+l*0.15).toFixed(2)},
   ],
@@ -2795,8 +2854,8 @@ function panelTopY(){
 /* how wide a slot can be, given the saucer is sitting in the middle of them */
 function rigGeom(){
   const R=TUR_R(), cx=(AR.x0+AR.x1)*.5, ufoW=R*1.34;
-  const step=Math.max(20,((AR.x1-AR.x0)-20-ufoW*2)/RIG_N);
-  return {cx, ufoW, step, sr:Math.min(17*S, step*0.46)};
+  const step=Math.max(24,((AR.x1-AR.x0)-14-ufoW*2)/RIG_N);
+  return {cx, ufoW, step, sr:Math.min(23*S, step*0.50)};
 }
 function slotAt(i){
   const g=rigGeom();
@@ -2813,6 +2872,16 @@ function rebuildRig(){
   for(const t of TURRETS) if(t.slot!==undefined) keep[t.slot+"|"+t.type]=t;
   const out=[UFO];
   if(!Array.isArray(G.rig)) G.rig=Array(RIG_N).fill(null);
+  if(G.rig.length!==RIG_N){
+    // a save from when the rig was a different size: keep every gun, pack
+    // them back in from the middle outward rather than losing the overflow
+    const guns=G.rig.filter(Boolean);
+    const fresh=Array(RIG_N).fill(null);
+    const order=[]; const mid=RIG_N/2;
+    for(let d=0;d<mid;d++){ order.push(mid-1-d); order.push(mid+d); }
+    for(let i=0;i<guns.length&&i<order.length;i++) fresh[order[i]]=guns[i];
+    G.rig=fresh; save();
+  }
   for(let i=0;i<RIG_N;i++){
     const ty=G.rig[i];
     if(!ty||!TUR_TYPES[ty]) continue;
@@ -2902,20 +2971,28 @@ function drawOneTurret(x,t,p,lifted){
     x.beginPath(); x.ellipse(0,2.5*S,R*0.95,R*0.16,0,0,TAU); x.fill();
     x.restore();
   }
+  // a wash of its own colour under it, so it is lit from where it stands
+  {
+    const gl=x.createRadialGradient(0,-R*0.4,0,0,-R*0.4,R*2.1);
+    gl.addColorStop(0,hexA(C,0.30));
+    gl.addColorStop(1,hexA(C,0));
+    x.fillStyle=gl;
+    x.beginPath(); x.arc(0,-R*0.4,R*2.1,0,TAU); x.fill();
+  }
   // the collar across the join
-  x.fillStyle="#141D30";
+  x.fillStyle="#22304C";
   x.beginPath(); x.roundRect(-R*(t.ufo?1.34:1.06),-1.5*S,R*(t.ufo?2.68:2.12),8*S,3*S); x.fill();
-  x.fillStyle="rgba(124,224,255,.30)";
-  x.beginPath(); x.roundRect(-R*(t.ufo?1.18:0.90),-0.5*S,R*(t.ufo?2.36:1.80),1.6*S,1*S); x.fill();
+  x.fillStyle=hexA(C,0.55);
+  x.beginPath(); x.roundRect(-R*(t.ufo?1.18:0.90),-0.5*S,R*(t.ufo?2.36:1.80),1.8*S,1*S); x.fill();
   if(t.ufo){
     const w=R*1.30*(1+k*0.08), hy=-R*0.30;
     // the underside, darker, so the hull has a bottom
-    x.fillStyle="#0D1526";
+    x.fillStyle="#131F35";
     x.beginPath(); x.ellipse(0,hy+R*0.10,w,R*0.30,0,0,Math.PI); x.fill();
     // the hull
     const hg=x.createLinearGradient(0,hy-R*0.34,0,hy+R*0.22);
-    hg.addColorStop(0,"#2A3854");
-    hg.addColorStop(1,"#10192B");
+    hg.addColorStop(0,"#54709F");
+    hg.addColorStop(1,"#1B2942");
     x.fillStyle=hg;
     x.beginPath(); x.ellipse(0,hy,w,R*0.34*(1-k*0.10),0,Math.PI,TAU); x.fill();
     x.beginPath(); x.ellipse(0,hy,w,R*0.20,0,0,Math.PI); x.fill();
@@ -2928,7 +3005,7 @@ function drawOneTurret(x,t,p,lifted){
       x.beginPath(); x.arc(q*R*0.46,hy+R*0.06,R*0.072,0,TAU); x.fill(); }
     // the canopy
     const cg=x.createLinearGradient(0,hy-R*0.86,0,hy);
-    cg.addColorStop(0,"#3B4C70"); cg.addColorStop(1,"#141F35");
+    cg.addColorStop(0,"#6C88BE"); cg.addColorStop(1,"#22334F");
     x.fillStyle=cg;
     x.beginPath(); x.ellipse(0,hy-R*0.04,R*0.60*(1+k*0.06),R*0.62*(1-k*0.10),0,Math.PI,TAU); x.fill();
     x.strokeStyle="rgba(190,230,255,.26)"; x.lineWidth=Math.max(1,1.2*S);
@@ -2946,11 +3023,11 @@ function drawOneTurret(x,t,p,lifted){
   } else if(t.type==="sniper"){
     // a long low body with a raised sight, so it reads as the patient one
     const sg=x.createLinearGradient(0,-R*0.8,0,0);
-    sg.addColorStop(0,"#33456A"); sg.addColorStop(1,"#141F33");
+    sg.addColorStop(0,"#5A76AE"); sg.addColorStop(1,"#22334F");
     x.fillStyle=sg;
     x.beginPath(); x.ellipse(0,0,R*(1+k*0.10),R*(0.70-k*0.12),0,Math.PI,TAU); x.fill();
     x.save(); x.rotate((t.aim===undefined?-Math.PI/2:t.aim)+Math.PI/2);
-    x.fillStyle="#26364F";
+    x.fillStyle="#3D5480";
     x.beginPath(); x.roundRect(-R*0.20,-R*1.55,R*0.40,R*1.30,R*0.16); x.fill();
     x.fillStyle=C;
     x.beginPath(); x.arc(0,-R*1.45,R*0.17,0,TAU); x.fill();
@@ -2967,8 +3044,8 @@ function drawOneTurret(x,t,p,lifted){
       x.closePath();
     };
     const bg=x.createLinearGradient(0,-R*1.5,0,0);
-    bg.addColorStop(0,"#33456A");
-    bg.addColorStop(1,"#16223A");
+    bg.addColorStop(0,"#5A76AE");
+    bg.addColorStop(1,"#22334F");
     x.fillStyle=bg;
     hex(0,-R*0.74,R*1.02*(1+k*0.08)); x.fill();
     // the comb: three cells cut into the face
@@ -2987,16 +3064,16 @@ function drawOneTurret(x,t,p,lifted){
     hex(0,-R*0.74,R*1.02*(1+k*0.08)); x.stroke();
   } else {
     const dg2=x.createLinearGradient(0,-R,0,0);
-    dg2.addColorStop(0,"#33456A"); dg2.addColorStop(1,"#141F33");
+    dg2.addColorStop(0,"#5A76AE"); dg2.addColorStop(1,"#22334F");
     x.fillStyle=dg2;
     x.beginPath(); x.ellipse(0,0,R*(1+k*0.14),R*(0.88-k*0.16),0,Math.PI,TAU); x.fill();
-    x.fillStyle="#20304C";
+    x.fillStyle="#33486E";
     x.beginPath(); x.ellipse(0,0,R*0.74*(1+k*0.1),R*0.66*(0.9-k*0.14),0,Math.PI,TAU); x.fill();
   }
   if(t.type!=="hive"){
     // a rim light along the crown, so it is lit rather than filled
-    x.strokeStyle="rgba(190,230,255,.42)";
-    x.lineWidth=Math.max(1.2,1.5*S);
+    x.strokeStyle="rgba(214,240,255,.68)";
+    x.lineWidth=Math.max(1.4,1.8*S);
     x.beginPath();
     x.ellipse(0,t.ufo?-R*0.16:0,R*(t.ufo?1.20:0.92),R*(t.ufo?0.34:0.80),0,Math.PI*1.14,Math.PI*1.86);
     x.stroke();
@@ -6630,10 +6707,49 @@ function openSheet(icon,title,sub,build){
   $("scrim").classList.add("on"); $("sheet").classList.add("on");
 }
 function closeSheet(){
-  $("scrim").classList.remove("on"); $("sheet").classList.remove("on"); sheetSync=null;
+  const sh=$("sheet");
+  sh.classList.remove("drag"); sh.style.transform="";
+  $("scrim").classList.remove("on"); sh.classList.remove("on"); sheetSync=null;
 }
 $("sheetClose").onclick=closeSheet;
 $("scrim").onclick=closeSheet;
+/* ---- pull it down to put it away ---------------------------------------
+   The body only surrenders the gesture when it is scrolled to the top and
+   you are still pulling down, so a long list scrolls the way it should. */
+(function sheetSwipe(){
+  const sh=$("sheet"), body=$("sheetBody");
+  let y0=0, t0=0, dy=0, live=false, fromBody=false;
+  const start=e=>{
+    if(!sh.classList.contains("on")||e.button) return;
+    fromBody=body.contains(e.target);
+    if(fromBody&&body.scrollTop>0) return;      // it is a scroll, not a drag
+    live=true; y0=e.clientY; t0=performance.now(); dy=0;
+    sh.classList.add("drag");
+  };
+  const move=e=>{
+    if(!live) return;
+    dy=e.clientY-y0;
+    if(dy<0) dy=dy*0.25;                        // upward has nowhere to go
+    if(fromBody&&body.scrollTop>0){ live=false; sh.classList.remove("drag");
+      sh.style.transform=""; return; }
+    if(dy>2) e.preventDefault();
+    sh.style.transform="translateY("+dy+"px)";
+  };
+  const end=()=>{
+    if(!live) return;
+    live=false;
+    sh.classList.remove("drag");
+    sh.style.transform="";
+    const far=dy>sh.offsetHeight*0.32;
+    const flick=dy>52 && (performance.now()-t0)<320;
+    if(far||flick) closeSheet();
+    dy=0;
+  };
+  sh.addEventListener("pointerdown",start,{passive:true});
+  sh.addEventListener("pointermove",move,{passive:false});
+  for(const ev of ["pointerup","pointercancel"]) sh.addEventListener(ev,end,{passive:true});
+  addEventListener("pointerup",end,{passive:true});
+})();
 
 function row(o){
   const d=document.createElement("div");
@@ -6989,13 +7105,59 @@ const GUN_ICO=k=>{
     '<circle cx="12" cy="13" r="3.4" fill="#fff"/><circle cx="12" cy="13" r="1.5" fill="'+c+'"/></svg>';
 };
 const gunPrice=k=>Math.ceil(TUR_TYPES[k].cost*scaleMul()
-                  *Math.pow(2.5,(G.rig||[]).filter(v=>v===k).length));
+                  *Math.pow(1.85,(G.rig||[]).filter(v=>v===k).length));
 /* pressing a slot: a plus asks what goes in it, a gun asks if it should go */
+let calloutFor=null;
+function hideCallout(){
+  const c=document.getElementById("callout");
+  if(c) c.classList.remove("on");
+  calloutFor=null;
+}
+/* put it over a gun, or over the saucer */
+function showCallout(kind,slot){
+  const c=document.getElementById("callout");
+  if(!c) return;
+  const spec=TUR_TYPES[kind];
+  const ar=roomArena.getBoundingClientRect();
+  const p=slot===undefined?turretAt(UFO):slotAt(slot);
+  const R=slot===undefined?turR(UFO):slotAt(slot).r;
+  calloutFor={kind,slot};
+  c.querySelector(".cIc").innerHTML='<span style="color:'+(spec?spec.col:"#7CE0FF")+'">'+
+    (kind==="sniper"?"\u25C6":kind==="hive"?"\u2B22":kind==="ufo"?"\u25CF":"\u25C9")+'</span>';
+  c.querySelector(".cName").textContent=spec?spec.nm:"Saucer";
+  c.querySelector(".cSub").textContent=slot===undefined?"drops the balls":("slot "+(slot+1));
+  c.classList.add("on");
+  // pin it above the gun, kept inside the screen
+  const w=c.offsetWidth||160;
+  const x=clamp(p.x, w*0.5+8, W-w*0.5-8);
+  c.style.left=Math.round(x)+"px";
+  c.style.top=Math.round(p.y-R*1.5-c.offsetHeight-14)+"px";
+  const tail=c.querySelector(".cTail");
+  tail.style.left=Math.round(p.x-x+w*0.5)+"px";
+  haptic(6); pop(880,{vol:.05,wet:.16});
+}
+(function calloutWire(){
+  const c=document.getElementById("callout");
+  if(!c) return;
+  c.querySelector(".cNo").onclick=e=>{ e.stopPropagation(); hideCallout(); };
+  c.querySelector(".cGo").onclick=e=>{
+    e.stopPropagation();
+    const f=calloutFor; hideCallout();
+    if(!f) return;
+    sheetTurrets(f.kind==="ufo"?"ufo":f.kind);
+  };
+})();
+addEventListener("pointerdown",e=>{
+  if(calloutFor && !e.target.closest("#callout")) hideCallout();
+},{capture:true});
 let turTab="eye";
 function sheetTurrets(type){
-  if(type&&TUR_TYPES[type]&&type!=="ufo") turTab=type;
-  const ICO=k=>'<span style="color:'+TUR_TYPES[k].col+'">'+
-    (k==="sniper"?"\u25C6":k==="hive"?"\u2B22":"\u25C9")+'</span>';
+  if(type==="ufo") turTab="ufo";
+  else if(type&&TUR_TYPES[type]) turTab=type;
+  const KCOL=k=>k==="ufo"?"#7CE0FF":TUR_TYPES[k].col;
+  const KNAME=k=>k==="ufo"?"Saucer":TUR_TYPES[k].nm;
+  const ICO=k=>'<span style="color:'+KCOL(k)+'">'+
+    (k==="sniper"?"\u25C6":k==="hive"?"\u2B22":k==="ufo"?"\u25CF":"\u25C9")+'</span>';
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
       '<circle cx="12" cy="13" r="7.2" fill="none" stroke="currentColor" stroke-width="2"/>'+
       '<circle cx="12" cy="13" r="2.4" fill="currentColor"/>'+
@@ -7004,26 +7166,42 @@ function sheetTurrets(type){
     // the three sub tabs
     const subs=document.createElement("div");
     subs.className="turTabs";
-    for(const k of Object.keys(TUR_TYPES)){
-      const n=(G.rig||[]).filter(v=>v===k).length;
+    for(const k of ["ufo"].concat(Object.keys(TUR_TYPES))){
+      const n=k==="ufo"?1:(G.rig||[]).filter(v=>v===k).length;
       const t=document.createElement("button");
       t.className="turTab"+(turTab===k?" on":"");
-      t.style.setProperty("--tc",TUR_TYPES[k].col);
-      t.innerHTML='<span>'+ICO(k)+'</span>'+TUR_TYPES[k].nm+
+      t.style.setProperty("--tc",KCOL(k));
+      t.innerHTML='<span>'+ICO(k)+'</span>'+KNAME(k)+
                   (n?'<i>'+n+'</i>':'<i class="none">0</i>');
       t.onclick=()=>{ turTab=k; sheetSync&&sheetSync(); };
       subs.appendChild(t);
     }
     b.appendChild(subs);
 
-    const owned=(G.rig||[]).filter(v=>v===turTab).length;
+    const owned=turTab==="ufo"?1:(G.rig||[]).filter(v=>v===turTab).length;
     const head=document.createElement("div");
     head.className="turHead";
-    head.innerHTML='<b>'+TUR_TYPES[turTab].nm+'</b><span>'+
-      (owned?owned+" on the rig":"none on the rig \u2014 upgrades still stick")+'</span>';
+    head.innerHTML='<b>'+KNAME(turTab)+'</b><span>'+
+      (turTab==="ufo"?"the one your thumb feeds"
+       :(owned?owned+" on the rig":"none on the rig \u2014 upgrades still stick"))+'</span>';
     b.appendChild(head);
+    // the saucer's two existing tracks, driven straight off the panel's own
+    // so a level bought here is the same level bought there
+    if(turTab==="ufo") for(const key of ["reload","payload"]){
+      const u=UP[key], lv2=lv(key), m=maxed(key), price=cost(key);
+      const d=row({ic:u.g, t:u.nm, s:u.d, v:u.fmt(lv2),
+        btn:m?"Max":fmt(price), btnOn:!m&&G.bio>=price,
+        fn:()=>{ buy(key); }});
+      d.classList.add("upR");
+      d.style.setProperty("--uc","#7CE0FF");
+      d.style.setProperty("--ub","rgba(124,224,255,.10)");
+      const lt=document.createElement("div");
+      lt.className="lvT"; lt.textContent=m?"Fully developed":"Level "+lv2;
+      d.querySelector(".l").appendChild(lt);
+      b.appendChild(d);
+    }
 
-    for(const u of TUR_UP[turTab]){
+    for(const u of (TUR_UP[turTab]||[])){
       const lv=turLv(turTab,u.k), maxed=turUpMaxed(turTab,u.k), price=turUpCost(turTab,u.k);
       const can=!maxed&&G.bio>=price;
       const d=row({ic:ICO(turTab), t:u.nm, s:u.d, v:u.fmt(lv),
@@ -7037,7 +7215,7 @@ function sheetTurrets(type){
           buySound(lv+1); haptic(9); save(); syncTop();
         }});
       d.classList.add("upR");
-      d.style.setProperty("--uc",TUR_TYPES[turTab].col);
+      d.style.setProperty("--uc",KCOL(turTab));
       d.style.setProperty("--ub","rgba(124,224,255,.10)");
       const lt=document.createElement("div");
       lt.className="lvT"; lt.textContent=maxed?"Fully developed":"Level "+lv;
@@ -8002,13 +8180,21 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
   c.addEventListener("pointerdown",e=>{
     if(e.button) return;
     const p=at(e);
+    // the saucer first, since it sits between the two middle slots
+    if(!rigEdit&&ready){
+      const u=turretAt(UFO), UR=turR(UFO);
+      if(Math.hypot(p.x-u.x,p.y-(u.y-UR*0.6))<UR*1.5){
+        e.preventDefault(); e.stopPropagation();
+        showCallout("ufo"); return;
+      }
+    }
     const slot=slotHit(p.x,p.y);
     if(slot<0) return;
     if(!rigEdit){
-      // not rearranging: a press on a gun is a press on its upgrades
+      // not rearranging: a press on a gun asks about that gun
       if(!G.rig[slot]||!ready) return;
       e.preventDefault(); e.stopPropagation();
-      sheetTurrets(G.rig[slot]);
+      showCallout(G.rig[slot],slot);
       return;
     }
     downAt={x:p.x,y:p.y,slot}; moved=0;
@@ -8042,7 +8228,10 @@ document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")
     e.preventDefault();
     panelDownT=1; fw.classList.add("down");
     if(!ready||rigEdit) return;              // rearranging is not firing
-    if(ventBall(6,true)) return;
+    if(ventBall(6,true)){
+      if(Math.random()<turVal("ufo","twin")) ventBall(6,true);
+      return;
+    }
     // it refused: say so, rather than doing nothing at all
     fw.classList.remove("nope"); void fw.offsetWidth; fw.classList.add("nope");
     setTimeout(()=>fw.classList.remove("nope"),320);
