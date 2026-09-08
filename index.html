@@ -505,7 +505,7 @@ input{font:inherit;color:inherit}
 
 /* ============ the bottom ============
    Nothing down here is DOM any more except the safe-area probe. The
-   launcher and the guns are canvas, so they take part in the world's
+   guns are canvas, so they take part in the world's
    lighting and its shake instead of floating above it. */
 #sabProbe{
   position:absolute;left:0;bottom:0;width:0;
@@ -1862,7 +1862,7 @@ input{font:inherit;color:inherit}
       <h1>Mitosis</h1>
       <ul class="rules">
         <li><span class="k" style="background:#DBEAFE;color:#2563EB">✥</span>
-            <span><b>Tap</b> a ball and it splits in two</span></li>
+            <span>Balls <b>rise on their own</b> from under the dish</span></li>
         <li><span class="k" style="background:#FFEDD5;color:#EA580C">◜</span>
             <span><b>Swipe</b> to cleave a whole line of them</span></li>
         <li><span class="k" style="background:#DCFCE7;color:#16A34A">⊕</span>
@@ -2002,22 +2002,22 @@ const ICO_SPORE='<svg class="cico" viewBox="0 0 24 24" aria-hidden="true">'+
   '<circle cx="12" cy="12" r="8.6"/></svg>';
 
 const SCALES=[
-  {n:"Atomic", portal:"#FF8F3D",    ball:"a proton",       mult:1,      spd:1.00,
+  {n:"Atomic",    ball:"a proton",       mult:1,      spd:1.00,
    form:{lobes:4, rough:.000, oval:1.00, paint:"core"},
    bg:["#FFFFFF","#F1F5FE"], stars:0,   neb:false, dark:false},
-  {n:"Cellular", portal:"#2FCB8B",  ball:"a living cell",  mult:34,     spd:1.14,
+  {n:"Cellular",  ball:"a living cell",  mult:34,     spd:1.14,
    form:{lobes:3, rough:.055, oval:1.22, paint:"nucleus"},
    bg:["#FFFCFB","#F5E8EE"], stars:0,   neb:false, dark:false},
-  {n:"Planetary", portal:"#FFC24B", ball:"a moon",         mult:1600,   spd:1.30,
+  {n:"Planetary", ball:"a moon",         mult:1600,   spd:1.30,
    form:{lobes:2, rough:.008, oval:1.02, paint:"planet"},
    bg:["#CFE0F4","#7B99C2"], stars:0,   neb:false, dark:false},
-  {n:"Stellar", portal:"#FFD84B",   ball:"a star",         mult:90000,  spd:1.46,
+  {n:"Stellar",   ball:"a star",         mult:90000,  spd:1.46,
    form:{lobes:6, rough:.030, oval:1.00, paint:"star"},
    bg:["#1A2236","#080C16"], stars:110, neb:false, dark:true},
-  {n:"Galactic", portal:"#B44BFF",  ball:"a galaxy",       mult:6.2e6,  spd:1.62,
+  {n:"Galactic",  ball:"a galaxy",       mult:6.2e6,  spd:1.62,
    form:{lobes:3, rough:.030, oval:1.42, paint:"spiral"},
    bg:["#0A0E1B","#02040A"], stars:260, neb:false, dark:true},
-  {n:"Cosmic", portal:"#2ED8E8",    ball:"a supercluster", mult:5.4e8,  spd:1.80,
+  {n:"Cosmic",    ball:"a supercluster", mult:5.4e8,  spd:1.80,
    form:{lobes:4, rough:.020, oval:1.30, paint:"halo"},
    bg:["#06040F","#010103"], stars:360, neb:true,  dark:true},
 ];
@@ -2079,7 +2079,7 @@ const UP={
            v:l=>Math.min(.92,l*.02), fmt:l=>(Math.min(92,l*2)).toFixed(0)+"%"},
   purity: {tab:"arena",g:aimg("up_purity"),
            nm:"Lucky", base:130,gr:1.24, max:40,
-           d:"Chance the arrow sends a rainbow ball. It pops for twenty-five times its worth and opens a frenzy.",
+           d:"Chance a ball arrives rainbow. It pops for twenty-five times its worth and opens a frenzy.",
            v:l=>Math.min(.09,l*.00225), fmt:l=>(0.5+Math.min(9,l*.225)).toFixed(1)+"%"},
 
   crit:   {tab:"touch",g:aimg("up_crit"),
@@ -2104,11 +2104,11 @@ const UP={
            v:l=>1+0.5*Math.pow(l,0.72), fmt:l=>"×"+(1+0.5*Math.pow(l,0.72)).toFixed(2)},
   reload: {tab:"arena",g:aimg("up_reload"),
            nm:"Reload", base:400, gr:1.22, max:30,
-           d:"How fast the launcher sends its automatic ball, with no help from you.",
+           d:"How often a new ball is sent up from below the dish.",
            v:l=>Math.max(3.5, 10-l*0.22), fmt:l=>Math.max(3.5,10-l*0.22).toFixed(1)+"s"},
   payload:{tab:"arena",g:aimg("up_payload"),
            nm:"Payload", base:260, gr:1.20, max:30,
-           d:"Chance the launcher sends a ball one whole rung bigger than it rolled.",
+           d:"Chance a ball arrives one whole rung bigger than it rolled.",
            v:l=>Math.min(.84,l*.028), fmt:l=>Math.round(Math.min(84,l*2.8))+"%"},
   magnet: {tab:"field",g:aimg("up_magnet"),
            nm:"Magnet",base:90, gr:1.19, max:40,
@@ -2118,7 +2118,7 @@ const UP={
 const UPK=Object.keys(UP);
 const UP_GROUPS=[
   {t:"Your swipe", keys:["reach","cascade","crit","magnet"]},
-  {t:"The launcher", keys:["reload","payload"]},
+  {t:"The spawner", keys:["reload","payload"]},
   {t:"What it pays", keys:["yield","colony","purity"]},
 ];
 const SHOP_UP=UP_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
@@ -2263,7 +2263,7 @@ const GRX=1.35;          // every upgrade's growth rate, raised to this power
    means something that can be checked rather than assumed. INCOME is
    measured, not guessed, and has to be re-measured whenever what feeds the
    dish changes — it has been wrong by six times once already. */
-const SCALE_INCOME=6.5e3;   // measured: one arrow, nothing else feeding the dish
+const SCALE_INCOME=6.5e3;   // measured: the spawner alone feeding the dish
 const SCALE_MINUTES=[40, 85, 140, 200, 260];
 const scaleMul=()=>curScale().mult;
 const cost=k=>Math.ceil(UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
@@ -2324,16 +2324,11 @@ let W=0,H=0,DPR=1,GS=1,S=1;
 const AR={x0:0,y0:0,x1:0,y1:0};
 
 
-function portalAt(){
-  return {x:(AR.x0+AR.x1)*0.5, y:H-safeBottom()-PORTAL_LIFT-PORTAL_R()};
-}
-function turretY(){ return portalAt().y + PORTAL_R()*0.30; }
+function turretY(){ return H - safeBottom() - 20 - TURR()*0.66; }
 function dishFloor(){
-  // the wall the balls bounce off: above the portal's ring and above the
-  // barrels, whichever of the two reaches higher
-  const ring  = portalAt().y - PORTAL_RING() - 4;
-  const barrel= turretY() - TURR()*2.05 - 4;
-  return Math.max(H*.35, Math.round(Math.min(ring,barrel) - 8));
+  // nothing stands in the middle any more, so the floor only has to clear
+  // the two barrels - which buys back the room the portal was taking
+  return Math.max(H*.35, Math.round(turretY() - TURR()*2.05 - 8));
 }
 /* where the chrome actually ends today, not where it ended at boot */
 function measureArena(){
@@ -2699,8 +2694,8 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const RIG_MAX=8;                    // the most the rig can ever carry
-const rigSlots=()=>clamp(2+turLv("ufo","mounts"),2,RIG_MAX);
+const RIG_MAX=2;                    // one gun each side, and that is the rig
+const rigSlots=()=>2;                // one corner each side, and that is all
 const TUR_TYPES={
   eye:   {nm:"Eye",    gap:9,  cost:5000,  col:"#7CE0FF",
           d:"Turns to the nearest ball and fires a needle that ricochets three times."},
@@ -2733,11 +2728,8 @@ const TUR_UP={
      v:l=>0.25-l*0.024, fmt:l=>Math.round((1-(0.25-l*0.024)/0.25)*100+10)+"%"},
   ],
   ufo:[
-    {k:"mounts", nm:"Turret mounts", base:24000, gr:2.30, max:6,
-     d:"Bolts another gun mount onto the rig, beside the ones already there.",
-     v:l=>2+l, fmt:l=>(2+l)+" mounts"},
     {k:"twin", nm:"Twin drop", base:9000, gr:1.42, max:12,
-     d:"Chance a press drops two balls instead of one.",
+     d:"Chance the spawner sends two balls instead of one.",
      v:l=>Math.min(.84,l*.07), fmt:l=>Math.round(Math.min(84,l*7))+"%"},
   ],
   hive:[
@@ -2766,49 +2758,27 @@ const turUpMaxed=(ty,k)=>{
   const spec=(TUR_UP[ty]||[]).find(u=>u.k===k);
   return !spec||turLv(ty,k)>=spec.max;
 };
-/* the mounts spread from the wall inward toward the portal, mirrored, so two
-   of them sit in the two lower corners and eight still fit */
+/* one in each lower corner, and that is the whole rig */
 function slotAt(i){
-  const n=rigSlots(), r=TURR(), p=portalAt();
-  const half=n/2, k=i<half?i:(n-1-i);
-  const outer=AR.x0+r+16;
-  const inner=p.x-PORTAL_R()*1.55-r-6;
-  const t=half<=1?0:k/(half-1);
-  const px=outer+(inner-outer)*t;
-  return {x:(i<half?px:(AR.x0+AR.x1-px)), y:turretY(), r};
+  const r=TURR(), x=AR.x0+r+18;
+  return {x:(i?AR.x0+AR.x1-x:x), y:turretY(), r};
 }
-const UFO={ufo:true, k:0, lean:0, aim:-Math.PI/2, type:"ufo"};
-let TURRETS=[UFO];
+let TURRETS=[];
 /* the list of live guns, rebuilt from the slots, keeping the ones that have
    not changed so their clocks and their aim survive a rearrange */
 function rebuildRig(){
   const keep={};
   for(const t of TURRETS) if(t.slot!==undefined) keep[t.slot+"|"+t.type]=t;
-  const out=[UFO];
+  const out=[];
   if(!Array.isArray(G.rig)) G.rig=Array(RIG_MAX).fill(null);
   const guns=G.rig.filter(Boolean);
-  // a save from before the rig shrank: give it the mounts it already needs
-  // rather than deleting guns somebody paid for
-  if(guns.length>rigSlots()){
-    G.turUp=G.turUp||{}; G.turUp.ufo=G.turUp.ufo||{};
-    G.turUp.ufo.mounts=clamp(guns.length-2,0,RIG_MAX-2);
-  }
   if(G.rig.length!==RIG_MAX){
-    // pack whatever is there back in from the middle outward
+    // an older, longer rig: its first two guns take the two corners
     const fresh=Array(RIG_MAX).fill(null);
-    const order=[]; const mid=RIG_MAX/2;
-    for(let d=0;d<mid;d++){ order.push(mid-1-d); order.push(mid+d); }
-    for(let i=0;i<guns.length&&i<order.length;i++) fresh[order[i]]=guns[i];
+    for(let i=0;i<RIG_MAX&&i<guns.length;i++) fresh[i]=guns[i];
     G.rig=fresh; save();
   }
-  // anything parked past the last mount comes back in to a mount that exists
-  const N=rigSlots();
-  for(let i=N;i<G.rig.length;i++){
-    if(!G.rig[i]) continue;
-    const free=G.rig.findIndex((v,j)=>j<N&&!v);
-    if(free>=0){ G.rig[free]=G.rig[i]; G.rig[i]=null; }
-  }
-  for(let i=0;i<N;i++){
+  for(let i=0;i<RIG_MAX;i++){
     const ty=G.rig[i];
     if(!ty||!TUR_TYPES[ty]) continue;
     const had=keep[i+"|"+ty];
@@ -2817,99 +2787,20 @@ function rebuildRig(){
   }
   TURRETS=out;
 }
-const turR=t=>t.ufo?PORTAL_R():TURR();
+const turR=()=>TURR();
 const turretAt=t=>{
   if(typeof t==="number") t=TURRETS[t];
-  if(!t||t.ufo) return portalAt();
-  return slotAt(t.slot);
+  return slotAt(t?t.slot:0);
 };
-const ufoAt=()=>turretAt(UFO);
 
 /* --------------------------------------------------------------- drawing */
 function drawTurrets(x){
   x.save();
   for(let i=0;i<rigSlots();i++){
     const ty=G.rig&&G.rig[i];
-    const t=ty?TURRETS.find(q=>q.slot===i):null;
-    drawMount(x, slotAt(i), ty, t);
+    if(!ty) continue;                 // an empty corner stays empty
+    drawMount(x, slotAt(i), ty, TURRETS.find(q=>q.slot===i));
   }
-  drawPortal(x);
-  x.restore();
-}
-
-/* ---------------------------------------------------------------- the portal
-   One blob, one ring, one small mark. Nothing else. */
-function portalCol(){ return curScale().portal || PAL()[3]; }
-function portalBlob(x,r,col,squash){
-  // the same shape a ball of this world would be, standing still
-  const still={wob:0.030, wp:1.1, sq:0, sqA:0, rot:0};
-  x.save();
-  x.scale(1,squash);
-  if(FORM.oval!==1){ x.save(); x.scale(1,1/FORM.oval); }
-  membrane(x,still,r);
-  x.fillStyle=col; x.fill();
-  x.save();
-  x.beginPath(); x.arc(0,0,r*0.87,0,TAU); x.clip();
-  scalePaint(x,r,col,-0.35,null);
-  x.restore();
-  membrane(x,still,r);
-  x.lineWidth=Math.max(2.4,r*0.095);
-  x.strokeStyle=RIM(col);
-  x.stroke();
-  if(FORM.oval!==1) x.restore();
-  x.restore();
-}
-function drawPortal(x){
-  const p=portalAt(), r=PORTAL_R(), col=portalCol();
-  const rdy=LA.ring>=0.999, spent=LA.e<LAUNCH.energyCost;
-  // it breathes only when there is a burst in it, so a pulse means ready
-  const beat=rdy?(0.5+0.5*Math.sin(el*3.2)):0;
-  x.save();
-  x.translate(p.x,p.y);
-
-  // the light it sits in - a wash on the background, not a second circle
-  const gl=x.createRadialGradient(0,0,r*0.55,0,0,r*2.15);
-  gl.addColorStop(0,hexA(col,(spent?0.06:0.17)+beat*0.11+LA.flash*0.22));
-  gl.addColorStop(1,hexA(col,0));
-  x.fillStyle=gl;
-  x.beginPath(); x.arc(0,0,r*2.15,0,TAU); x.fill();
-
-  // the body, compressing as it lets go
-  x.globalAlpha=spent?0.52:1;
-  portalBlob(x, r*(1+beat*0.022), col, 1-LA.recoil*0.13);
-
-  // the nucleus: the bright middle, which is the part that is alive
-  const ng=x.createRadialGradient(0,-r*0.05,0,0,0,r*0.60);
-  ng.addColorStop(0,   "rgba(255,255,255,"+(0.78+beat*0.22+LA.flash*0.22).toFixed(2)+")");
-  ng.addColorStop(0.55,"rgba(255,255,255,"+(0.28+beat*0.18).toFixed(2)+")");
-  ng.addColorStop(1,   "rgba(255,255,255,0)");
-  x.fillStyle=ng;
-  x.beginPath(); x.arc(0,0,r*0.60,0,TAU); x.fill();
-
-  // one small mark inside it. Secondary to the portal, and not a joystick.
-  const a=r*0.19;
-  x.fillStyle=RIM(col);
-  x.beginPath();
-  x.moveTo(0,-a*1.30); x.lineTo(a,a*0.50); x.lineTo(-a,a*0.50);
-  x.closePath(); x.fill();
-  x.globalAlpha=1;
-
-  // and exactly one ring
-  const rr=PORTAL_RING(), lw=Math.max(3,3.6);
-  x.lineCap="round"; x.lineWidth=lw;
-  x.strokeStyle=curScale().dark?"rgba(255,255,255,.13)":"rgba(20,40,70,.11)";
-  x.beginPath(); x.arc(0,0,rr,0,TAU); x.stroke();
-  if(LA.ring>0.004){
-    x.strokeStyle=rdy?"#7CE0FF":hexA("#7CE0FF",0.55+0.45*LA.ring);
-    x.beginPath(); x.arc(0,0,rr,-Math.PI/2,-Math.PI/2+TAU*LA.ring); x.stroke();
-  }
-  // a refusal reddens the ring rather than doing nothing at all
-  if(LA.dim>0){
-    x.strokeStyle=hexA("#FF7A8A",0.70*LA.dim);
-    x.lineWidth=lw+1.4;
-    x.beginPath(); x.arc(0,0,rr*(1+0.10*LA.dim),0,TAU); x.stroke();
-  }
-  x.lineCap="butt";
   x.restore();
 }
 
@@ -2920,20 +2811,6 @@ function drawMount(x,p,kind,t){
   const r=p.r;
   x.save();
   x.translate(p.x,p.y);
-  if(!kind){
-    // an empty mount: somewhere a gun could stand, quiet about it
-    x.setLineDash([r*0.26,r*0.22]);
-    x.lineWidth=Math.max(2,r*0.085);
-    x.strokeStyle=curScale().dark?"rgba(255,255,255,.24)":"rgba(30,50,80,.22)";
-    x.beginPath(); x.arc(0,0,r*0.78,0,TAU); x.stroke();
-    x.setLineDash([]);
-    x.lineCap="round"; x.lineWidth=Math.max(2.2,r*0.10);
-    x.beginPath();
-    x.moveTo(-r*0.28,0); x.lineTo(r*0.28,0);
-    x.moveTo(0,-r*0.28); x.lineTo(0,r*0.28);
-    x.stroke(); x.lineCap="butt";
-    x.restore(); return;
-  }
   const col=TUR_TYPES[kind].col, ink=RIM(col), lw=Math.max(2.6,r*0.12);
   const k=Math.max(0,(t&&t.k)||0);            // the kick, just after it fires
   // a barrel only reads as up if it stays near up: 38 degrees either side
@@ -3038,7 +2915,7 @@ function stepTurrets(dt){
       t.aim+=d2*(1-Math.pow(t.type==="sniper"?0.02:0.0008,dt));
     }
     // and its own trigger
-    if(t.ufo||rigEdit) continue;
+    if(rigEdit) continue;
     const spec=TUR_TYPES[t.type]; if(!spec) continue;
     const gap=turVal(t.type,"rate")||spec.gap;
     if(t.cd===undefined) t.cd=gap;
@@ -3785,9 +3662,9 @@ function startSlice(p,id){
   ptrDown=true; ptrId=id; ptrX=p.x; ptrY=p.y;
   trail.push({x:p.x,y:p.y,t:0});
 }
-function releaseLauncher(){
-  LA.ptr=null; LA.holdOn=false; LA.holdT=0; LA.moved=0;
-}
+/* One gesture on the arena: a swipe cuts. The only thing that is not a cut
+   is a press on one of the two guns, and a gun lives below the floor line
+   where no ball ever goes - so a slice can never be mistaken for one. */
 roomArena.addEventListener("pointerdown",e=>{
   if(zoomPhase||room!=="arena") return;
   if(e.target.closest("button,input,#sheet,#scrim,#callout,.rail,.cur")) return;
@@ -3795,38 +3672,12 @@ roomArena.addEventListener("pointerdown",e=>{
   if(p.y>H-safeBottom()) return;             // never play inside the home indicator
   e.preventDefault(); actx();
   try{ roomArena.setPointerCapture(e.pointerId); }catch(err){}
-  // the machine first, and only if this press began on it
-  if(ready && LA.ptr===null && launcherHit(p.x,p.y)){
-    LA.ptr=e.pointerId; LA.downT=el; LA.moved=0; LA.x0=p.x; LA.y0=p.y;
-    LA.holdOn=false; LA.holdT=LAUNCH.holdDelay;
-    haptic(6); pop(660,{vol:.05,wet:.16});
-    return;
-  }
-  // a mount, or a gun standing on one
-  // below the dish floor is the machine, above it is the playfield - an
-  // exact line, so a slice near the bottom is never eaten by a mount
   const slot=p.y>AR.y1?slotHit(p.x,p.y):-1;
-  if(ready && slot>=0){
-    if(G.rig[slot]) showCallout(G.rig[slot],slot); else sheetSlot(slot);
-    return;
-  }
+  if(ready && slot>=0 && G.rig[slot]){ showCallout(G.rig[slot],slot); return; }
   startSlice(p,e.pointerId);
   touchAt(p.x,p.y);
 },{passive:false});
 roomArena.addEventListener("pointermove",e=>{
-  // a press that started on the launcher: it is a tap until it travels
-  if(e.pointerId===LA.ptr){
-    const p=localPt(e);
-    LA.moved=Math.max(LA.moved,Math.hypot(p.x-LA.x0,p.y-LA.y0));
-    if(!LA.holdOn && (el-LA.downT)>=LAUNCH.holdDelay){ LA.holdOn=true; LA.holdT=0; }
-    // travelled: it was a swipe passing through, so hand it to the slicer
-    if(!LA.holdOn && LA.moved>LAUNCH.tapSlop){
-      releaseLauncher();
-      startSlice(p,e.pointerId);
-    }
-    e.preventDefault();
-    return;
-  }
   if(!ptrDown||e.pointerId!==ptrId) return;
   e.preventDefault();
   const p=localPt(e);
@@ -3836,29 +3687,9 @@ roomArena.addEventListener("pointermove",e=>{
     ptrX=p.x; ptrY=p.y;
   }
 },{passive:false});
-const endPtr=e=>{
-  if(e.pointerId===LA.ptr){
-    const held=LA.holdOn, moved=LA.moved;
-    releaseLauncher();
-    // a deliberate tap that began and ended on it sends the burst
-    if(!held && moved<=LAUNCH.tapSlop && ready && !zoomPhase){
-      let sent=0, full=false;
-      for(let i=0;i<LAUNCH.burst;i++){
-        if(LA.e<LAUNCH.energyCost) break;
-        if(!launchPaid()){ full=true; break; }
-        sent++;
-      }
-      if(sent){ haptic(12); LA.flash=1; }
-      else launchRefuse(full);
-    }
-  }
-  if(e.pointerId===ptrId){ ptrDown=false; ptrId=null; }
-};
+const endPtr=e=>{ if(e.pointerId===ptrId){ ptrDown=false; ptrId=null; } };
 roomArena.addEventListener("pointerup",endPtr);
 roomArena.addEventListener("pointercancel",endPtr);
-// a press that ends anywhere at all still ends, so it can never stick down
-addEventListener("pointerup",e=>{ if(e.pointerId===LA.ptr) endPtr(e); },{passive:true});
-addEventListener("blur",()=>releaseLauncher(),{passive:true});
 
 /* ---------------------------------------------------------------- powers */
 function pwState(p){ return G.pw[p.id]||(G.pw[p.id]={owned:p.cost===0,cd:0}); }
@@ -4079,7 +3910,7 @@ const castX=i=>((i%WCOLS)+0.5)/WCOLS*W;
 const wizCount=()=>{ let n=0; for(let i=0;i<PLAY;i++) if(G.wiz[i]) n++; return n; };
 
 function throughput(){
-  // the arrow's mass a second, which is what the dish is fed
+  // the spawner's mass a second, which is what the dish is fed
   return (VENT.mass/10)*yieldMul()*1.35;
 }
 function anyMerge(){
@@ -4223,46 +4054,38 @@ function stepWizards(dt){
 }
 /* A fresh save has no balls, no wizards, and no way to earn the 120 the
    first wizard costs: measured over a simulated minute it made exactly
-   nothing. The vent under the handle coughs one up every five to ten
-   seconds. It is a floor, not a source — its mass is fixed at eight and
-   never follows your rank, so by the time wizards are working it is noise. */
+   nothing. Balls come up from under the dish on their own. It is a floor,
+   not a source - its mass is fixed and never follows your rank, so by the
+   time the guns are working it is noise. */
 const VENT={t:1.5, max:1.5, mass:26, n:0};
 
-/* ---- the launcher, and everything you can turn about it ------------------
-   Automatic fire is free and never stops: it does not touch energy, so the
-   dish keeps filling whether or not you are holding anything. Energy only
-   buys the extra - the burst on a tap and the stream on a hold. */
-const LAUNCH={
-  autoGap:    1.5,    // s between the free automatic launches
-  burst:      3,      // balls a deliberate tap sends at once
-  holdGap:    0.16,   // s between launches while a press is held
-  holdDelay:  0.20,   // s a press must sit still before it starts streaming
-  tapSlop:    16,     // px a press may wander and still count as a tap
-  energyMax:  9,      // how much bonus launching it can store
-  energyCost: 1,      // what one bonus ball costs
-  regen:      1.15,   // energy back per second
-  hitR:       1.62,   // hit circle, as a multiple of the opening's radius
-  ringLead:   0.9,    // how fast the ring chases the true energy, per second
-  maxBalls:   300,    // the readability ceiling; 260 on a phone that is struggling
+/* ---- the spawner, and everything you can turn about it -------------------
+   Balls arrive on their own, from just under the floor line, and the rate
+   backs off as the dish fills so a crowded screen stops getting worse. Every
+   number that decides how that feels is here. */
+const SPAWN={
+  gap:        1.15,     // s between launches on an empty dish
+  crowdSlow:  3.40,     // how much a full dish stretches that gap
+  maxBalls:   300,      // the hard ceiling; a frame-rate guard, not a rule
+  fill:       0.55,     // how much of the dish may be covered at once
+  maxBig:     3,        // how many of the two biggest rungs may be out
+  bigTier:    1,        // tier 0 and 1 are "big"
+  bigCool:    6.0,      // s before another big one may be sent
+  speed:      [385,470],// how hard it is thrown up
+  drift:      70,       // sideways, so it arcs rather than climbs a line
+  under:      [8,26],   // how far below the floor line it starts
+  arcG:       620,      // the pull that bends the launch into an arc
+  arcT:       0.95,     // how long that pull lasts, in seconds
+  tries:      5,        // candidate columns tested for a clear lane
+  edge:       0.10,     // how far in from each wall it may appear
 };
 /* what a turret's kill is worth against your own. Slicing has to stay the
    better way to earn or the guns quietly replace the game. */
 const TURRET_CUT=0.60;
 const TURRET_KEEPS_COMBO=false;    // and a turret kill does not feed the streak
 
-const LA={e:LAUNCH.energyMax, ring:1, ptr:null, downT:0, moved:0,
-          holdOn:false, holdT:0, flash:0, recoil:0, dim:0, spin:0};
-const PORTAL_R   = ()=>clamp(W*0.104, 35, 42.5);   // 70px .. 85px across
-const PORTAL_RING= ()=>PORTAL_R()*1.20;            // the one ring
-const PORTAL_LIFT= 34;                             // clear of the home indicator
-const launchHitR = ()=>PORTAL_R()*LAUNCH.hitR;     // what your thumb has to find
-/* the guns shrink as mounts are added, because eight of them still have to
-   fit between the wall and the portal on a 320 phone */
-const TURR = ()=>{
-  const half=Math.max(1,rigSlots()/2);
-  const room=((AR.x0+AR.x1)*0.5 - PORTAL_R()*1.55 - AR.x0 - 8)/half;
-  return clamp(Math.min(W*0.078, room*0.40), 11, 34);
-};
+/* the two guns stand in the lower corners and nothing stands between them */
+const TURR = ()=>clamp(W*0.082, 26, 34);
 /* the home indicator, in real pixels. env() is not readable from script, so
    a zero-width probe carries the value out of CSS for us. */
 function safeBottom(){
@@ -4277,7 +4100,7 @@ function safeBottom(){
    one and takes three taps to open rather than one. Across the whole table
    that is 14.9 mass a drop against the flat 8 it used to be, which matters
    for about the first minute and is noise next to a wizard after that. */
-const VENT_GAP=10;                 // the arrow's reload before any Reload levels
+const VENT_GAP=10;                 // the spawner's gap before any Reload levels
 const VENT_ROLL=[
   {tier:4, p:.44},   // blue, and nothing weaker than blue
   {tier:3, p:.26},   // purple
@@ -4475,48 +4298,57 @@ function bossPull(dt){
     }
   }
 }
-function launchAuto(){
-  // the Reload upgrade scales the base interval rather than replacing it
-  return LAUNCH.autoGap*(val("reload")/10);
+/* how long until the next one. An empty dish sends them at SPAWN.gap; a full
+   one stretches that out, so a crowded screen stops getting worse on its own
+   and recovers as soon as you cut something. */
+function spawnGap(){
+  const base=SPAWN.gap*(val("reload")/10);
+  const f=clamp(dishFill(),0,1);
+  return base*(1+f*f*SPAWN.crowdSlow);
 }
-const launcherAt=()=>portalAt();
-function launcherHit(x,y){
-  if(y>H-safeBottom()) return false;          // the home indicator is not the game
-  const p=launcherAt();
-  return Math.hypot(x-p.x,y-p.y)<launchHitR();
-}
-/* one bonus ball, paid for out of the ring */
-function launchPaid(){
-  if(LA.e<LAUNCH.energyCost) return false;
-  if(!ventBall(6,true)) return false;         // the dish was full: nothing spent
-  LA.e-=LAUNCH.energyCost;
-  if(Math.random()<turVal("ufo","twin")) ventBall(6,true);
-  return true;
-}
-/* it refused: a short dim pulse on the ring, not silence and not a wall of text */
-function launchRefuse(full){
-  LA.dim=1;
-  pop(120,{vol:.06,len:.10,wet:.05});
-  haptic(9);
-  if(full && el-fullT>6){ fullT=el; toast("The dish is full \u2014 break some down"); }
-}
-function stepLauncher(dt){
-  // energy back, and the ring easing toward wherever it actually is
-  LA.e=Math.min(LAUNCH.energyMax, LA.e+LAUNCH.regen*dt);
-  const want=LA.e/LAUNCH.energyMax;
-  LA.ring += (want-LA.ring)*(1-Math.pow(1-LAUNCH.ringLead,dt*60/6));
-  LA.flash =Math.max(0,LA.flash -dt*5.5);
-  LA.recoil=Math.max(0,LA.recoil-dt*6.0);
-  LA.dim   =Math.max(0,LA.dim   -dt*2.0);
-  if(!LA.holdOn) return;
-  // a held press keeps launching while there is anything to spend
-  LA.holdT-=dt;
-  if(LA.holdT<=0){
-    LA.holdT=LAUNCH.holdGap;
-    if(!ready||zoomPhase) return;
-    if(LA.e<LAUNCH.energyCost){ LA.dim=Math.max(LA.dim,0.7); return; }
-    if(!launchPaid()) LA.dim=Math.max(LA.dim,0.7);
+const bigOut=()=>{ let n=0; for(const b of balls) if(!b.gone&&b.tier<=SPAWN.bigTier) n++; return n; };
+let bigT=-99;
+/* which rung. Big ones are rare by the roll, capped by how many are already
+   out, and put on a cooldown after each one - so a giant stays an event. */
+function spawnTier(){
+  let t=ventRoll();
+  const crowded=dishFill()>0.5;
+  if(t<=SPAWN.bigTier){
+    if(bigOut()>=SPAWN.maxBig || el-bigT<SPAWN.bigCool || crowded)
+      t=SPAWN.bigTier+1+((Math.random()*3)|0);
+    else bigT=el;
   }
+  return Math.min(t,DROPT);
+}
+/* the lane: whichever candidate column has the most clear sky above it, and
+   never the two columns the guns stand in */
+function spawnX(rr){
+  const lo=AR.x0+Math.max(rr+4, (AR.x1-AR.x0)*SPAWN.edge);
+  const hi=AR.x1-Math.max(rr+4, (AR.x1-AR.x0)*SPAWN.edge);
+  if(hi<=lo) return (AR.x0+AR.x1)*0.5;
+  let best=(lo+hi)*0.5, bestScore=-1;
+  for(let i=0;i<SPAWN.tries;i++){
+    const x=rnd(lo,hi);
+    // a gun's column is not a lane
+    let bad=false;
+    for(let k=0;k<rigSlots();k++){
+      const p=slotAt(k);
+      if(G.rig[k] && Math.abs(x-p.x)<p.r+rr+6){ bad=true; break; }
+    }
+    if(bad) continue;
+    // how far up this column is clear, and how big whatever is in it is
+    let score=1e9;
+    for(const b of balls){
+      if(b.gone) continue;
+      const dx=Math.abs(b.x-x);
+      if(dx>b.r+rr) continue;
+      const gap=(b.y+b.r)>AR.y1 ? 0 : (AR.y1-(b.y+b.r));
+      // a big ball in the way counts against the lane harder than a small one
+      score=Math.min(score, gap-b.r*1.4);
+    }
+    if(score>bestScore){ bestScore=score; best=x; }
+  }
+  return best;
 }
 function ventRoll(){
   let r=Math.random(), t=VENT_ROLL[0].tier;
@@ -4533,16 +4365,23 @@ function ventBall(forceTier, plainOnly){
   const rr=tierRadius(t,cls);
   if(!roomFor(rr,plainOnly)) return false;     // a deliberate tap gets more room
   // out of the saucer, which is the thing sitting directly over the button
-  const u=launcherAt();
-  const x=clamp(u.x+rnd(-5,5)*S, rr+2, Math.max(rr+3,W-rr-2));
-  const y=u.y-PORTAL_R()*0.34-rr*0.55;
-  const ut=TURRETS.find(t2=>t2.ufo); if(ut) ut.k=1;   // the hull flexes
-  LA.flash=1; LA.recoil=1;                            // compress, flash, kick
+  const x=clamp(spawnX(rr), rr+2, Math.max(rr+3,W-rr-2));
+  // it starts under the floor and climbs through it, which is what makes it
+  // read as arriving from below rather than appearing out of nothing
+  const y=AR.y1+rr+rnd(SPAWN.under[0],SPAWN.under[1]);
+
   // the heavy ones leave slower, or a yellow would be off the top of the dish
   const kick=clamp(1-up*.075,.66,1.12);
-  const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S*kick, cls,
+  // a little sideways, so it climbs an arc and not a line - and always away
+  // from the wall it is nearest, so nothing is thrown straight into one
+  const away=x<(AR.x0+AR.x1)*0.5?1:-1;
+  const b=makeBall(t, x, y,
+                   (rnd(0,SPAWN.drift)*away+rnd(-16,16))*S,
+                   -rnd(SPAWN.speed[0],SPAWN.speed[1])*S*kick, cls,
                    VENT.mass*Math.pow(1.6,up), kind);
   b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el; b.luck=kind==="golden";
+  b.entering=1;                       // the floor lets it through, once
+  b.arc=SPAWN.arcT;                   // and it arcs over on the way in
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   // the nozzle: a tight ring at the lip, and a wider one a beat later as the
@@ -4581,7 +4420,7 @@ function ventBall(forceTier, plainOnly){
 }
 function castBall(i){
   const cls=WRANK[wiz(i).rank], t=cls.tier;
-  // rainbows are the arrow's business; a wizard casts plain and unstable
+  // rainbows are the spawner's business; a wizard casts plain and unstable
   const kind=dropKind()==="unstable"?"unstable":"plain";
   const rr=tierRadius(t,cls);
   const x=clamp(castX(i)+rnd(-9,9), rr+2, Math.max(rr+3,W-rr-2));
@@ -5163,9 +5002,8 @@ function arenaArea(){ return W*Math.max(1, AR.y1-AR.y0); }
    cost 10 and 800 cost 16, which is the whole budget. A phone has perhaps a
    third of the speed, so it stops well short. */
 const ballCeil=()=>app.classList.contains("lowfx")
-  ? Math.round(LAUNCH.maxBalls*0.87) : LAUNCH.maxBalls;
-const DISH_MAX=0.86;                 // how full the screen may get, flat
-const dishMax=()=>DISH_MAX;
+  ? Math.round(SPAWN.maxBalls*0.87) : SPAWN.maxBalls;
+const dishMax=()=>SPAWN.fill;        // how full the screen may get, flat
 /* each icon costs its own rectangle plus a working margin, because the strip
    right beside one is ground no ball of any size can settle in */
 let blockedA=0, blockedFor=-1;
@@ -5179,8 +5017,8 @@ function blockedArea(){
 const usableArea=()=>Math.max(1, arenaArea()-blockedArea());
 const dishFill=()=>Math.max(areaSum()/(usableArea()*dishMax()), balls.length/ballCeil());
 /* room for one more of this size, not merely room for one more */
-const roomFor=(r,manual)=>balls.length<ballCeil()+(manual?12:0) &&
-  areaSum()+Math.PI*r*r <= usableArea()*(dishMax()+(manual?0.06:0));
+const roomFor=r=>balls.length<ballCeil() &&
+  areaSum()+Math.PI*r*r <= usableArea()*dishMax();
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
@@ -5249,8 +5087,13 @@ function step(dt){
   psRate += (psFrame/dt - psRate) * (1-Math.pow(0.5, dt/4));
   psFrame=0;
   VENT.t-=dt;
-  if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? launchAuto() : 2.5; VENT.max=VENT.t; }
-  stepLauncher(dt);
+  if(VENT.t<=0){
+    if(ventBall(spawnTier())){
+      if(Math.random()<turVal("ufo","twin")) ventBall(spawnTier());
+      VENT.t=spawnGap();
+    } else VENT.t=2.5;
+    VENT.max=VENT.t;
+  }
   bossGate(); bossPull(dt); stepNeedles(dt); stepShells(dt); stepDrones(dt); stepTurrets(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
@@ -5284,6 +5127,8 @@ function step(dt){
       const dx=ptrX-b.x, dy=ptrY-b.y, d=Math.hypot(dx,dy);
       if(d<mag&&d>1){ const f=(1-d/mag)*260*dt; b.vx+=dx/d*f; b.vy+=dy/d*f; }
     }
+    // a ball still arriving is the only thing in the dish that has weight
+    if(b.arc>0){ b.arc-=dt; b.vy+=SPAWN.arcG*dt; }
     b.x+=b.vx*dt; b.y+=b.vy*dt;
     const k=Math.pow(.42,dt); b.vx*=k; b.vy*=k;
     const t=TIER[b.tier].spd*S*curScale().spd, sp=Math.hypot(b.vx,b.vy);
@@ -5295,7 +5140,10 @@ function step(dt){
     if(b.x>W-b.r){ b.x=W-b.r; b.vx=-Math.abs(b.vx)*.92; b.wob=Math.max(b.wob,.1); }
     if(b.y<AR.y0+b.r){ b.y=AR.y0+b.r; b.vy=Math.abs(b.vy)*.92; b.wob=Math.max(b.wob,.1); }
     bounceChrome(b);
-    if(b.y>AR.y1-b.r){
+    if(b.entering){
+      if(b.y<=AR.y1-b.r) b.entering=0;     // it is in: the floor is solid now
+    }
+    else if(b.y>AR.y1-b.r){
       // a rising floor should nudge, not fling — only bounce a ball that was
       // actually travelling into it
       const into=b.vy>0;
@@ -7135,13 +6983,12 @@ function showCallout(kind,slot){
   if(!c) return;
   const spec=TUR_TYPES[kind];
   const ar=roomArena.getBoundingClientRect();
-  const p=slot===undefined?turretAt(UFO):slotAt(slot);
-  const R=slot===undefined?turR(UFO):slotAt(slot).r;
+  const p=slotAt(slot), R=p.r;
   calloutFor={kind,slot};
   c.querySelector(".cIc").innerHTML='<span style="color:'+(spec?spec.col:"#7CE0FF")+'">'+
     (kind==="sniper"?"\u25C6":kind==="hive"?"\u2B22":kind==="ufo"?"\u25CF":"\u25C9")+'</span>';
   c.querySelector(".cName").textContent=spec?spec.nm:"Saucer";
-  c.querySelector(".cSub").textContent=slot===undefined?"drops the balls":("mount "+(slot+1));
+  c.querySelector(".cSub").textContent=slot===0?"left":"right";
   c.classList.add("on");
   // pin it above the gun, kept inside the screen
   const w=c.offsetWidth||160;
@@ -7160,7 +7007,7 @@ function showCallout(kind,slot){
     e.stopPropagation();
     const f=calloutFor; hideCallout();
     if(!f) return;
-    sheetTurrets(f.kind==="ufo"?"ufo":f.kind);
+    sheetTurrets(f.kind);
   };
 })();
 addEventListener("pointerdown",e=>{
@@ -7171,7 +7018,7 @@ function sheetTurrets(type){
   if(type==="ufo") turTab="ufo";
   else if(type&&TUR_TYPES[type]) turTab=type;
   const KCOL=k=>k==="ufo"?"#7CE0FF":TUR_TYPES[k].col;
-  const KNAME=k=>k==="ufo"?"Saucer":TUR_TYPES[k].nm;
+  const KNAME=k=>k==="ufo"?"Spawner":TUR_TYPES[k].nm;
   const ICO=k=>'<span style="color:'+KCOL(k)+'">'+
     (k==="sniper"?"\u25C6":k==="hive"?"\u2B22":k==="ufo"?"\u25CF":"\u25C9")+'</span>';
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
@@ -7198,10 +7045,10 @@ function sheetTurrets(type){
     const head=document.createElement("div");
     head.className="turHead";
     head.innerHTML='<b>'+KNAME(turTab)+'</b><span>'+
-      (turTab==="ufo"?"the one your thumb feeds"
-       :(owned?owned+" on the rig":"none on the rig \u2014 upgrades still stick"))+'</span>';
+      (turTab==="ufo"?"sends the balls up on its own"
+       :(owned?owned+" deployed":"not deployed \u2014 upgrades still stick"))+'</span>';
     b.appendChild(head);
-    // the saucer's two existing tracks, driven straight off the panel's own
+    // the spawner's two existing tracks, driven straight off the panel's own
     // so a level bought here is the same level bought there
     if(turTab==="ufo") for(const key of ["reload","payload"]){
       const u=UP[key], lv2=lv(key), m=maxed(key), price=cost(key);
@@ -7217,6 +7064,33 @@ function sheetTurrets(type){
       b.appendChild(d);
     }
 
+    // buying one: the two corners are the only places it can stand
+    if(turTab!=="ufo"){
+      const free=(G.rig||[]).findIndex((v,i)=>i<rigSlots()&&!v);
+      if(free>=0){
+        const price=gunPrice(turTab), can=G.bio>=price;
+        b.appendChild(row({ic:ICO(turTab), t:"Deploy a "+TUR_TYPES[turTab].nm,
+          s:TUR_TYPES[turTab].d,
+          btn:fmt(price), btnOn:can,
+          fn:()=>{
+            if(G.bio<price){ toast("Needs "+fmt(price)+" cash"); return; }
+            G.bio-=price; G.rig[free]=turTab; rebuildRig();
+            buySound(2); haptic(12); save(); syncTop();
+            toast(TUR_TYPES[turTab].nm+" deployed");
+            sheetSync&&sheetSync();
+          }}));
+      } else if(owned){
+        b.appendChild(row({ic:"\u2715", t:"Take it down",
+          s:"Frees the corner. You do not get the cash back.",
+          btn:"Remove", btnOn:true,
+          fn:()=>{
+            const at=(G.rig||[]).lastIndexOf(turTab);
+            if(at<0) return;
+            G.rig[at]=null; rebuildRig(); save(); haptic(10);
+            sheetSync&&sheetSync();
+          }}));
+      }
+    }
     for(const u of (TUR_UP[turTab]||[])){
       const lv=turLv(turTab,u.k), maxed=turUpMaxed(turTab,u.k), price=turUpCost(turTab,u.k);
       const can=!maxed&&G.bio>=price;
@@ -7228,7 +7102,6 @@ function sheetTurrets(type){
           G.bio-=price;
           G.turUp[turTab]=G.turUp[turTab]||{};
           G.turUp[turTab][u.k]=lv+1;
-          if(u.k==="mounts"){ rebuildRig(); measureArena(); }
           buySound(lv+1); haptic(9); save(); syncTop();
         }});
       d.classList.add("upR");
@@ -7241,35 +7114,6 @@ function sheetTurrets(type){
     }
   });
 }
-function sheetSlot(slot){
-  const here=G.rig&&G.rig[slot];
-  openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
-      '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" '+
-      'stroke-linecap="round" fill="none"/></svg>',
-    here?TUR_TYPES[here].nm:"Empty mount",
-    here?"Mount "+(slot+1)+" of "+rigSlots():"Pick what stands here", b=>{
-    if(here){
-      b.appendChild(row({ic:GUN_ICO(here), t:TUR_TYPES[here].nm, s:TUR_TYPES[here].d,
-        btn:"Upgrade", btnOn:true,
-        fn:()=>{ closeSheet(); setTimeout(()=>sheetTurrets(here),200); }}));
-      b.appendChild(row({ic:"\u2715", t:"Take it off", s:"Frees the mount. You do not get the cash back.",
-        btn:"Remove", btnOn:true,
-        fn:()=>{ G.rig[slot]=null; rebuildRig(); save(); haptic(10); closeSheet(); }}));
-      return;
-    }
-    for(const k of Object.keys(TUR_TYPES)){
-      const spec=TUR_TYPES[k], price=gunPrice(k), can=G.bio>=price;
-      b.appendChild(row({ic:GUN_ICO(k), t:spec.nm, s:spec.d,
-        btn:price?fmt(price):"Free", btnOn:can,
-        fn:()=>{
-          if(G.bio<price){ toast("Needs "+fmt(price)+" cash"); return; }
-          G.bio-=price; G.rig[slot]=k; rebuildRig();
-          buySound(2); haptic(12); save(); syncTop();
-          toast(spec.nm+" mounted"); closeSheet();
-        }}));
-    }
-  });
-}
 function sheetUpgrades(){
   openSheet('<img src="'+ART.mark_ink+'" alt="" '+
       'style="width:21px;height:21px;display:block;object-fit:contain">',
@@ -7277,8 +7121,8 @@ function sheetUpgrades(){
     upRows={};
     b.appendChild(lbl("The rig"));
     b.appendChild(row({ic:'<span style="color:#7CE0FF">◉</span>',
-      t:"Launcher and turrets",
-      s:"Twin drop, extra mounts, and every gun standing on the rig.",
+      t:"Spawner and turrets",
+      s:"How the balls arrive, and the two guns that help you cut them.",
       btn:"Open", btnOn:true,
       fn:()=>{ closeSheet(); setTimeout(()=>sheetTurrets("ufo"),200); }}));
     for(const grp of UP_GROUPS){
@@ -8037,9 +7881,8 @@ function begin(){
   actx();
   if(!G.seen){
     G.seen=true;
-    setTimeout(()=>banner("TAP TO SPLIT"),400);
-    setTimeout(()=>toast("Swipe across balls to cleave a whole line"),2600);
-    setTimeout(()=>toast("Tap the arrow up top — your wizards live up there"),6400);
+    setTimeout(()=>banner("SWIPE TO SLICE"),400);
+    setTimeout(()=>toast("They come up from below on their own — cut them"),2600);
   }
   unlockAudio();
   setTimeout(()=>{
