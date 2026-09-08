@@ -270,6 +270,15 @@ input{font:inherit;color:inherit}
   color:var(--topInk,#0F1720);
 }
 .cur{display:flex;align-items:center;gap:7px;pointer-events:auto}
+/* settings, stats and the board - off the playfield, where they belong */
+#sysBtn{
+  order:3;pointer-events:auto;flex:none;width:31px;height:31px;padding:0;border:0;
+  border-radius:50%;background:rgba(15,23,32,.07);color:var(--topInk,#0F1720);
+  display:grid;place-items:center;-webkit-tap-highlight-color:transparent;
+}
+#sysBtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.62}
+#sysBtn:active{background:rgba(15,23,32,.14)}
 .pip{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex:none;color:#fff}
 /* the money reads as money: a banknote on pale green, the amount in deep
    green and set much larger than anything else on the bar */
@@ -437,7 +446,6 @@ input{font:inherit;color:inherit}
   #railR{width:46px;top:calc(var(--top-h) + 42px + 54px)}
   #railR .pw{width:38px;height:38px;border-radius:12px}
   #railR .pw .g{font-size:13px}
-  #fireWrap{left:10px;right:10px;height:58px;top:13px}
   #upBtn{width:46px;height:46px;border-radius:14px}
   #upBtn .mk{width:20px;height:20px}
   #upBtn b{font-size:6.5px}
@@ -459,9 +467,9 @@ input{font:inherit;color:inherit}
   position:absolute;z-index:5;left:50%;top:calc(var(--top-h) + 92px);
   transform:translateX(-50%) scale(.8);
   font-family:var(--font);font-weight:700;
-  font-size:34px;letter-spacing:-.01em;
+  font-size:29px;letter-spacing:-.01em;
   color:var(--cg,#E8A200);opacity:0;pointer-events:none;
-  transition:opacity 1.5s ease;
+  transition:opacity .16s ease;
   font-variant-numeric:tabular-nums;
   -webkit-text-stroke:2.5px rgba(255,255,255,.92);paint-order:stroke fill;
   text-shadow:0 3px 0 rgba(255,255,255,.75), 0 0 22px var(--cg,#E8A200);
@@ -469,6 +477,7 @@ input{font:inherit;color:inherit}
 /* overshoot, drift up, settle — a flat scale-in read as a number changing
    rather than something being won */
 #combo.on{opacity:1;animation:comboPop .54s cubic-bezier(.22,1.5,.34,1) forwards}
+#combo.fade{opacity:.32;transition:opacity .5s ease}
 @keyframes comboPop{
   0%  {opacity:0;transform:translateX(-50%) translateY(14px) scale(.58)}
   34% {opacity:1;transform:translateX(-50%) translateY(-7px) scale(1.26)}
@@ -494,96 +503,19 @@ input{font:inherit;color:inherit}
 }
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ============ dock ============ */
-#dockHandle{
-  position:absolute;inset:0;margin:auto;
-  width:62px;height:62px;border-radius:50%;padding:0;
-  pointer-events:none;                       /* the panel takes the press */
-  background:none;border:none;box-shadow:none;
-  display:grid;place-items:center;z-index:6;
-  filter:drop-shadow(0 0 8px rgba(124,224,255,.55));
+/* ============ the bottom ============
+   Nothing down here is DOM any more except the safe-area probe. The
+   launcher and the guns are canvas, so they take part in the world's
+   lighting and its shake instead of floating above it. */
+#sabProbe{
+  position:absolute;left:0;bottom:0;width:0;
+  height:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden;
 }
-@keyframes handleBob{50%{translate:0 -4px}}
-#dockHandle .ah{display:grid;place-items:center;line-height:0}
-/* how long until the next one is loaded. It fills as the chamber does and
-   drains the instant it fires. */
-#vBar{
-  position:absolute;bottom:9px;left:50%;transform:translateX(-50%);z-index:2;
-  width:66px;height:5px;border-radius:99px;overflow:hidden;
-  background:rgba(124,224,255,.16);
-  box-shadow:inset 0 0 0 1px rgba(124,224,255,.22);
-}
-#vBar b{display:block;height:100%;width:0%;border-radius:99px;
-  background:linear-gradient(90deg,#2FA3FF,#7CE0FF);
-  transition:width .1s linear}
-/* loaded: it goes gold and breathes, so a full chamber is obvious */
-#vBar.full b{background:linear-gradient(90deg,#7CE0FF,#EAFBFF)}
-#vBar.full{animation:vbFull 1.2s ease-in-out infinite}
-@keyframes vbFull{50%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),
-                                  0 0 10px rgba(245,163,0,.55)}}
-#dockHandle svg{width:33px;height:33px;color:#7CE0FF;fill:#7CE0FF;
-  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
-  transition:transform .26s cubic-bezier(.3,.8,.3,1)}
-#dock{
-  position:absolute;z-index:5;left:0;right:0;bottom:0;
-  height:calc(var(--dock-h) + env(safe-area-inset-bottom));
-  transition:height .26s cubic-bezier(.3,.8,.3,1);
-  background:none;border:none;box-shadow:none;pointer-events:none;
-  display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
-}
-#fireWrap,#dockHandle,#upBtn{
+#upBtn{
   pointer-events:auto;-webkit-touch-callout:none;
   -webkit-user-select:none;user-select:none;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
-/* the way in to the five, standing on the strip beside the trigger */
-/* the glass the trigger stands on, and the whole of it is the trigger */
-#fireWrap{
-  position:absolute;left:12px;right:12px;top:11px;height:62px;
-  border-radius:20px;z-index:5;cursor:pointer;
-  background:linear-gradient(180deg,#33496F,#1A2740);
-  box-shadow:0 6px 0 #070C18, 0 10px 22px rgba(4,8,18,.5),
-             inset 0 0 0 1px rgba(124,224,255,.34),
-             inset 0 1px 0 rgba(160,230,255,.42);
-  transition:transform .09s ease-out, box-shadow .09s ease-out;
-}
-#fireWrap.nope{animation:fwNope .3s ease-out}
-@keyframes fwNope{
-  0%{transform:translateX(0)}
-  22%{transform:translateX(-5px)} 46%{transform:translateX(5px)}
-  70%{transform:translateX(-3px)} 100%{transform:translateX(0)}}
-#fireWrap.nope{box-shadow:0 6px 0 #7A1220, 0 10px 20px rgba(122,18,32,.34),
-  inset 0 0 0 1px rgba(255,122,138,.5)}
-#fireWrap:active,#fireWrap.down{
-  transform:translateY(4px);
-  box-shadow:0 2px 0 #050912, 0 4px 10px rgba(11,16,26,.3),
-             inset 0 0 0 1px rgba(124,224,255,.5),
-             inset 0 1px 0 rgba(124,224,255,.42);
-}
-/* the port the ball leaves by, cut into the top edge above the arrow */
-#rigEdit{
-  position:absolute;right:9px;top:50%;margin-top:-17px;
-  width:34px;height:34px;border-radius:11px;padding:0;border:none;z-index:7;
-  background:rgba(124,224,255,.12);
-  box-shadow:inset 0 0 0 1px rgba(124,224,255,.30);
-  display:grid;place-items:center;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  transition:background .14s ease, box-shadow .14s ease;
-}
-#rigEdit svg{width:17px;height:17px;fill:#7CE0FF;display:block}
-#rigEdit.on{background:#7CE0FF;box-shadow:0 0 14px rgba(124,224,255,.6)}
-#rigEdit.on svg{fill:#08121E}
-/* while it is open the dish stops taking swipes, so a drag is only a drag */
-.rigEditing #fx{touch-action:none}
-#firePort{
-  position:absolute;left:50%;top:-1px;width:46px;height:9px;
-  margin-left:-23px;border-radius:0 0 12px 12px;z-index:6;pointer-events:none;
-  background:linear-gradient(180deg,rgba(124,224,255,.75),rgba(124,224,255,0));
-  box-shadow:0 0 12px rgba(124,224,255,.5);
-  opacity:.55;transition:opacity .12s ease, transform .12s ease;
-  transform-origin:50% 0;
-}
-#fireWrap.shot #firePort{opacity:1;transform:scaleY(1.45)}
 /* the circle centres itself on the pane rather than on the screen */
 /* the bubble, with a tail down onto whatever it is about */
 #callout{
@@ -1861,6 +1793,7 @@ input{font:inherit;color:inherit}
         <span class="p">0%</span>
         <span class="bar"><i></i></span>
       </button>
+      <i id="sabProbe" aria-hidden="true"></i>
       <div class="rail" id="railL"></div>
       <div class="rail" id="railR"></div>
       <div id="combo"></div>
@@ -1875,26 +1808,12 @@ input{font:inherit;color:inherit}
       <button id="upBtn" aria-label="Upgrades">
         <i class="mk"></i><b>Upgrades</b><span class="dot"></span>
       </button>
-      <div id="dock">
-        <div id="fireWrap">
-          <i id="vBar" title="Next free ball"><b></b></i>
-          <i id="firePort"></i>
-          <button id="rigEdit" aria-label="Rearrange the guns">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 20.4h4.2L19 9.6l-4.2-4.2L4 16.2z"/>
-              <path d="M16.2 4l3.8 3.8 1.6-1.6a2 2 0 0 0 0-2.8l-1-1a2 2 0 0 0-2.8 0z"/>
-            </svg>
-          </button>
-          <button id="dockHandle" aria-label="Drop a ball" tabindex="-1">
-            <span class="ah"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.9" r="4.4"/><circle cx="10.3" cy="4.2" r="1.45" fill="#EAFBFF" opacity=".9"/><path d="M6.4 16.5 12 13.6l5.6 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/><path d="M6.4 21.6 12 18.7l5.6 2.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".42"/></svg></span>
-          </button>
-        </div>
-      </div>
     </section>
 
   </div>
 
   <div id="top">
+    <button id="sysBtn" aria-label="Settings and stats"></button>
     <div class="cur" id="bioWrap"><span class="pip bio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.6" y="5.4" width="20.8" height="13.2" rx="2.6"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.3" cy="12" r="1.15"/><circle cx="18.7" cy="12" r="1.15"/></svg></span><span class="n mono-n" id="bioN">0</span><span class="ps" id="bioPs">0/s</span></div>
     <button class="cur gemBtn" id="sporeWrap"><span class="pip spore"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/></svg></span><span class="n mono-n" id="sporeN">0</span><span class="plus">+</span></button>
   </div>
@@ -2185,11 +2104,11 @@ const UP={
            v:l=>1+0.5*Math.pow(l,0.72), fmt:l=>"×"+(1+0.5*Math.pow(l,0.72)).toFixed(2)},
   reload: {tab:"arena",g:aimg("up_reload"),
            nm:"Reload", base:400, gr:1.22, max:30,
-           d:"How long the arrow takes to load its next free ball.",
+           d:"How fast the launcher sends its automatic ball, with no help from you.",
            v:l=>Math.max(3.5, 10-l*0.22), fmt:l=>Math.max(3.5,10-l*0.22).toFixed(1)+"s"},
   payload:{tab:"arena",g:aimg("up_payload"),
            nm:"Payload", base:260, gr:1.20, max:30,
-           d:"Chance the arrow sends a ball one whole rung bigger than it rolled.",
+           d:"Chance the launcher sends a ball one whole rung bigger than it rolled.",
            v:l=>Math.min(.84,l*.028), fmt:l=>Math.round(Math.min(84,l*2.8))+"%"},
   magnet: {tab:"field",g:aimg("up_magnet"),
            nm:"Magnet",base:90, gr:1.19, max:40,
@@ -2199,7 +2118,7 @@ const UP={
 const UPK=Object.keys(UP);
 const UP_GROUPS=[
   {t:"Your swipe", keys:["reach","cascade","crit","magnet"]},
-  {t:"The arrow",  keys:["reload","payload"]},
+  {t:"The launcher", keys:["reload","payload"]},
   {t:"What it pays", keys:["yield","colony","purity"]},
 ];
 const SHOP_UP=UP_GROUPS.reduce((a,g)=>a.concat(g.keys),[]);
@@ -2405,17 +2324,15 @@ let W=0,H=0,DPR=1,GS=1,S=1;
 const AR={x0:0,y0:0,x1:0,y1:0};
 
 
+function rigBaseY(){
+  // the floor the machine is bolted to, clear of the home indicator
+  return H - safeBottom() - Math.round(14+6*S);
+}
 function dishFloor(){
-  const dock=document.getElementById("dock");
-  if(!dock) return H-152;
-  const ar=roomArena.getBoundingClientRect();
-  // the dock by rect, so safe areas and notches are inside the number
-  let y=dock.getBoundingClientRect().top-ar.top;
-  if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
-  const fw=document.getElementById("fireWrap");
-  // off the panel's own edge, less the guns standing on it and a little air
-  if(fw) y+=fw.offsetTop-TUR_H()-6;
-  return Math.max(H*.35, Math.round(y));
+  // the wall the balls bounce off: above the launcher's mouth and above the
+  // guns, whichever of the two stands taller
+  const head=Math.max(TUR_H(), Math.round(launchR()*2.45));
+  return Math.max(H*.35, Math.round(rigBaseY()-head-6*S));
 }
 /* where the chrome actually ends today, not where it ended at boot */
 function measureArena(){
@@ -2434,6 +2351,9 @@ function measureArena(){
   AR.x0=0; AR.x1=W;
   AR.y0=Math.max(0,Math.round(y0));
   AR.y1=dishFloor();
+  // whatever floats above the machine floats above the real machine
+  if(room==="arena")
+    document.documentElement.style.setProperty("--chrome-b",Math.round(H-AR.y1)+"px");
   // nothing is left stranded outside the walls it was inside a moment ago
   for(const b of balls) if(!b.gone) clampIn(b);
 }
@@ -2468,7 +2388,7 @@ if(document.fonts&&document.fonts.ready)
   document.fonts.ready.then(()=>{ measureArena(); drawBg(); }).catch(()=>{});
 if(window.ResizeObserver){
   const ro=new ResizeObserver(()=>{ if(!zoomPhase){ measureArena(); drawBg(); } });
-  for(const id of ["top","goal","dock"]){
+  for(const id of ["top","goal","sabProbe"]){
     const el=document.getElementById(id); if(el) ro.observe(el);
   }
 }
@@ -2778,7 +2698,8 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const RIG_N=8;                      // eight slots, four each side
+const RIG_MAX=8;                    // the most the rig can ever carry
+const rigSlots=()=>clamp(2+turLv("ufo","mounts"),2,RIG_MAX);
 const TUR_TYPES={
   eye:   {nm:"Eye",    gap:9,  cost:5000,  col:"#7CE0FF",
           d:"Turns to the nearest ball and fires a needle that ricochets three times."},
@@ -2811,6 +2732,9 @@ const TUR_UP={
      v:l=>0.25-l*0.024, fmt:l=>Math.round((1-(0.25-l*0.024)/0.25)*100+10)+"%"},
   ],
   ufo:[
+    {k:"mounts", nm:"Turret mounts", base:24000, gr:2.30, max:6,
+     d:"Bolts another gun mount onto the rig, beside the ones already there.",
+     v:l=>2+l, fmt:l=>(2+l)+" mounts"},
     {k:"twin", nm:"Twin drop", base:9000, gr:1.42, max:12,
      d:"Chance a press drops two balls instead of one.",
      v:l=>Math.min(.84,l*.07), fmt:l=>Math.round(Math.min(84,l*7))+"%"},
@@ -2841,25 +2765,19 @@ const turUpMaxed=(ty,k)=>{
   const spec=(TUR_UP[ty]||[]).find(u=>u.k===k);
   return !spec||turLv(ty,k)>=spec.max;
 };
-const TUR_R=()=>22*S;                                // the saucer
+const TUR_R=()=>launchR();                           // the launcher
 const TUR_H=()=>Math.round(TUR_R()*1.30);            // how far the rig stands up
-function panelTopY(){
-  const dock=document.getElementById("dock"), fw=document.getElementById("fireWrap");
-  if(!dock||!fw) return H-90;
-  const ar=roomArena.getBoundingClientRect();
-  let y=dock.getBoundingClientRect().top-ar.top;
-  if(!isFinite(y)||y<=0) y=H-dock.offsetHeight;
-  return Math.round(y+fw.offsetTop);
-}
+function panelTopY(){ return rigBaseY(); }
 /* how wide a slot can be, given the saucer is sitting in the middle of them */
 function rigGeom(){
-  const R=TUR_R(), cx=(AR.x0+AR.x1)*.5, ufoW=R*1.34;
-  const step=Math.max(24,((AR.x1-AR.x0)-14-ufoW*2)/RIG_N);
-  return {cx, ufoW, step, sr:Math.min(23*S, step*0.50)};
+  const n=rigSlots(), cx=(AR.x0+AR.x1)*.5, ufoW=launchR()*1.12;
+  const room=Math.max(24,((AR.x1-AR.x0)-16-ufoW*2)/n);
+  const sr=Math.min(launchR()*0.74, room*0.46);
+  return {cx, ufoW, sr, step:Math.min(sr*2.40, room)};
 }
 function slotAt(i){
-  const g=rigGeom();
-  const n=i<RIG_N/2 ? i-RIG_N/2 : i-RIG_N/2+1;       // -5..-1, 1..5
+  const g=rigGeom(), N=rigSlots();
+  const n=i<N/2 ? i-N/2 : i-N/2+1;                   // -k..-1, 1..k
   return {x:g.cx+Math.sign(n)*(g.ufoW+(Math.abs(n)-0.5)*g.step),
           y:panelTopY()+2, r:g.sr};
 }
@@ -2871,18 +2789,30 @@ function rebuildRig(){
   const keep={};
   for(const t of TURRETS) if(t.slot!==undefined) keep[t.slot+"|"+t.type]=t;
   const out=[UFO];
-  if(!Array.isArray(G.rig)) G.rig=Array(RIG_N).fill(null);
-  if(G.rig.length!==RIG_N){
-    // a save from when the rig was a different size: keep every gun, pack
-    // them back in from the middle outward rather than losing the overflow
-    const guns=G.rig.filter(Boolean);
-    const fresh=Array(RIG_N).fill(null);
-    const order=[]; const mid=RIG_N/2;
+  if(!Array.isArray(G.rig)) G.rig=Array(RIG_MAX).fill(null);
+  const guns=G.rig.filter(Boolean);
+  // a save from before the rig shrank: give it the mounts it already needs
+  // rather than deleting guns somebody paid for
+  if(guns.length>rigSlots()){
+    G.turUp=G.turUp||{}; G.turUp.ufo=G.turUp.ufo||{};
+    G.turUp.ufo.mounts=clamp(guns.length-2,0,RIG_MAX-2);
+  }
+  if(G.rig.length!==RIG_MAX){
+    // pack whatever is there back in from the middle outward
+    const fresh=Array(RIG_MAX).fill(null);
+    const order=[]; const mid=RIG_MAX/2;
     for(let d=0;d<mid;d++){ order.push(mid-1-d); order.push(mid+d); }
     for(let i=0;i<guns.length&&i<order.length;i++) fresh[order[i]]=guns[i];
     G.rig=fresh; save();
   }
-  for(let i=0;i<RIG_N;i++){
+  // anything parked past the last mount comes back in to a mount that exists
+  const N=rigSlots();
+  for(let i=N;i<G.rig.length;i++){
+    if(!G.rig[i]) continue;
+    const free=G.rig.findIndex((v,j)=>j<N&&!v);
+    if(free>=0){ G.rig[free]=G.rig[i]; G.rig[i]=null; }
+  }
+  for(let i=0;i<N;i++){
     const ty=G.rig[i];
     if(!ty||!TUR_TYPES[ty]) continue;
     const had=keep[i+"|"+ty];
@@ -2902,29 +2832,36 @@ const ufoAt=()=>turretAt(UFO);
 /* --------------------------------------------------------------- drawing */
 function drawTurrets(x){
   x.save();
-  x.translate(0, panelDown*4);              // the same four pixels the CSS moves
-  if(rigEdit) drawSlots(x);
-  for(const t of TURRETS){
-    if(t===rigHeld) continue;               // the one in your hand draws last
-    drawOneTurret(x,t,turretAt(t));
-  }
-  if(rigHeld) drawOneTurret(x,rigHeld,{x:rigHeldX,y:rigHeldY},true);
+  x.translate(0, LA.recoil*5*S);            // the whole rig kicks with it
+  drawRigDeck(x);
+  drawSlots(x);
+  for(const t of TURRETS) drawOneTurret(x,t,turretAt(t));
+  x.restore();
+}
+function drawRigDeck(x){
+  const y=panelTopY(), N=rigSlots();
+  const lo=slotAt(0), hi=slotAt(N-1);
+  const x0=lo.x-lo.r*1.35, x1=hi.x+hi.r*1.35;
+  const h=Math.max(7, (H-y)-safeBottom()+2);
+  x.save();
+  // the plate, dark and slightly lit along its top edge
+  const g=x.createLinearGradient(0,y-2*S,0,y+h);
+  g.addColorStop(0,"#25344F");
+  g.addColorStop(1,"#0B1220");
+  const R=launchR();
+  x.fillStyle=g;
+  // the arms out to the mounts, thin
+  x.beginPath(); x.roundRect(x0,y-R*0.16,x1-x0,h+R*0.16,5*S); x.fill();
+  // and a deeper block under the launcher itself
+  x.beginPath(); x.roundRect((AR.x0+AR.x1)*.5-R*1.10,y-R*0.30,R*2.20,h+R*0.30,7*S); x.fill();
+  x.strokeStyle="rgba(124,224,255,.30)"; x.lineWidth=Math.max(1,1.2*S);
+  x.beginPath(); x.moveTo(x0+6*S,y-R*0.145); x.lineTo(x1-6*S,y-R*0.145); x.stroke();
   x.restore();
 }
 function drawSlots(x){
-  const over=rigHeld?slotHit(rigHeldX,rigHeldY):-1;
-  for(let i=0;i<RIG_N;i++){
-    const p=slotAt(i), taken=G.rig&&G.rig[i], lit=(i===over);
+  for(let i=0;i<rigSlots();i++){
+    const p=slotAt(i), taken=G.rig&&G.rig[i], lit=false;
     x.save(); x.translate(p.x,p.y);
-    if(lit){
-      x.fillStyle="rgba(124,224,255,.20)";
-      x.beginPath(); x.roundRect(-p.r*1.1,-p.r*1.7,p.r*2.2,p.r*1.9,4*S); x.fill();
-    }
-    if(taken){
-      x.strokeStyle=lit?"rgba(124,224,255,.95)":"rgba(124,224,255,.22)";
-      x.lineWidth=Math.max(1,(lit?2:1.2)*S);
-      x.beginPath(); x.roundRect(-p.r,-p.r*1.5,p.r*2,p.r*1.6,3*S); x.stroke();
-    }
     // an empty socket: a dark plate set into the rig with a plus in it
     if(!taken){
       const cy=-p.r*0.72, w=p.r*0.92, hh=p.r*0.80;
@@ -2952,6 +2889,102 @@ function drawSlots(x){
     }
     x.restore();
   }
+}
+/* the mouth, the ring, the arrow and the base */
+function drawLauncher(x,R,k){
+  const rec=LA.recoil, fl=LA.flash, dim=LA.dim;
+  const sq=1-rec*0.30;                      // it compresses as it lets go
+  const cy=-R*LAUNCH_LIFT*sq;               // the centre of the opening
+  const ro=R*0.72;                          // the opening's own radius
+
+  // ---- the neck, first, so the housing sits in front of it
+  const ng=x.createLinearGradient(0,cy,0,0);
+  ng.addColorStop(0,"#5D7BAE"); ng.addColorStop(1,"#22334F");
+  x.fillStyle=ng;
+  x.beginPath(); x.roundRect(-R*0.40,cy,R*0.80,-cy,R*0.16); x.fill();
+  // ---- the housing: a squat block with a shoulder either side
+  const bg=x.createLinearGradient(0,-R*0.66,0,R*0.16);
+  bg.addColorStop(0,"#54739F"); bg.addColorStop(0.55,"#2A3C5C"); bg.addColorStop(1,"#101A2C");
+  x.fillStyle=bg;
+  x.beginPath(); x.roundRect(-R*0.96,-R*0.66,R*1.92,R*0.82,R*0.22); x.fill();
+  // the lit rim along its top, which is what makes it read as a solid object
+  x.strokeStyle=hexA("#9CD8FF",0.42+fl*0.3);
+  x.lineWidth=Math.max(1.2,1.6*S);
+  x.beginPath(); x.moveTo(-R*0.80,-R*0.63); x.lineTo(R*0.80,-R*0.63); x.stroke();
+  // a dark recess with three vents in it, brighter the fuller the ring is
+  x.fillStyle="#0A1120";
+  x.beginPath(); x.roundRect(-R*0.66,-R*0.44,R*1.32,R*0.30,R*0.10); x.fill();
+  for(let q=-1;q<=1;q++){
+    x.fillStyle=hexA("#7CE0FF",0.20+0.60*LA.ring*(q?0.65:1)+fl*0.4);
+    x.beginPath(); x.roundRect(q*R*0.38-R*0.09,-R*0.39,R*0.18,R*0.20,R*0.06); x.fill();
+  }
+  // two feet, so it is standing on the deck rather than hovering over it
+  x.fillStyle="#1B2942";
+  for(const q of [-1,1]){
+    x.beginPath(); x.roundRect(q*R*0.74-R*0.14,R*0.10,R*0.28,R*0.22,R*0.06); x.fill();
+  }
+
+  // ---- the light it throws, idling slow and hard when it is loaded
+  const idle=0.5+0.5*Math.sin(el*(LA.ring>=1?3.4:1.5));
+  const glowA=0.16+0.20*LA.ring+idle*(LA.ring>=1?0.22:0.07)+fl*0.5;
+  const gg=x.createRadialGradient(0,cy,0,0,cy,ro*3.4);
+  gg.addColorStop(0,hexA("#7CE0FF",glowA));
+  gg.addColorStop(1,hexA("#7CE0FF",0));
+  x.fillStyle=gg;
+  x.beginPath(); x.arc(0,cy,ro*3.4,0,TAU); x.fill();
+
+  // ---- the mouth
+  const mg=x.createRadialGradient(0,cy+ro*0.3,ro*0.1,0,cy,ro);
+  mg.addColorStop(0,hexA("#EAFBFF",0.30+fl*0.7));
+  mg.addColorStop(0.55,hexA("#2FA3FF",0.34+fl*0.4));
+  mg.addColorStop(1,"rgba(6,14,26,.94)");
+  x.fillStyle=mg;
+  x.beginPath(); x.ellipse(0,cy,ro,ro*(0.82+rec*0.16),0,0,TAU); x.fill();
+  x.strokeStyle=hexA("#7CE0FF",0.55+fl*0.45);
+  x.lineWidth=Math.max(1.4,2.0*S);
+  x.beginPath(); x.ellipse(0,cy,ro,ro*(0.82+rec*0.16),0,0,TAU); x.stroke();
+
+  // ---- the arrow in the throat: this is where the balls come from
+  const ay=cy+ro*0.16, aw=ro*0.42, ah=ro*0.50;
+  x.strokeStyle=hexA("#EAFBFF",0.62+fl*0.38-dim*0.35);
+  x.lineWidth=Math.max(2,2.6*S); x.lineCap="round"; x.lineJoin="round";
+  x.beginPath();
+  x.moveTo(-aw,ay); x.lineTo(0,ay-ah); x.lineTo(aw,ay);
+  x.stroke();
+  x.globalAlpha=0.45;
+  x.beginPath();
+  x.moveTo(-aw,ay+ah*0.62); x.lineTo(0,ay-ah*0.38); x.lineTo(aw,ay+ah*0.62);
+  x.stroke();
+  x.globalAlpha=1;
+
+  // ---- the ring: the energy, filling clockwise from the top
+  const rr=ro*1.42;
+  x.lineCap="butt";
+  x.lineWidth=Math.max(2.4,3.2*S);
+  x.strokeStyle="rgba(124,224,255,.14)";
+  x.beginPath(); x.arc(0,cy,rr,0,TAU); x.stroke();
+  if(LA.ring>0.004){
+    const full=LA.ring>=0.999;
+    x.strokeStyle=full?"#EAFBFF":hexA("#7CE0FF",0.55+0.45*LA.ring);
+    x.lineWidth=Math.max(2.8,(full?4.2:3.6)*S);
+    x.lineCap="round";
+    x.beginPath();
+    x.arc(0,cy,rr,-Math.PI/2,-Math.PI/2+TAU*LA.ring);
+    x.stroke();
+    if(full){
+      x.globalAlpha=0.30+0.30*idle;
+      x.lineWidth=Math.max(5,7*S);
+      x.beginPath(); x.arc(0,cy,rr,0,TAU); x.stroke();
+      x.globalAlpha=1;
+    }
+  }
+  // and when there is nothing to spend, the ring says so rather than the game
+  if(dim>0){
+    x.strokeStyle=hexA("#FF7A8A",0.72*dim);
+    x.lineWidth=Math.max(4,5.4*S);
+    x.beginPath(); x.arc(0,cy,rr*(1+0.13*dim),0,TAU); x.stroke();
+  }
+  x.lineCap="butt";
 }
 function drawOneTurret(x,t,p,lifted){
   const k=Math.max(0,(t.k||0));
@@ -2985,42 +3018,7 @@ function drawOneTurret(x,t,p,lifted){
   x.fillStyle=hexA(C,0.55);
   x.beginPath(); x.roundRect(-R*(t.ufo?1.18:0.90),-0.5*S,R*(t.ufo?2.36:1.80),1.8*S,1*S); x.fill();
   if(t.ufo){
-    const w=R*1.30*(1+k*0.08), hy=-R*0.30;
-    // the underside, darker, so the hull has a bottom
-    x.fillStyle="#131F35";
-    x.beginPath(); x.ellipse(0,hy+R*0.10,w,R*0.30,0,0,Math.PI); x.fill();
-    // the hull
-    const hg=x.createLinearGradient(0,hy-R*0.34,0,hy+R*0.22);
-    hg.addColorStop(0,"#54709F");
-    hg.addColorStop(1,"#1B2942");
-    x.fillStyle=hg;
-    x.beginPath(); x.ellipse(0,hy,w,R*0.34*(1-k*0.10),0,Math.PI,TAU); x.fill();
-    x.beginPath(); x.ellipse(0,hy,w,R*0.20,0,0,Math.PI); x.fill();
-    // the seam round the widest part
-    x.strokeStyle="rgba(124,224,255,.20)"; x.lineWidth=Math.max(1,1.1*S);
-    x.beginPath(); x.ellipse(0,hy,w*0.99,R*0.19,0,0,TAU); x.stroke();
-    // running lights, dimmer at the edges
-    for(let q=-2;q<=2;q++){ if(!q) continue;
-      x.fillStyle="rgba(124,224,255,"+(0.26+k*0.55-Math.abs(q)*0.05).toFixed(2)+")";
-      x.beginPath(); x.arc(q*R*0.46,hy+R*0.06,R*0.072,0,TAU); x.fill(); }
-    // the canopy
-    const cg=x.createLinearGradient(0,hy-R*0.86,0,hy);
-    cg.addColorStop(0,"#6C88BE"); cg.addColorStop(1,"#22334F");
-    x.fillStyle=cg;
-    x.beginPath(); x.ellipse(0,hy-R*0.04,R*0.60*(1+k*0.06),R*0.62*(1-k*0.10),0,Math.PI,TAU); x.fill();
-    x.strokeStyle="rgba(190,230,255,.26)"; x.lineWidth=Math.max(1,1.2*S);
-    x.beginPath(); x.ellipse(0,hy-R*0.04,R*0.60,R*0.62,0,Math.PI*1.10,Math.PI*1.90); x.stroke();
-    // and the port at the top, which is where your ball comes out
-    const py=hy-R*0.66, pr=R*0.24*(1+k*0.9);
-    const pg=x.createRadialGradient(0,py,0,0,py,Math.max(1,pr*3));
-    pg.addColorStop(0,"rgba(255,255,255,"+(0.72+k*0.28).toFixed(2)+")");
-    pg.addColorStop(.4,"rgba(124,224,255,"+(0.5+k*0.5).toFixed(2)+")");
-    pg.addColorStop(1,"rgba(124,224,255,0)");
-    x.fillStyle=pg;
-    x.beginPath(); x.arc(0,py,Math.max(1,pr*3),0,TAU); x.fill();
-    x.fillStyle="#EAFBFF";
-    x.beginPath(); x.ellipse(0,py,pr,pr*0.72,0,0,TAU); x.fill();
-  } else if(t.type==="sniper"){
+    drawLauncher(x,R,k);  } else if(t.type==="sniper"){
     // a long low body with a raised sight, so it reads as the patient one
     const sg=x.createLinearGradient(0,-R*0.8,0,0);
     sg.addColorStop(0,"#5A76AE"); sg.addColorStop(1,"#22334F");
@@ -3103,47 +3101,18 @@ function hexA(h,a){
 }
 
 /* --------------------------------------------------------------- the clocks */
-let rigEdit=false, rigHeld=null, rigHeldX=0, rigHeldY=0, rigFrom=-1;
-function setRigEdit(on){
-  rigEdit=!!on;
-  const b=document.getElementById("rigEdit");
-  if(b) b.classList.toggle("on",rigEdit);
-  app.classList.toggle("rigEditing",rigEdit);
-  if(!rigEdit&&rigHeld){ dropHeld(-1); }
-  if(rigEdit) toast("Drag a gun to move it");
-  save();
-}
+const rigEdit=false;               // kept as a constant: several draws read it
 /* which slot a point is over, or -1 */
 function slotHit(x,y){
   let best=-1, bd=1e9;
-  for(let i=0;i<RIG_N;i++){
+  for(let i=0;i<rigSlots();i++){
     const p=slotAt(i), d=Math.hypot(x-p.x, y-(p.y-p.r*0.7));
     if(d<bd&&d<p.r*2.8){ bd=d; best=i; }
   }
   return best;
 }
-function pickHeld(x,y){
-  const i=slotHit(x,y);
-  if(i<0||!G.rig[i]) return false;
-  rigFrom=i; rigHeldX=x; rigHeldY=y;
-  rigHeld=TURRETS.find(t=>t.slot===i)||{slot:i,type:G.rig[i],k:0,aim:-Math.PI/2};
-  haptic(8); pop(720,{vol:.05,wet:.2});
-  return true;
-}
-function dropHeld(to){
-  if(!rigHeld) return;
-  const from=rigFrom, ty=G.rig[from];
-  if(to>=0&&to!==from){
-    G.rig[from]=G.rig[to]||null;            // a swap, not an overwrite
-    G.rig[to]=ty;
-    haptic(10); pop(980,{vol:.06,wet:.2});
-  }
-  rigHeld=null; rigFrom=-1;
-  rebuildRig(); save();
-}
-let panelDown=0, panelDownT=0, fullT=-99;
+let fullT=-99;
 function stepTurrets(dt){
-  panelDown += (panelDownT-panelDown)*(1-Math.pow(0.00002,dt));
   for(const t of TURRETS){
     if(t.k) t.k=Math.max(0,t.k-dt*4.2);
     if(t.aim===undefined) t.aim=-Math.PI/2;
@@ -3228,7 +3197,7 @@ function burstShell(x,y){
   }
   for(const b of balls.slice()){
     if(b.gone||b.kind==="boss") continue;
-    if(Math.hypot(b.x-x,b.y-y)<=R+b.r){ b.lastHit=-1e9; strike(b,undefined,{x,y},true); }
+    if(Math.hypot(b.x-x,b.y-y)<=R+b.r){ b.lastHit=-1e9; strike(b,undefined,{x,y,turret:true},true); }
   }
   shake=Math.max(shake,6); flash=Math.max(flash,.16);
   thud(46,{pan:panAt(x),vol:.16,len:.5});
@@ -3255,7 +3224,7 @@ function fireDrones(t){
   const swarm=3+turLv("hive","swarm");
   for(let i=0;i<swarm;i++){
     const a=-Math.PI/2+rnd(-.9,.9);
-    drones.push({x:p.x+rnd(-4,4)*S, y:p.y-turR(t)*0.9,
+    drones.push({turret:true, x:p.x+rnd(-4,4)*S, y:p.y-turR(t)*0.9,
       vx:Math.cos(a)*rnd(90,150)*S, vy:Math.sin(a)*rnd(90,150)*S, t:0});
   }
   pop(700,{pan:panAt(p.x),vol:.06,wet:.2});
@@ -3319,7 +3288,7 @@ function fireNeedle(t){
   t.k=1;                                    // it rocks back
   const x=p.x, y=p.y-turR(t)*1.1;
   const a=(t.aim===undefined?-Math.PI/2+t.lean:t.aim)+rnd(-.04,.04);
-  needles.push({x, y, a, left:3+turLv("eye","bounce"), t:0, hit:0, px:x, py:y});
+  needles.push({x, y, a, left:3+turLv("eye","bounce"), t:0, hit:0, px:x, py:y, turret:true});
   rings.push({x,y,r:2,R:18*S,t:0,life:.2,col:"#8FA0B8",w:1.8});
   pop(1180,{pan:panAt(x),vol:.05,wet:.12});
   noiseHit(.06,{pan:panAt(x),vol:.05,cut:3200,q:4});
@@ -3485,6 +3454,9 @@ function bumpCombo(){
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
   objProg("combo",0,combo);
   const c=document.getElementById("combo"), m=totalMul(), cap=comboCap()*(x2On()?2:1);
+  // one slice is not a streak: it appears on the second
+  if(combo<2){ c.classList.remove("on","fade"); return; }
+  c.classList.remove("fade");
   const k=(m-1)/(cap-1);
   c.textContent="×"+m.toFixed(2);
   c.classList.toggle("max", m>=cap-1e-9);
@@ -3633,10 +3605,11 @@ function strike(b,dmg,src,forced){
   if(!b||b.gone) return;
   if(!forced && el-b.lastHit<0.07) return;
   b.lastHit=el;
+  b.by = (src&&src.turret) ? "turret" : "hand";   // who gets the credit
   b.sqA=src?Math.atan2(b.y-src.y,b.x-src.x):rnd(0,TAU);
   b.sq=.30; b.wob=.16; b.hit=1;
 
-  if(b.kind==="unstable"){ detonate(b,0); return; }
+  if(b.kind==="unstable"){ detonate(b,0,b.by); return; }
 
   if(b.kind==="boss"&&b.shield){
     // it rings, it does not break
@@ -3794,9 +3767,10 @@ function finish(b,col){
   for(let i=0;i<9;i++) spark(b.x,b.y,col);
   rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*3,t:0,life:.4,col,w:2});
   shake=Math.max(shake,2.8);
-  bumpCombo();
+  const byGun = b.by==="turret";
+  if(!byGun||TURRET_KEEPS_COMBO) bumpCombo();
   const crit = b.kind!=="golden" && Math.random()<val("crit");
-  earn(b.mass*(b.kind==="golden"?25:1)*(crit?2:1),b.x,b.y,col);
+  earn(b.mass*(b.kind==="golden"?25:1)*(crit?2:1)*(byGun?TURRET_CUT:1),b.x,b.y,col);
   if(crit){
     // it has to be visible or it is just a number that is sometimes bigger
     rings.push({x:b.x,y:b.y,r:b.r*.4,R:b.r*3.4,t:0,life:.34,col:"#FF3B57",w:2.6});
@@ -3837,7 +3811,7 @@ function burstWhole(b){
   haptic(24);
 }
 
-function detonate(b,depth){
+function detonate(b,depth,by){
   remove(b);
   G.stat.bursts++; objProg("burst",1);
   const HOT="#FFE9A8", R=b.r*4.3;
@@ -3849,7 +3823,8 @@ function detonate(b,depth){
   }
   for(let i=0;i<20;i++) spark(b.x,b.y,Math.random()<.4?"#fff":HOT);
   shake=Math.max(shake,11); flash=Math.max(flash,.48); freeze=Math.max(freeze,.06);
-  bumpCombo(); earn(b.mass*0.5,b.x,b.y,HOT); haptic(28);
+  if(by!=="turret"||TURRET_KEEPS_COMBO) bumpCombo();
+  earn(b.mass*0.5*(by==="turret"?TURRET_CUT:1),b.x,b.y,HOT); haptic(28);
   const dp=panAt(b.x);
   thud(96,{pan:dp,vol:.34,len:.4});
   noiseHit(.42,{pan:dp,vol:.22,cut:1100,q:.8,to:.06,wet:.34});
@@ -3867,7 +3842,7 @@ function detonate(b,depth){
   }
   if(depth<5){
     caught.sort((p,q)=>p.d-q.d);
-    for(const c of caught) fuses.push({b:c.o,t:.03+c.d/(R*7),d:999,depth:depth+1});
+    for(const c of caught) fuses.push({b:c.o,t:.03+c.d/(R*7),d:999,depth:depth+1,by});
   }
 }
 
@@ -3903,17 +3878,52 @@ function segDist(x0,y0,x1,y1,px,py){
 function trailCol(){ return (TRAILS.find(t=>t.id===G.trail)||TRAILS[0]).c; }
 function localPt(e){ const r=roomArena.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
 
+function startSlice(p,id){
+  ptrDown=true; ptrId=id; ptrX=p.x; ptrY=p.y;
+  trail.push({x:p.x,y:p.y,t:0});
+}
+function releaseLauncher(){
+  LA.ptr=null; LA.holdOn=false; LA.holdT=0; LA.moved=0;
+}
 roomArena.addEventListener("pointerdown",e=>{
   if(zoomPhase||room!=="arena") return;
-  if(e.target.closest("button,input,#dock,#sheet,#scrim,.rail,.cur")) return;
-  e.preventDefault(); actx();
+  if(e.target.closest("button,input,#sheet,#scrim,#callout,.rail,.cur")) return;
   const p=localPt(e);
-  ptrDown=true; ptrId=e.pointerId; ptrX=p.x; ptrY=p.y;
-  trail.push({x:p.x,y:p.y,t:0});
-  touchAt(p.x,p.y);
+  if(p.y>H-safeBottom()) return;             // never play inside the home indicator
+  e.preventDefault(); actx();
   try{ roomArena.setPointerCapture(e.pointerId); }catch(err){}
+  // the machine first, and only if this press began on it
+  if(ready && LA.ptr===null && launcherHit(p.x,p.y)){
+    LA.ptr=e.pointerId; LA.downT=el; LA.moved=0; LA.x0=p.x; LA.y0=p.y;
+    LA.holdOn=false; LA.holdT=LAUNCH.holdDelay;
+    haptic(6); pop(660,{vol:.05,wet:.16});
+    return;
+  }
+  // a mount, or a gun standing on one
+  // below the dish floor is the machine, above it is the playfield - an
+  // exact line, so a slice near the bottom is never eaten by a mount
+  const slot=p.y>AR.y1?slotHit(p.x,p.y):-1;
+  if(ready && slot>=0){
+    if(G.rig[slot]) showCallout(G.rig[slot],slot); else sheetSlot(slot);
+    return;
+  }
+  startSlice(p,e.pointerId);
+  touchAt(p.x,p.y);
 },{passive:false});
 roomArena.addEventListener("pointermove",e=>{
+  // a press that started on the launcher: it is a tap until it travels
+  if(e.pointerId===LA.ptr){
+    const p=localPt(e);
+    LA.moved=Math.max(LA.moved,Math.hypot(p.x-LA.x0,p.y-LA.y0));
+    if(!LA.holdOn && (el-LA.downT)>=LAUNCH.holdDelay){ LA.holdOn=true; LA.holdT=0; }
+    // travelled: it was a swipe passing through, so hand it to the slicer
+    if(!LA.holdOn && LA.moved>LAUNCH.tapSlop){
+      releaseLauncher();
+      startSlice(p,e.pointerId);
+    }
+    e.preventDefault();
+    return;
+  }
   if(!ptrDown||e.pointerId!==ptrId) return;
   e.preventDefault();
   const p=localPt(e);
@@ -3923,9 +3933,29 @@ roomArena.addEventListener("pointermove",e=>{
     ptrX=p.x; ptrY=p.y;
   }
 },{passive:false});
-const endPtr=e=>{ if(e.pointerId===ptrId){ ptrDown=false; ptrId=null; } };
+const endPtr=e=>{
+  if(e.pointerId===LA.ptr){
+    const held=LA.holdOn, moved=LA.moved;
+    releaseLauncher();
+    // a deliberate tap that began and ended on it sends the burst
+    if(!held && moved<=LAUNCH.tapSlop && ready && !zoomPhase){
+      let sent=0, full=false;
+      for(let i=0;i<LAUNCH.burst;i++){
+        if(LA.e<LAUNCH.energyCost) break;
+        if(!launchPaid()){ full=true; break; }
+        sent++;
+      }
+      if(sent){ haptic(12); LA.flash=1; }
+      else launchRefuse(full);
+    }
+  }
+  if(e.pointerId===ptrId){ ptrDown=false; ptrId=null; }
+};
 roomArena.addEventListener("pointerup",endPtr);
 roomArena.addEventListener("pointercancel",endPtr);
+// a press that ends anywhere at all still ends, so it can never stick down
+addEventListener("pointerup",e=>{ if(e.pointerId===LA.ptr) endPtr(e); },{passive:true});
+addEventListener("blur",()=>releaseLauncher(),{passive:true});
 
 /* ---------------------------------------------------------------- powers */
 function pwState(p){ return G.pw[p.id]||(G.pw[p.id]={owned:p.cost===0,cd:0}); }
@@ -4293,7 +4323,42 @@ function stepWizards(dt){
    nothing. The vent under the handle coughs one up every five to ten
    seconds. It is a floor, not a source — its mass is fixed at eight and
    never follows your rank, so by the time wizards are working it is noise. */
-const VENT={t:3.5, max:3.5, mass:26, n:0};
+const VENT={t:1.5, max:1.5, mass:26, n:0};
+
+/* ---- the launcher, and everything you can turn about it ------------------
+   Automatic fire is free and never stops: it does not touch energy, so the
+   dish keeps filling whether or not you are holding anything. Energy only
+   buys the extra - the burst on a tap and the stream on a hold. */
+const LAUNCH={
+  autoGap:    1.5,    // s between the free automatic launches
+  burst:      3,      // balls a deliberate tap sends at once
+  holdGap:    0.16,   // s between launches while a press is held
+  holdDelay:  0.20,   // s a press must sit still before it starts streaming
+  tapSlop:    16,     // px a press may wander and still count as a tap
+  energyMax:  9,      // how much bonus launching it can store
+  energyCost: 1,      // what one bonus ball costs
+  regen:      1.15,   // energy back per second
+  hitR:       1.62,   // hit circle, as a multiple of the opening's radius
+  ringLead:   0.9,    // how fast the ring chases the true energy, per second
+  maxBalls:   300,    // the readability ceiling; 260 on a phone that is struggling
+};
+/* what a turret's kill is worth against your own. Slicing has to stay the
+   better way to earn or the guns quietly replace the game. */
+const TURRET_CUT=0.60;
+const TURRET_KEEPS_COMBO=false;    // and a turret kill does not feed the streak
+
+const LA={e:LAUNCH.energyMax, ring:1, ptr:null, downT:0, moved:0,
+          holdOn:false, holdT:0, flash:0, recoil:0, dim:0, spin:0};
+const launchR = ()=>clamp(W*0.088, 27, 42);     // the opening
+const LAUNCH_LIFT=1.30;                         // how high the mouth rides
+const launchHitR = ()=>launchR()*LAUNCH.hitR;   // what your thumb has to find
+/* the home indicator, in real pixels. env() is not readable from script, so
+   a zero-width probe carries the value out of CSS for us. */
+function safeBottom(){
+  const p=document.getElementById("sabProbe");
+  const v=p?p.offsetHeight:0;
+  return isFinite(v)?v:0;
+}
 
 /* What the vent rolls: cyan is the floor and yellow is the prize, four rungs
    up the ladder. Rarer has to be worth more or the colour is just a colour,
@@ -4499,6 +4564,49 @@ function bossPull(dt){
     }
   }
 }
+function launchAuto(){
+  // the Reload upgrade scales the base interval rather than replacing it
+  return LAUNCH.autoGap*(val("reload")/10);
+}
+const launcherAt=()=>{ const g=rigGeom(); return {x:g.cx, y:panelTopY()-launchR()*LAUNCH_LIFT}; };
+function launcherHit(x,y){
+  if(y>H-safeBottom()) return false;          // the home indicator is not the game
+  const p=launcherAt();
+  return Math.hypot(x-p.x,y-p.y)<launchHitR();
+}
+/* one bonus ball, paid for out of the ring */
+function launchPaid(){
+  if(LA.e<LAUNCH.energyCost) return false;
+  if(!ventBall(6,true)) return false;         // the dish was full: nothing spent
+  LA.e-=LAUNCH.energyCost;
+  if(Math.random()<turVal("ufo","twin")) ventBall(6,true);
+  return true;
+}
+/* it refused: a short dim pulse on the ring, not silence and not a wall of text */
+function launchRefuse(full){
+  LA.dim=1;
+  pop(120,{vol:.06,len:.10,wet:.05});
+  haptic(9);
+  if(full && el-fullT>6){ fullT=el; toast("The dish is full \u2014 break some down"); }
+}
+function stepLauncher(dt){
+  // energy back, and the ring easing toward wherever it actually is
+  LA.e=Math.min(LAUNCH.energyMax, LA.e+LAUNCH.regen*dt);
+  const want=LA.e/LAUNCH.energyMax;
+  LA.ring += (want-LA.ring)*(1-Math.pow(1-LAUNCH.ringLead,dt*60/6));
+  LA.flash =Math.max(0,LA.flash -dt*5.5);
+  LA.recoil=Math.max(0,LA.recoil-dt*6.0);
+  LA.dim   =Math.max(0,LA.dim   -dt*2.0);
+  if(!LA.holdOn) return;
+  // a held press keeps launching while there is anything to spend
+  LA.holdT-=dt;
+  if(LA.holdT<=0){
+    LA.holdT=LAUNCH.holdGap;
+    if(!ready||zoomPhase) return;
+    if(LA.e<LAUNCH.energyCost){ LA.dim=Math.max(LA.dim,0.7); return; }
+    if(!launchPaid()) LA.dim=Math.max(LA.dim,0.7);
+  }
+}
 function ventRoll(){
   let r=Math.random(), t=VENT_ROLL[0].tier;
   for(const v of VENT_ROLL){ r-=v.p; if(r<=0){ t=v.tier; break; } }
@@ -4514,15 +4622,11 @@ function ventBall(forceTier, plainOnly){
   const rr=tierRadius(t,cls);
   if(!roomFor(rr,plainOnly)) return false;     // a deliberate tap gets more room
   // out of the saucer, which is the thing sitting directly over the button
-  const u=ufoAt();
-  const x=clamp(u.x+rnd(-7,7)*S, rr+2, Math.max(rr+3,W-rr-2));
-  const y=u.y-TUR_R()*0.9-rr*0.55;
+  const u=launcherAt();
+  const x=clamp(u.x+rnd(-5,5)*S, rr+2, Math.max(rr+3,W-rr-2));
+  const y=u.y-launchR()*0.30-rr*0.55;
   const ut=TURRETS.find(t2=>t2.ufo); if(ut) ut.k=1;   // the hull flexes
-  const fwp=document.getElementById("fireWrap");
-  if(fwp){
-    fwp.classList.remove("shot"); void fwp.offsetWidth; fwp.classList.add("shot");
-    setTimeout(()=>fwp.classList.remove("shot"),150);
-  }
+  LA.flash=1; LA.recoil=1;                            // compress, flash, kick
   // the heavy ones leave slower, or a yellow would be off the top of the dish
   const kick=clamp(1-up*.075,.66,1.12);
   const b=makeBall(t, x, y, rnd(-20,20)*S, -rnd(380,470)*S*kick, cls,
@@ -4555,13 +4659,13 @@ function ventBall(forceTier, plainOnly){
     haptic(6+up*4);
   }
   VENT.n++;
-  // one short pulse, no overshoot and no blink, so hammering it stays smooth
-  const h=document.getElementById("dockHandle");
-  if(h&&h.animate) h.animate([
-    {transform:"scale(1)"},
-    {transform:"scale(.88)",offset:.35},
-    {transform:"scale(1)"}
-  ],{duration:180,easing:"ease-out"});
+  // a few sparks climbing out of the throat behind it
+  for(let q=0;q<4;q++){
+    const a=-Math.PI/2+rnd(-.5,.5);
+    parts.push({x:x+rnd(-3,3)*S, y:AR.y1-1,
+      vx:Math.cos(a)*rnd(40,120)*S, vy:Math.sin(a)*rnd(150,320)*S,
+      r:rnd(1,2.2)*S, col:"#7CE0FF", t:0, life:rnd(.22,.4), goo:false, drag:.9});
+  }
   return true;
 }
 function castBall(i){
@@ -5123,7 +5227,8 @@ function goRoom(to){
   world.classList.add("slide"); world.classList.add("moving");
   world.style.transform = to==="wiz" ? "translateY(0%)" : "translateY(-50%)";
   document.documentElement.style.setProperty("--chrome-b",
-    to==="wiz" ? (document.getElementById("wizChrome").offsetHeight+"px") : "var(--dock-h)");
+    to==="wiz" ? (document.getElementById("wizChrome").offsetHeight+"px")
+               : (Math.round(H-AR.y1)+"px"));
   lastChromeH=0;
   if(to==="wiz"){ layoutWizards(); syncWizGrid(); syncWizPanel(true); }
   Sn.budget=22;
@@ -5141,20 +5246,13 @@ function clampIn(b){
   b.y=clamp(b.y,AR.y0+b.r,Math.max(AR.y0+b.r,AR.y1-b.r));
 }
 function areaSum(){ let a=0; for(const b of balls) a+=b.r*b.r*Math.PI; return a; }
-function dockFull(){
-  const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dock-h"));
-  return isFinite(v)&&v>0?v:152;
-}
-function arenaArea(){
-  const floor=Math.min(AR.y1, H-dockFull());   // the shelf-open floor
-  return W*Math.max(1, floor-AR.y0);
-}
+function arenaArea(){ return W*Math.max(1, AR.y1-AR.y0); }
 /* The dish is full at just under half covered. BALL_LIMIT is not a rule, it
    is a frame-rate guard: measured here, 200 balls cost 4.7ms a frame, 500
    cost 10 and 800 cost 16, which is the whole budget. A phone has perhaps a
    third of the speed, so it stops well short. */
-const BALL_SOFT=300;
-const ballCeil=()=>app.classList.contains("lowfx")?260:BALL_SOFT;
+const ballCeil=()=>app.classList.contains("lowfx")
+  ? Math.round(LAUNCH.maxBalls*0.87) : LAUNCH.maxBalls;
 const DISH_MAX=0.86;                 // how full the screen may get, flat
 const dishMax=()=>DISH_MAX;
 /* each icon costs its own rectangle plus a working margin, because the strip
@@ -5240,7 +5338,8 @@ function step(dt){
   psRate += (psFrame/dt - psRate) * (1-Math.pow(0.5, dt/4));
   psFrame=0;
   VENT.t-=dt;
-  if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? val("reload") : 2.5; VENT.max=VENT.t; }
+  if(VENT.t<=0){ VENT.t = ventBall(ventRoll()) ? launchAuto() : 2.5; VENT.max=VENT.t; }
+  stepLauncher(dt);
   bossGate(); bossPull(dt); stepNeedles(dt); stepShells(dt); stepDrones(dt); stepTurrets(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
@@ -5259,7 +5358,8 @@ function step(dt){
 
   for(let i=fuses.length-1;i>=0;i--){
     const f=fuses[i]; f.t-=dt;
-    if(f.t<=0){ fuses.splice(i,1); if(!f.b.gone) strike(f.b,f.d,null,true); }
+    if(f.t<=0){ fuses.splice(i,1);
+      if(!f.b.gone) strike(f.b,f.d,f.by==="turret"?{x:f.b.x,y:f.b.y,turret:true}:null,true); }
   }
 
   // stepWizards(dt);   // the tower is closed
@@ -5405,7 +5505,13 @@ function step(dt){
   }
   for(let i=trail.length-1;i>=0;i--){ trail[i].t+=dt; if(trail[i].t>.34) trail.splice(i,1); }
 
-  if(comboT>0){ comboT-=dt; if(comboT<=0){ combo=0; document.getElementById("combo").classList.remove("on"); } }
+  if(comboT>0){
+    comboT-=dt;
+    const c=document.getElementById("combo");
+    // it starts letting go before the streak does, so the end is not a blink
+    if(comboT<0.5) c.classList.add("fade");
+    if(comboT<=0){ combo=0; c.classList.remove("on","fade"); }
+  }
   if(luckUntil && luckUntil<=el){ luckUntil=0; setFrenzy(false); toast("Frenzy over"); }
   if(luckUntil){
     const t=$("fzTag");
@@ -6141,6 +6247,7 @@ const ICONS={
        '<circle fill="currentColor" stroke="none" cx="12" cy="12" r="2.3"/>'+
        '<circle fill="currentColor" stroke="none" cx="19" cy="12" r="2.3"/>',
 
+  flag:'<path d="M6 21V4.2M6 4.6h11.4l-2.1 3.7 2.1 3.7H6"/>',
   gear:'<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M19.46 9.40L22.61 9.96L22.61 14.04L19.46 14.60A7.9 7.9 0 0 1 19.11 15.44L20.94 18.06L18.06 20.94L15.44 19.11A7.9 7.9 0 0 1 14.60 19.46L14.04 22.61L9.96 22.61L9.40 19.46A7.9 7.9 0 0 1 8.56 19.11L5.94 20.94L3.06 18.06L4.89 15.44A7.9 7.9 0 0 1 4.54 14.60L1.39 14.04L1.39 9.96L4.54 9.40A7.9 7.9 0 0 1 4.89 8.56L3.06 5.94L5.94 3.06L8.56 4.89A7.9 7.9 0 0 1 9.40 4.54L9.96 1.39L14.04 1.39L14.60 4.54A7.9 7.9 0 0 1 15.44 4.89L18.06 3.06L20.94 5.94L19.11 8.56A7.9 7.9 0 0 1 19.46 9.40ZM12 8.05A3.95 3.95 0 1 0 12 15.95A3.95 3.95 0 1 0 12 8.05Z"/>',
 
   chart:'<rect fill="currentColor" stroke="none" x="3.9" y="13.2" width="4.6" height="7.6" rx="1.5"/>'+
@@ -6236,8 +6343,7 @@ function buildRails(){
   const L=$("railL"); L.innerHTML="";
   for(const it of [
     {id:"shop",svg:ICONS.bag,    fn:()=>{G.stTab="shop"; sheetShop();}, c:"#22C55E", ic:"#FFFFFF"},
-    {id:"mis", svg:ICONS.target, fn:sheetMissions,     c:"#F97316", ic:"#FFFFFF"},
-    {id:"more",svg:ICONS.dots,   fn:sheetMore,         c:"#232B39", ic:"#FFFFFF"},
+    {id:"mis", svg:ICONS.flag,   fn:sheetMissions,     c:"#F97316", ic:"#FFFFFF"},
   ]){
     const b=document.createElement("button");
     b.className="orb"; b.id="orb-"+it.id;
@@ -6347,7 +6453,6 @@ function buildTabs(){
     b.innerHTML='<span class="g">'+t.g+'</span>'+t.lbl;
     b.onclick=()=>{
       // asking for a tab is asking to see what is in it
-      if(G.opt.dockMin) setDockMin(false);
       G.tab=t.id; buildTabs(); save();
     };
     n.appendChild(b);
@@ -7125,7 +7230,7 @@ function showCallout(kind,slot){
   c.querySelector(".cIc").innerHTML='<span style="color:'+(spec?spec.col:"#7CE0FF")+'">'+
     (kind==="sniper"?"\u25C6":kind==="hive"?"\u2B22":kind==="ufo"?"\u25CF":"\u25C9")+'</span>';
   c.querySelector(".cName").textContent=spec?spec.nm:"Saucer";
-  c.querySelector(".cSub").textContent=slot===undefined?"drops the balls":("slot "+(slot+1));
+  c.querySelector(".cSub").textContent=slot===undefined?"drops the balls":("mount "+(slot+1));
   c.classList.add("on");
   // pin it above the gun, kept inside the screen
   const w=c.offsetWidth||160;
@@ -7212,6 +7317,7 @@ function sheetTurrets(type){
           G.bio-=price;
           G.turUp[turTab]=G.turUp[turTab]||{};
           G.turUp[turTab][u.k]=lv+1;
+          if(u.k==="mounts"){ rebuildRig(); measureArena(); }
           buySound(lv+1); haptic(9); save(); syncTop();
         }});
       d.classList.add("upR");
@@ -7229,13 +7335,13 @@ function sheetSlot(slot){
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
       '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" '+
       'stroke-linecap="round" fill="none"/></svg>',
-    here?TUR_TYPES[here].nm:"Empty slot",
-    here?"Slot "+(slot+1)+" of "+RIG_N:"Pick what stands here", b=>{
+    here?TUR_TYPES[here].nm:"Empty mount",
+    here?"Mount "+(slot+1)+" of "+rigSlots():"Pick what stands here", b=>{
     if(here){
       b.appendChild(row({ic:GUN_ICO(here), t:TUR_TYPES[here].nm, s:TUR_TYPES[here].d,
         btn:"Upgrade", btnOn:true,
         fn:()=>{ closeSheet(); setTimeout(()=>sheetTurrets(here),200); }}));
-      b.appendChild(row({ic:"\u2715", t:"Take it off", s:"Frees the slot. You do not get the cash back.",
+      b.appendChild(row({ic:"\u2715", t:"Take it off", s:"Frees the mount. You do not get the cash back.",
         btn:"Remove", btnOn:true,
         fn:()=>{ G.rig[slot]=null; rebuildRig(); save(); haptic(10); closeSheet(); }}));
       return;
@@ -7258,6 +7364,12 @@ function sheetUpgrades(){
       'style="width:21px;height:21px;display:block;object-fit:contain">',
     "Upgrades","Hold a price to keep buying",b=>{
     upRows={};
+    b.appendChild(lbl("The rig"));
+    b.appendChild(row({ic:'<span style="color:#7CE0FF">◉</span>',
+      t:"Launcher and turrets",
+      s:"Twin drop, extra mounts, and every gun standing on the rig.",
+      btn:"Open", btnOn:true,
+      fn:()=>{ closeSheet(); setTimeout(()=>sheetTurrets("ufo"),200); }}));
     for(const grp of UP_GROUPS){
     const hd=lbl(grp.t);
     b.appendChild(hd);
@@ -7282,7 +7394,7 @@ function sheetUpgrades(){
 }
 function sheetMore(){
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#3A4A5E">'+ICONS.dots+'</svg>',
-    "More","Everything else",b=>{
+    "Settings","Sound, stats and your save",b=>{
     const go=(fn)=>()=>fn();
     const mk=(svg,bg,fg,t,sub,fn)=>{
       const d=row({t,s:sub,fn:go(fn)});
@@ -7986,12 +8098,6 @@ function tickUI(dt){
       const nd=nextScaleCost(); if(G.earned<nd) G.earned=nd;
     }
     syncTop(); syncRails(); syncGoal(); syncUpBtn();
-    const vb=$("vBar");
-    if(vb){
-      const k=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
-      vb.firstElementChild.style.width=(k*100).toFixed(0)+"%";
-      vb.classList.toggle("full",k>=.999);
-    }
     // the tower is closed
 
   }
@@ -8147,108 +8253,11 @@ function slingshot(){
   haptic(16);
 }
 
-let dockTracking=false;
-function setDockMin(min,quiet){
-  const dock=$("dock");
-  if(!!G.opt.dockMin===!!min && !quiet) return;
-  G.opt.dockMin=!!min;
-  dock.classList.toggle("min",!!min);
-  save(); obsChanged();
-  if(!quiet){ tick(min?420:560,.07); slingshot(); }
-  // Only the dish floor moves. resize() would reallocate and clear every
-  // canvas on each frame, which is what made this stutter and made the
-  // balls look like they were being reset.
-  if(dockTracking) return;
-  dockTracking=true;
-  const t0=now();
-  const track=()=>{
-    AR.y1=dishFloor();
-    if(now()-t0<430) requestAnimationFrame(track);
-    else { dockTracking=false; AR.y1=dishFloor(); }
-  };
-  requestAnimationFrame(track);
-}
 /* press it and it fires: a green one, straight up, every time */
 document.documentElement.style.setProperty("--mark-w",'url("'+ART.mark_white+'")');
-/* the drag lives on the effects canvas, because that is where the guns are */
-(function rigDrag(){
-  const c=document.getElementById("fx");
-  if(!c) return;
-  const at=e=>{ const r=roomArena.getBoundingClientRect();
-                return {x:e.clientX-r.left, y:e.clientY-r.top-panelDown*4}; };
-  let downAt=null, moved=0;
-  c.addEventListener("pointerdown",e=>{
-    if(e.button) return;
-    const p=at(e);
-    // the saucer first, since it sits between the two middle slots
-    if(!rigEdit&&ready){
-      const u=turretAt(UFO), UR=turR(UFO);
-      if(Math.hypot(p.x-u.x,p.y-(u.y-UR*0.6))<UR*1.5){
-        e.preventDefault(); e.stopPropagation();
-        showCallout("ufo"); return;
-      }
-    }
-    const slot=slotHit(p.x,p.y);
-    if(slot<0) return;
-    if(!rigEdit){
-      // not rearranging: a press on a gun asks about that gun
-      if(!G.rig[slot]||!ready) return;
-      e.preventDefault(); e.stopPropagation();
-      showCallout(G.rig[slot],slot);
-      return;
-    }
-    downAt={x:p.x,y:p.y,slot}; moved=0;
-    e.preventDefault(); e.stopPropagation();
-    try{ c.setPointerCapture(e.pointerId); }catch(err){}
-    if(G.rig[slot]) pickHeld(p.x,p.y);      // only a gun can be lifted
-  },{passive:false,capture:true});
-  c.addEventListener("pointermove",e=>{
-    if(!downAt) return;
-    const p=at(e);
-    moved=Math.max(moved,Math.hypot(p.x-downAt.x,p.y-downAt.y));
-    if(rigHeld){ rigHeldX=p.x; rigHeldY=p.y; }
-    e.preventDefault(); e.stopPropagation();
-  },{passive:false,capture:true});
-  for(const ev of ["pointerup","pointercancel"])
-    c.addEventListener(ev,e=>{
-      if(!downAt) return;
-      const p=at(e), slot=downAt.slot, tap=moved<9;
-      if(rigHeld) dropHeld(tap?slot:slotHit(p.x,p.y));
-      if(tap) sheetSlot(slot);              // a press that stayed put
-      downAt=null; moved=0;
-      e.preventDefault(); e.stopPropagation();
-    },{passive:false,capture:true});
-})();
-(function arrowButton(){
-  const fw=$("fireWrap");
-  // click coalesces two simultaneous taps into one; pointerdown does not
-  fw.addEventListener("pointerdown",e=>{
-    if(e.button) return;
-    if(e.target.closest&&e.target.closest("#rigEdit")) return;   // the pencil
-    e.preventDefault();
-    panelDownT=1; fw.classList.add("down");
-    if(!ready||rigEdit) return;              // rearranging is not firing
-    if(ventBall(6,true)){
-      if(Math.random()<turVal("ufo","twin")) ventBall(6,true);
-      return;
-    }
-    // it refused: say so, rather than doing nothing at all
-    fw.classList.remove("nope"); void fw.offsetWidth; fw.classList.add("nope");
-    setTimeout(()=>fw.classList.remove("nope"),320);
-    pop(120,{vol:.07,len:.12,wet:.05});
-    haptic(18);
-    if(el-fullT>6){ fullT=el; toast("The dish is full — break some down"); }
-  },{passive:false});
-  for(const ev of ["pointerup","pointercancel","pointerleave"])
-    fw.addEventListener(ev,()=>{ panelDownT=0; fw.classList.remove("down"); },{passive:true});
-  // and a release anywhere at all, so it can never be left stuck down
-  for(const ev of ["pointerup","pointercancel","blur"])
-    addEventListener(ev,()=>{ panelDownT=0; fw.classList.remove("down"); },{passive:true});
+(function chrome(){
   const u=$("upBtn");
   if(u) u.onclick=()=>{ if(ready) sheetUpgrades(); };
-  const re=$("rigEdit");
-  if(re) re.onclick=e=>{ e.stopPropagation(); if(ready) setRigEdit(!rigEdit); };
-
 })();
 /* the tower is closed */
 document.getElementById("goDown").onclick=()=>goRoom("arena");
@@ -8266,6 +8275,13 @@ document.getElementById("goDown").onclick=()=>goRoom("arena");
   });
 })();
 
+{
+  const sb=document.getElementById("sysBtn");
+  if(sb){
+    sb.innerHTML='<svg viewBox="0 0 24 24">'+ICONS.gear+'</svg>';
+    sb.onclick=()=>{ if(ready) sheetMore(); };
+  }
+}
 buildRails(); rebuildRig(); syncTop(); syncRails();
 $("introHint").textContent = G.totalEarned>0
   ? "Banked "+fmt(G.totalEarned)+" · Strain "+ROMAN[G.strain] : "";
