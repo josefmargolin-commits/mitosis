@@ -3145,10 +3145,9 @@ function rbShine(x,b,r){
 }
 function tierRadius(tier,cls){ return TIER[tier].r*S*cls.size; }
 function makeBall(tier,x,y,vx,vy,cls,mass,kind){
-  // one clean cut, unless it is plated. Bosses keep their own accounting.
-  const maxHp = kind==="armor"
-    ? Math.max(2, Math.round(ARMOR_HP*Math.max(.5,TIER[tier].hp)))
-    : 1;
+  // how tough it is comes from how big it is, and from nothing else.
+  // Bosses overwrite this with their own count.
+  const maxHp = TIER_CUTS[tier]||1;
   return {id:++seq,tier,cls,kind:kind||"plain",
     x,y,vx,vy,r:tierRadius(tier,cls),
     mass:mass===undefined?cls.mass:mass,
@@ -3157,15 +3156,13 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
 }
 const P_VIRUS=0.02;                  // one ball in fifty
 const P_RAINBOW=0.005;               // one ball in two hundred
-const P_ARMOR=0.13;                  // and one in eight comes plated
 const P_SPLIT=0.11;                  // one in nine comes ready to come apart
-const ARMOR_HP=4;                    // cuts to get through the plating
+/* cuts to break each rung, biggest first. One segment of the ring per cut,
+   so the ring is the number - and Damage buys through them, which is the
+   whole of what Damage is for. */
+const TIER_CUTS=[5,4,3,2,1,1,1,1];
 function dropKind(bonus){
-  {
-    const r2=Math.random();
-    if(r2<P_ARMOR) return "armor";
-    if(r2<P_ARMOR+P_SPLIT) return "split";
-  }
+  if(Math.random()<P_SPLIT) return "split";
   const p=val("purity")+(bonus||0);
   const r=Math.random();
   if(r<p) return "golden";
@@ -5801,9 +5798,10 @@ function draw(){
     }
     xFx.restore();
 
-    // toughness, read as pips around the rim — one segment per remaining hit.
-    // Only armour has any, which is what makes a ring worth looking at.
-    if(b.maxHp>1 && r>10*S){
+    // toughness, read as pips around the rim — one segment per remaining cut.
+    // Every ball big enough to need more than one has one, and no other
+    // ball has one, so a ring always means the same thing.
+    if(b.maxHp>1){
       const segs=Math.min(b.maxHp,14);
       const left=Math.ceil(b.hp/b.maxHp*segs);
       const arc=TAU/segs, gap=Math.min(arc*.34,.30);
