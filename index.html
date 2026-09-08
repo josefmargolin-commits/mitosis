@@ -2222,7 +2222,7 @@ function freshState(){
   const up={}; for(const k of UPK) up[k]=0;
   return {
     v:5, bio:0, spore:0, strain:0, earned:0, totalEarned:0, bossMark:0, chests:0,
-    rig:[null,null,null,null,"eye","eye",null,null,null,null],
+    rig:["eye"],
     turUp:{eye:{},sniper:{},hive:{},ufo:{}},
     up, tab:"touch",
     wiz:Array(16).fill(null), wlvl:[0,0,0,0,0,0], summons:0, wizSeq:0,
@@ -2324,11 +2324,13 @@ let W=0,H=0,DPR=1,GS=1,S=1;
 const AR={x0:0,y0:0,x1:0,y1:0};
 
 
-function turretY(){ return H - safeBottom() - 20 - TURR()*0.66; }
+function rigBaseY(){ return H - safeBottom() - 22; }
+function turretY(){ return rigBaseY(); }
 function dishFloor(){
-  // nothing stands in the middle any more, so the floor only has to clear
-  // the two barrels - which buys back the room the portal was taking
-  return Math.max(H*.35, Math.round(turretY() - TURR()*2.05 - 8));
+  // clear of whichever machine stands taller - the barrel, as it turns out
+  const funnel = rigBaseY() - CANNON_R()*1.55;
+  const barrel = rigBaseY() - BREAKER_R()*2.90;
+  return Math.max(H*.35, Math.round(Math.min(funnel,barrel) - 8));
 }
 /* where the chrome actually ends today, not where it ended at boot */
 function measureArena(){
@@ -2694,8 +2696,8 @@ function haptic(p){ if(G.opt.haptic&&navigator.vibrate){ try{navigator.vibrate(p
 let balls=[],parts=[],rings=[],pops=[],fuses=[];
 const NEEDLE={cd:0, gap:9, bounces:3, life:4.2, speed:1180, n:0};
 /* where the guns stand, across the floor, and which way each one leans */
-const RIG_MAX=2;                    // one gun each side, and that is the rig
-const rigSlots=()=>2;                // one corner each side, and that is all
+const RIG_MAX=1;                    // the breaker, and nothing else
+const rigSlots=()=>1;                // the breaker
 const TUR_TYPES={
   eye:   {nm:"Eye",    gap:9,  cost:5000,  col:"#7CE0FF",
           d:"Turns to the nearest ball and fires a needle that ricochets three times."},
@@ -2758,11 +2760,9 @@ const turUpMaxed=(ty,k)=>{
   const spec=(TUR_UP[ty]||[]).find(u=>u.k===k);
   return !spec||turLv(ty,k)>=spec.max;
 };
-/* one in each lower corner, and that is the whole rig */
-function slotAt(i){
-  const r=TURR(), x=AR.x0+r+18;
-  return {x:(i?AR.x0+AR.x1-x:x), y:turretY(), r};
-}
+/* the rig is one gun: the breaker, on the right. The left is the cannon and
+   is not a gun at all - it cannot be bought, sold or swapped. */
+function slotAt(){ const p=breakerAt(); return {x:p.x, y:p.y, r:BREAKER_R()}; }
 let TURRETS=[];
 /* the list of live guns, rebuilt from the slots, keeping the ones that have
    not changed so their clocks and their aim survive a rearrange */
@@ -2770,13 +2770,14 @@ function rebuildRig(){
   const keep={};
   for(const t of TURRETS) if(t.slot!==undefined) keep[t.slot+"|"+t.type]=t;
   const out=[];
-  if(!Array.isArray(G.rig)) G.rig=Array(RIG_MAX).fill(null);
-  const guns=G.rig.filter(Boolean);
-  if(G.rig.length!==RIG_MAX){
-    // an older, longer rig: its first two guns take the two corners
-    const fresh=Array(RIG_MAX).fill(null);
-    for(let i=0;i<RIG_MAX&&i<guns.length;i++) fresh[i]=guns[i];
-    G.rig=fresh; save();
+  if(!Array.isArray(G.rig)) G.rig=[];
+  const guns=G.rig.filter(v=>v&&TUR_TYPES[v]);
+  // an older rig held two; the breaker takes the best of them, and a rig
+  // holding nothing is given the eye rather than left standing empty
+  if(G.rig.length!==RIG_MAX || !G.rig[0]){
+    const order=["hive","sniper","eye"];
+    guns.sort((a,b2)=>order.indexOf(a)-order.indexOf(b2));
+    G.rig=[guns[0]||"eye"]; save();
   }
   for(let i=0;i<RIG_MAX;i++){
     const ty=G.rig[i];
@@ -2796,83 +2797,263 @@ const turretAt=t=>{
 /* --------------------------------------------------------------- drawing */
 function drawTurrets(x){
   x.save();
-  for(let i=0;i<rigSlots();i++){
-    const ty=G.rig&&G.rig[i];
-    if(!ty) continue;                 // an empty corner stays empty
-    drawMount(x, slotAt(i), ty, TURRETS.find(q=>q.slot===i));
+  drawPlatform(x);
+  drawCannon(x);
+  drawCore(x);
+  const ty=G.rig&&G.rig[0];
+  if(ty) drawBreaker(x, slotAt(), ty, TURRETS[0]);
+  x.restore();
+}
+
+/* --------------------------------------------------------- the shared floor
+   One low cable slung between the three of them, so they read as parts of a
+   machine rather than three ornaments. It is a cable and a shadow, never a
+   panel: no fill above the base line, nothing squared off. */
+function drawPlatform(x){
+  const a=cannonAt(), b=breakerAt(), y=rigBaseY();
+  const on=FLOW.on>0;
+  x.save();
+  // the ground shadow the three of them share
+  const sg=x.createLinearGradient(0,y-10,0,y+16);
+  sg.addColorStop(0,"rgba(10,18,32,0)");
+  sg.addColorStop(1,"rgba(10,18,32,.22)");
+  x.fillStyle=sg;
+  x.beginPath(); x.ellipse((a.x+b.x)/2, y+7, (b.x-a.x)/2+CANNON_R()*0.9, 15, 0,0,TAU); x.fill();
+  // the cable: a slack curve, not a bar
+  const sag=on?4:9;
+  const run=()=>{ x.beginPath(); x.moveTo(a.x,y+2);
+                  x.quadraticCurveTo((a.x+b.x)/2, y+2+sag, b.x, y+2); x.stroke(); };
+  x.lineCap="round";
+  // the casing
+  x.lineWidth=Math.max(5,7);
+  x.strokeStyle=curScale().dark?"rgba(120,168,210,.34)":"rgba(40,70,110,.30)";
+  run();
+  // and the charge inside it, dim but never dark - it is a live cable
+  const k=clamp(FLOW.e/FLOW.max,0,1);
+  x.lineWidth=Math.max(2,3);
+  x.strokeStyle=hexA("#7CE0FF",0.22+k*0.5);
+  run();
+  // and while overdrive runs, the charge is visibly moving along it
+  if(on){
+    const g=x.createLinearGradient(a.x,0,b.x,0);
+    g.addColorStop(0,"rgba(124,224,255,.95)");
+    g.addColorStop(.5,"rgba(255,255,255,.95)");
+    g.addColorStop(1,"rgba(255,138,138,.95)");
+    x.strokeStyle=g; x.lineWidth=Math.max(2,3);
+    x.beginPath();
+    x.moveTo(a.x,y+2); x.quadraticCurveTo((a.x+b.x)/2, y+2+sag, b.x, y+2); x.stroke();
+    // sparks running the length of it
+    for(let i=0;i<3;i++){
+      const t=((el*0.75+i/3)%1);
+      const px=a.x+(b.x-a.x)*t, py=y+2+sag*4*t*(1-t);
+      x.fillStyle="rgba(255,255,255,.9)";
+      x.beginPath(); x.arc(px,py,2.6,0,TAU); x.fill();
+    }
   }
   x.restore();
 }
 
-/* ---------------------------------------------------------------- the guns
-   A tower and a barrel, in the same soft shading and thick outline as
-   everything else on screen. They are not pressable and must not look it. */
-function drawMount(x,p,kind,t){
-  const r=p.r;
+/* ------------------------------------------------------------- the cannon
+   Wide, short, fixed. A funnel with a lit chamber under it that fills as the
+   next cell loads, then kicks and throws liquid when it goes. */
+function drawCannon(x){
+  const p=cannonAt(), R=CANNON_R();
+  const COL="#2FC8E8", INK=RIM(COL);
+  const load=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
+  const kick=CN.kick;
+  const lw=Math.max(2.6,R*0.095);
   x.save();
   x.translate(p.x,p.y);
-  const col=TUR_TYPES[kind].col, ink=RIM(col), lw=Math.max(2.6,r*0.12);
-  const k=Math.max(0,(t&&t.k)||0);            // the kick, just after it fires
-  // a barrel only reads as up if it stays near up: 38 degrees either side
-  let ang=(t&&t.aim!==undefined)?t.aim:-Math.PI/2;
-  ang=clamp(ang, -Math.PI/2-0.66, -Math.PI/2+0.66);
+  x.translate(0, kick*R*0.16);                 // the whole thing sits down
   x.lineJoin="round";
 
-  // ---- the barrel, long and slim, with a slight flare at the mouth
+  // the glow it throws while a cell is loading
+  const gg=x.createRadialGradient(0,-R*0.95,0,0,-R*0.95,R*1.9);
+  gg.addColorStop(0,hexA(COL,0.10+load*0.26+kick*0.4));
+  gg.addColorStop(1,hexA(COL,0));
+  x.fillStyle=gg;
+  x.beginPath(); x.arc(0,-R*0.95,R*1.9,0,TAU); x.fill();
+
+  // --- the body: a squat drum
+  const bg=x.createLinearGradient(0,-R*0.72,0,R*0.22);
+  bg.addColorStop(0,shade(COL,.36)); bg.addColorStop(1,shade(COL,-.30));
+  x.fillStyle=bg;
+  x.beginPath(); x.roundRect(-R*0.86,-R*0.72,R*1.72,R*0.94,R*0.26); x.fill();
+  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
+
+  // --- the chamber: a window in the drum that fills before it fires
+  const cw=R*0.62, chh=R*0.30, cy=-R*0.26;
+  x.save();
+  x.beginPath(); x.roundRect(-cw,cy-chh,cw*2,chh*2,R*0.12); x.clip();
+  x.fillStyle="rgba(6,16,28,.85)"; x.fillRect(-cw,cy-chh,cw*2,chh*2);
+  const fh=chh*2*load;
+  const lg=x.createLinearGradient(0,cy+chh-fh,0,cy+chh);
+  lg.addColorStop(0,shade(COL,.55)); lg.addColorStop(1,COL);
+  x.fillStyle=lg; x.fillRect(-cw,cy+chh-fh,cw*2,fh);
+  if(load>0.03){                                // a meniscus, so it reads as liquid
+    x.fillStyle="rgba(255,255,255,"+(0.35+load*0.4).toFixed(2)+")";
+    x.fillRect(-cw,cy+chh-fh,cw*2,1.6);
+  }
+  x.restore();
+  x.lineWidth=Math.max(1.6,R*0.055); x.strokeStyle=INK;
+  x.beginPath(); x.roundRect(-cw,cy-chh,cw*2,chh*2,R*0.12); x.stroke();
+
+  // --- the funnel: wide at the mouth, always straight up
+  const my=-R*1.36, mw=R*0.92, nw=R*0.40;
+  const fg=x.createLinearGradient(-mw,0,mw,0);
+  fg.addColorStop(0,shade(COL,-.24)); fg.addColorStop(.45,shade(COL,.40));
+  fg.addColorStop(1,shade(COL,-.10));
+  x.fillStyle=fg;
+  x.beginPath();
+  x.moveTo(-nw,-R*0.66);
+  x.lineTo(-mw*(1+kick*0.06), my);
+  x.lineTo( mw*(1+kick*0.06), my);
+  x.lineTo( nw,-R*0.66);
+  x.closePath(); x.fill();
+  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
+  // the bore, lit from inside
+  const bore=x.createLinearGradient(0,my,0,my+R*0.30);
+  bore.addColorStop(0,"rgba(255,255,255,"+(0.30+load*0.30+kick*0.6).toFixed(2)+")");
+  bore.addColorStop(1,"rgba(6,16,28,.9)");
+  x.fillStyle=bore;
+  x.beginPath(); x.ellipse(0,my,mw*(1+kick*0.06)*0.94,R*0.15,0,0,TAU); x.fill();
+  x.lineWidth=Math.max(1.6,R*0.05); x.strokeStyle=INK;
+  x.beginPath(); x.ellipse(0,my,mw*(1+kick*0.06)*0.94,R*0.15,0,0,TAU); x.stroke();
+
+  // two stubby legs, so a wide thing does not look like it is floating
+  x.fillStyle=shade(COL,-.34);
+  for(const q of [-1,1]){
+    x.beginPath(); x.roundRect(q*R*0.62-R*0.13,R*0.10,R*0.26,R*0.20,R*0.07); x.fill();
+    x.lineWidth=lw*0.7; x.strokeStyle=INK; x.stroke();
+  }
+  x.restore();
+}
+
+/* --------------------------------------------------------------- the core
+   Not a button. It fills from your slices and, when it is full, it fires
+   itself. The only thing it responds to is cutting. */
+function drawCore(x){
+  const p=coreAt(), R=CORE_R();
+  const k=FLOW.e/FLOW.max, on=FLOW.on>0;
+  const beat=on?(0.5+0.5*Math.sin(el*9)):(0.5+0.5*Math.sin(el*2.4));
+  const COL=on?"#FFD84B":"#7CE0FF";
+  x.save();
+  x.translate(p.x,p.y);
+  // the mount it sits on: a short stalk, so it is part of the cable
+  x.strokeStyle=curScale().dark?"rgba(140,190,230,.34)":"rgba(40,70,110,.30)";
+  x.lineWidth=Math.max(2,3); x.lineCap="round";
+  x.beginPath(); x.moveTo(0,R*0.5); x.lineTo(0,R*1.5); x.stroke();
+  // the glow
+  const gg=x.createRadialGradient(0,0,0,0,0,R*(on?3.6:2.4));
+  gg.addColorStop(0,hexA(COL,(on?0.5:0.12)+k*0.20+beat*(on?0.24:0.06)));
+  gg.addColorStop(1,hexA(COL,0));
+  x.fillStyle=gg;
+  x.beginPath(); x.arc(0,0,R*(on?3.6:2.4),0,TAU); x.fill();
+  // the shell
+  x.fillStyle=curScale().dark?"rgba(16,26,44,.9)":"rgba(24,38,62,.86)";
+  x.beginPath(); x.arc(0,0,R,0,TAU); x.fill();
+  x.lineWidth=Math.max(2,R*0.16); x.strokeStyle=RIM(COL);
+  x.beginPath(); x.arc(0,0,R,0,TAU); x.stroke();
+  // how full it is, as a level rather than another ring
+  x.save();
+  x.beginPath(); x.arc(0,0,R*0.80,0,TAU); x.clip();
+  const fh=R*1.6*k;
+  const lg=x.createLinearGradient(0,R*0.8-fh,0,R*0.8);
+  lg.addColorStop(0,shade(COL,.5)); lg.addColorStop(1,COL);
+  x.fillStyle=lg; x.fillRect(-R,R*0.8-fh,R*2,fh);
+  if(k>0.03){ x.fillStyle="rgba(255,255,255,.55)"; x.fillRect(-R,R*0.8-fh,R*2,1.4); }
+  x.restore();
+  if(on){
+    x.globalAlpha=0.35+0.35*beat;
+    x.lineWidth=Math.max(2,R*0.22); x.strokeStyle="#FFF3C4";
+    x.beginPath(); x.arc(0,0,R*1.35,0,TAU); x.stroke();
+    x.globalAlpha=1;
+  }
+  x.restore();
+}
+
+/* ------------------------------------------------------------- the breaker
+   Long barrel, narrow head, and it turns. Everything about it is thinner and
+   sharper than the cannon, which is the point. */
+function drawBreaker(x,p,kind,t){
+  const R=p.r;
+  const COL="#FF6B6B", ACC=TUR_TYPES[kind]?TUR_TYPES[kind].col:COL;
+  const INK=RIM(COL), lw=Math.max(2.4,R*0.115);
+  const k=Math.max(0,(t&&t.k)||0);
+  let ang=(t&&t.aim!==undefined)?t.aim:-Math.PI/2;
+  ang=clamp(ang, -Math.PI/2-0.80, -Math.PI/2+0.80);
+  x.save();
+  x.translate(p.x,p.y);
+  x.lineJoin="round"; x.lineCap="round";
+
+  // --- the barrel: long, thin, and it comes to a point
   x.save();
   x.rotate(ang+Math.PI/2);
-  x.translate(0, k*r*0.16);                   // recoil, back into the tower
-  const bw=r*(kind==="sniper"?0.20:kind==="hive"?0.30:0.245), bl=r*2.05;
+  x.translate(0, k*R*0.22);                        // recoil down the bore
+  const bw=R*(kind==="sniper"?0.15:kind==="hive"?0.24:0.19), bl=R*2.90;
   const bg=x.createLinearGradient(-bw,0,bw,0);
-  bg.addColorStop(0,shade(col,-.28)); bg.addColorStop(.5,shade(col,.34));
-  bg.addColorStop(1,shade(col,-.12));
+  bg.addColorStop(0,shade(COL,-.30)); bg.addColorStop(.45,shade(COL,.38));
+  bg.addColorStop(1,shade(COL,-.14));
   x.fillStyle=bg;
   x.beginPath();
-  x.moveTo(-bw*1.30,-bl); x.lineTo(bw*1.30,-bl);
-  x.lineTo( bw*0.92,-bl+bw*1.10);
-  x.lineTo( bw*0.92, r*0.10);
-  x.lineTo(-bw*0.92, r*0.10);
-  x.lineTo(-bw*0.92,-bl+bw*1.10);
+  x.moveTo(-bw*1.45,-bl);                          // the flared brake
+  x.lineTo( bw*1.45,-bl);
+  x.lineTo( bw*1.45,-bl+bw*1.5);
+  x.lineTo( bw*0.80,-bl+bw*2.4);
+  x.lineTo( bw*0.80, R*0.20);
+  x.lineTo(-bw*0.80, R*0.20);
+  x.lineTo(-bw*0.80,-bl+bw*2.4);
+  x.lineTo(-bw*1.45,-bl+bw*1.5);
   x.closePath(); x.fill();
-  x.lineWidth=lw; x.strokeStyle=ink; x.stroke();
-  // the bore, and the flash still in it
-  x.fillStyle="rgba(10,16,28,.55)";
-  x.beginPath(); x.ellipse(0,-bl+bw*0.30,bw*0.86,bw*0.40,0,0,TAU); x.fill();
+  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
+  // two cooling bands, which read as machined
+  x.strokeStyle=hexA(ACC,.75); x.lineWidth=Math.max(1.6,R*0.07);
+  for(const f of [0.42,0.58]){
+    x.beginPath(); x.moveTo(-bw*0.80,-bl*f); x.lineTo(bw*0.80,-bl*f); x.stroke();
+  }
+  x.fillStyle="rgba(8,14,26,.7)";
+  x.beginPath(); x.ellipse(0,-bl+bw*0.5,bw*1.0,bw*0.42,0,0,TAU); x.fill();
+  // the muzzle flash, right after it fires
   if(k>0.02){
-    const fg=x.createRadialGradient(0,-bl,0,0,-bl,bw*2.6*k);
-    fg.addColorStop(0,"rgba(255,255,255,"+(0.85*k).toFixed(2)+")");
-    fg.addColorStop(.45,hexA(col,0.6*k));
-    fg.addColorStop(1,hexA(col,0));
+    const fg=x.createRadialGradient(0,-bl,0,0,-bl,bw*5*k);
+    fg.addColorStop(0,"rgba(255,255,255,"+(0.95*k).toFixed(2)+")");
+    fg.addColorStop(.35,hexA("#FFD0A0",0.8*k));
+    fg.addColorStop(1,hexA(COL,0));
     x.fillStyle=fg;
-    x.beginPath(); x.arc(0,-bl,Math.max(1,bw*2.6*k),0,TAU); x.fill();
+    x.beginPath(); x.arc(0,-bl,Math.max(1,bw*5*k),0,TAU); x.fill();
+    // and two spikes of it out of the brake
+    x.strokeStyle="rgba(255,240,210,"+(0.8*k).toFixed(2)+")";
+    x.lineWidth=Math.max(1.6,bw*0.5);
+    for(const q of [-1,1]){
+      x.beginPath(); x.moveTo(q*bw*1.1,-bl);
+      x.lineTo(q*bw*(1.1+3.2*k),-bl-bw*2.4*k); x.stroke();
+    }
   }
   x.restore();
 
-  // ---- the tower: a rounded bunker on a flat foot
-  const tg=x.createLinearGradient(0,-r*0.80,0,r*0.60);
-  tg.addColorStop(0,shade(col,.44)); tg.addColorStop(1,shade(col,-.28));
-  x.fillStyle=tg;
+  // --- the head it turns on
+  x.save();
+  x.rotate((ang+Math.PI/2)*0.55);
+  const hg=x.createLinearGradient(0,-R*0.55,0,R*0.30);
+  hg.addColorStop(0,shade(COL,.42)); hg.addColorStop(1,shade(COL,-.26));
+  x.fillStyle=hg;
+  x.beginPath(); x.roundRect(-R*0.56,-R*0.52,R*1.12,R*0.92,R*0.26); x.fill();
+  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
+  x.fillStyle=shade(ACC,.35);
+  x.beginPath(); x.arc(0,-R*0.10,R*0.19,0,TAU); x.fill();
+  x.lineWidth=Math.max(1.4,R*0.07); x.strokeStyle=INK; x.stroke();
+  x.restore();
+
+  // --- the mount, which does not turn: a narrow pedestal
+  const pg=x.createLinearGradient(0,-R*0.2,0,R*0.66);
+  pg.addColorStop(0,shade(COL,.10)); pg.addColorStop(1,shade(COL,-.38));
+  x.fillStyle=pg;
   x.beginPath();
-  x.moveTo(-r*0.86, r*0.52);
-  x.lineTo(-r*0.78,-r*0.10);
-  x.quadraticCurveTo(-r*0.72,-r*0.74, 0,-r*0.74);
-  x.quadraticCurveTo( r*0.72,-r*0.74, r*0.78,-r*0.10);
-  x.lineTo( r*0.86, r*0.52);
-  x.quadraticCurveTo( r*0.88, r*0.66, r*0.66, r*0.66);
-  x.lineTo(-r*0.66, r*0.66);
-  x.quadraticCurveTo(-r*0.88, r*0.66,-r*0.86, r*0.52);
+  x.moveTo(-R*0.34,-R*0.14); x.lineTo(R*0.34,-R*0.14);
+  x.lineTo(R*0.62,R*0.52); x.quadraticCurveTo(R*0.66,R*0.68,R*0.44,R*0.68);
+  x.lineTo(-R*0.44,R*0.68); x.quadraticCurveTo(-R*0.66,R*0.68,-R*0.62,R*0.52);
   x.closePath(); x.fill();
-  x.lineWidth=lw+0.5; x.strokeStyle=ink; x.stroke();
-  // a band across the foot, so it stands on something
-  x.fillStyle=shade(col,-.20);
-  x.beginPath(); x.roundRect(-r*0.80,r*0.30,r*1.60,r*0.26,r*0.11); x.fill();
-  x.lineWidth=lw*0.7; x.strokeStyle=ink; x.stroke();
-  // the lens, so it reads as watching rather than waiting to be pressed
-  x.fillStyle=shade(col,.70);
-  x.beginPath(); x.arc(0,-r*0.16,r*0.26,0,TAU); x.fill();
-  x.lineWidth=Math.max(1.6,r*0.08); x.strokeStyle=ink; x.stroke();
-  x.fillStyle="rgba(255,255,255,.9)";
-  x.beginPath(); x.arc(-r*0.08,-r*0.24,r*0.09,0,TAU); x.fill();
+  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
   x.restore();
 }
 function hexA(h,a){
@@ -2883,13 +3064,13 @@ function hexA(h,a){
 /* --------------------------------------------------------------- the clocks */
 const rigEdit=false;               // kept as a constant: several draws read it
 /* which slot a point is over, or -1 */
+/* which machine a press is on: 0 is the breaker, -2 the cannon, -1 neither.
+   Both open their own upgrades; neither is a control. */
 function slotHit(x,y){
-  let best=-1, bd=1e9;
-  for(let i=0;i<rigSlots();i++){
-    const p=slotAt(i), d=Math.hypot(x-p.x, y-(p.y-p.r*0.7));
-    if(d<bd&&d<p.r*2.8){ bd=d; best=i; }
-  }
-  return best;
+  const b=slotAt(), c=cannonAt(), CR=CANNON_R();
+  if(Math.hypot(x-b.x, y-(b.y-b.r*0.9))<b.r*2.2) return 0;
+  if(Math.hypot(x-c.x, y-(c.y-CR*0.7))<CR*1.5) return -2;
+  return -1;
 }
 let fullT=-99;
 function stepTurrets(dt){
@@ -2917,7 +3098,7 @@ function stepTurrets(dt){
     // and its own trigger
     if(rigEdit) continue;
     const spec=TUR_TYPES[t.type]; if(!spec) continue;
-    const gap=turVal(t.type,"rate")||spec.gap;
+    const gap=(turVal(t.type,"rate")||spec.gap)*(FLOW.on>0?FLOW.fireMul:1);
     if(t.cd===undefined) t.cd=gap;
     t.cd-=dt;
     if(t.cd<=0){
@@ -3212,7 +3393,10 @@ function rbShine(x,b,r){
 }
 function tierRadius(tier,cls){ return TIER[tier].r*S*cls.size; }
 function makeBall(tier,x,y,vx,vy,cls,mass,kind){
-  const maxHp=Math.max(1,Math.round(cls.taps*TIER[tier].hp));
+  // one clean cut, unless it is plated. Bosses keep their own accounting.
+  const maxHp = kind==="armor"
+    ? Math.max(2, Math.round(ARMOR_HP*Math.max(.5,TIER[tier].hp)))
+    : 1;
   return {id:++seq,tier,cls,kind:kind||"plain",
     x,y,vx,vy,r:tierRadius(tier,cls),
     mass:mass===undefined?cls.mass:mass,
@@ -3221,7 +3405,15 @@ function makeBall(tier,x,y,vx,vy,cls,mass,kind){
 }
 const P_VIRUS=0.02;                  // one ball in fifty
 const P_RAINBOW=0.005;               // one ball in two hundred
+const P_ARMOR=0.13;                  // and one in eight comes plated
+const P_SPLIT=0.11;                  // one in nine comes ready to come apart
+const ARMOR_HP=4;                    // cuts to get through the plating
 function dropKind(bonus){
+  {
+    const r2=Math.random();
+    if(r2<P_ARMOR) return "armor";
+    if(r2<P_ARMOR+P_SPLIT) return "split";
+  }
   const p=val("purity")+(bonus||0);
   const r=Math.random();
   if(r<p) return "golden";
@@ -3386,6 +3578,7 @@ function strike(b,dmg,src,forced){
   if(!forced && el-b.lastHit<0.07) return;
   b.lastHit=el;
   b.by = (src&&src.turret) ? "turret" : "hand";   // who gets the credit
+  if(b.by==="hand" && FLOW.on<=0) FLOW.e=Math.min(FLOW.max, FLOW.e+FLOW.perSlice);
   b.sqA=src?Math.atan2(b.y-src.y,b.x-src.x):rnd(0,TAU);
   b.sq=.30; b.wob=.16; b.hit=1;
 
@@ -3486,7 +3679,7 @@ function divide(b){
   const ax=rnd(0,TAU), kick=52+b.r*2.0;
   const kids=[];
   // one roll for the whole slice, and only if there is somewhere to put them
-  const dbl = b.kind==="plain" && Math.random()<val("cascade")
+  const dbl = (b.kind==="split" || (b.kind==="plain" && Math.random()<val("cascade")))
               && roomFor(tierRadius(t2,b.cls));
   for(let i=0;i<(dbl?4:2);i++){
     if(balls.length>=hard) break;
@@ -3550,7 +3743,7 @@ function finish(b,col){
   const byGun = b.by==="turret";
   if(!byGun||TURRET_KEEPS_COMBO) bumpCombo();
   const crit = b.kind!=="golden" && Math.random()<val("crit");
-  earn(b.mass*(b.kind==="golden"?25:1)*(crit?2:1)*(byGun?TURRET_CUT:1),b.x,b.y,col);
+  earn(b.mass*(b.kind==="golden"?25:1)*(crit?2:1)*(byGun?TURRET_CUT:1)*flowPay(),b.x,b.y,col);
   if(crit){
     // it has to be visible or it is just a number that is sometimes bigger
     rings.push({x:b.x,y:b.y,r:b.r*.4,R:b.r*3.4,t:0,life:.34,col:"#FF3B57",w:2.6});
@@ -3673,6 +3866,7 @@ roomArena.addEventListener("pointerdown",e=>{
   e.preventDefault(); actx();
   try{ roomArena.setPointerCapture(e.pointerId); }catch(err){}
   const slot=p.y>AR.y1?slotHit(p.x,p.y):-1;
+  if(ready && slot===-2){ sheetTurrets("ufo"); return; }
   if(ready && slot>=0 && G.rig[slot]){ showCallout(G.rig[slot],slot); return; }
   startSlice(p,e.pointerId);
   touchAt(p.x,p.y);
@@ -4063,20 +4257,33 @@ const VENT={t:1.5, max:1.5, mass:26, n:0};
    Balls arrive on their own, from just under the floor line, and the rate
    backs off as the dish fills so a crowded screen stops getting worse. Every
    number that decides how that feels is here. */
+const FLOW={
+  e:0, on:0,            // charge, and seconds of overdrive left
+  max:      26,         // slices to fill it
+  perSlice: 1,          // what one hand-cut is worth
+  dur:      5.0,        // how long overdrive runs
+  decay:    0.55,       // charge lost per second when you stop cutting
+  spawnMul: 0.45,       // the cannon's gap, while it runs
+  fireMul:  0.50,       // the breaker's gap
+  payMul:   1.25,       // and what a kill is worth
+};
+const CN={kick:0};      // the cannon's recoil
 const SPAWN={
   gap:        1.15,     // s between launches on an empty dish
   crowdSlow:  3.40,     // how much a full dish stretches that gap
   maxBalls:   300,      // the hard ceiling; a frame-rate guard, not a rule
-  fill:       0.55,     // how much of the dish may be covered at once
-  maxBig:     3,        // how many of the two biggest rungs may be out
+  maxOut:     10,       // cells the cannon will let stand at once
+  fill:       0.42,     // how much of the dish may be covered at once
+  maxBig:     2,        // how many of the big rungs may be out
   bigTier:    1,        // tier 0 and 1 are "big"
-  bigCool:    6.0,      // s before another big one may be sent
+  bigCool:    11.0,     // s before another big one may be sent
+  bigOdds:    0.55,     // and the roll for one is cut by this much
   speed:      [385,470],// how hard it is thrown up
   drift:      70,       // sideways, so it arcs rather than climbs a line
   under:      [8,26],   // how far below the floor line it starts
   arcG:       620,      // the pull that bends the launch into an arc
   arcT:       0.95,     // how long that pull lasts, in seconds
-  tries:      5,        // candidate columns tested for a clear lane
+  fan:        0.72,     // how wide the cannon throws, in radians either side
   edge:       0.10,     // how far in from each wall it may appear
 };
 /* what a turret's kill is worth against your own. Slicing has to stay the
@@ -4085,7 +4292,16 @@ const TURRET_CUT=0.60;
 const TURRET_KEEPS_COMBO=false;    // and a turret kill does not feed the streak
 
 /* the two guns stand in the lower corners and nothing stands between them */
-const TURR = ()=>clamp(W*0.082, 26, 34);
+const CANNON_R  = ()=>clamp(W*0.098, 32, 42);   // wide and squat
+const BREAKER_R = ()=>clamp(W*0.074, 24, 32);   // narrow and tall
+const CORE_R    = ()=>clamp(W*0.036, 12, 17);
+const TURR = ()=>BREAKER_R();                   // the one gun on the rig
+const cannonAt =()=>({x:AR.x0+CANNON_R()+16,  y:rigBaseY()});
+const breakerAt=()=>({x:AR.x1-BREAKER_R()-18, y:rigBaseY()});
+const coreAt   =()=>({x:(AR.x0+AR.x1)*0.5,    y:rigBaseY()-CORE_R()*0.55});
+/* where a cell actually leaves the cannon */
+const muzzleAt =()=>{ const c=cannonAt(), R=CANNON_R();
+                      return {x:c.x, y:c.y-R*1.36}; };
 /* the home indicator, in real pixels. env() is not readable from script, so
    a zero-width probe carries the value out of CSS for us. */
 function safeBottom(){
@@ -4302,10 +4518,35 @@ function bossPull(dt){
    one stretches that out, so a crowded screen stops getting worse on its own
    and recovers as soon as you cut something. */
 function spawnGap(){
-  const base=SPAWN.gap*(val("reload")/10);
+  const base=SPAWN.gap*(val("reload")/10)*(FLOW.on>0?FLOW.spawnMul:1);
   const f=clamp(dishFill(),0,1);
   return base*(1+f*f*SPAWN.crowdSlow);
 }
+/* the core: it fills, it fires itself, it runs down, and it never asks */
+function stepFlow(dt){
+  if(FLOW.on>0){
+    FLOW.on-=dt;
+    if(FLOW.on<=0){ FLOW.on=0; FLOW.e=0; pop(180,{vol:.07,len:.3,wet:.3}); }
+    return;
+  }
+  if(FLOW.e>=FLOW.max){
+    FLOW.on=FLOW.dur;
+    banner("OVERDRIVE");
+    shake=Math.max(shake,7); flash=Math.max(flash,.22);
+    for(let i=0;i<4;i++) chime(392*semi(LADDER[i*2]),{vol:.13,len:1.1,delay:i*.05,wet:.5});
+    haptic([18,40,18]);
+    // it throws light along the cable to both machines
+    const c=coreAt();
+    for(let i=0;i<16;i++){
+      const a=rnd(0,TAU), sp=rnd(90,300);
+      parts.push({x:c.x,y:c.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*0.6,
+        r:rnd(1.4,3.2),col:"#FFD84B",t:0,life:rnd(.3,.6),goo:false,drag:.88});
+    }
+    return;
+  }
+  FLOW.e=Math.max(0, FLOW.e-FLOW.decay*dt);
+}
+const flowPay=()=>FLOW.on>0?FLOW.payMul:1;
 const bigOut=()=>{ let n=0; for(const b of balls) if(!b.gone&&b.tier<=SPAWN.bigTier) n++; return n; };
 let bigT=-99;
 /* which rung. Big ones are rare by the roll, capped by how many are already
@@ -4314,41 +4555,13 @@ function spawnTier(){
   let t=ventRoll();
   const crowded=dishFill()>0.5;
   if(t<=SPAWN.bigTier){
-    if(bigOut()>=SPAWN.maxBig || el-bigT<SPAWN.bigCool || crowded)
+    // a big one is an event: capped, cooled down, and rolled against again
+    if(bigOut()>=SPAWN.maxBig || el-bigT<SPAWN.bigCool || crowded
+       || Math.random()>SPAWN.bigOdds)
       t=SPAWN.bigTier+1+((Math.random()*3)|0);
     else bigT=el;
   }
   return Math.min(t,DROPT);
-}
-/* the lane: whichever candidate column has the most clear sky above it, and
-   never the two columns the guns stand in */
-function spawnX(rr){
-  const lo=AR.x0+Math.max(rr+4, (AR.x1-AR.x0)*SPAWN.edge);
-  const hi=AR.x1-Math.max(rr+4, (AR.x1-AR.x0)*SPAWN.edge);
-  if(hi<=lo) return (AR.x0+AR.x1)*0.5;
-  let best=(lo+hi)*0.5, bestScore=-1;
-  for(let i=0;i<SPAWN.tries;i++){
-    const x=rnd(lo,hi);
-    // a gun's column is not a lane
-    let bad=false;
-    for(let k=0;k<rigSlots();k++){
-      const p=slotAt(k);
-      if(G.rig[k] && Math.abs(x-p.x)<p.r+rr+6){ bad=true; break; }
-    }
-    if(bad) continue;
-    // how far up this column is clear, and how big whatever is in it is
-    let score=1e9;
-    for(const b of balls){
-      if(b.gone) continue;
-      const dx=Math.abs(b.x-x);
-      if(dx>b.r+rr) continue;
-      const gap=(b.y+b.r)>AR.y1 ? 0 : (AR.y1-(b.y+b.r));
-      // a big ball in the way counts against the lane harder than a small one
-      score=Math.min(score, gap-b.r*1.4);
-    }
-    if(score>bestScore){ bestScore=score; best=x; }
-  }
-  return best;
 }
 function ventRoll(){
   let r=Math.random(), t=VENT_ROLL[0].tier;
@@ -4363,41 +4576,48 @@ function ventBall(forceTier, plainOnly){
   const t=(forceTier===undefined||forceTier===null)?ventRoll():forceTier;
   const up=DROPT-t;                                   // rungs above the drop
   const rr=tierRadius(t,cls);
-  if(!roomFor(rr,plainOnly)) return false;     // a deliberate tap gets more room
+  if(!roomToSpawn(rr)) return false;          // the cannon holds its fire
   // out of the saucer, which is the thing sitting directly over the button
-  const x=clamp(spawnX(rr), rr+2, Math.max(rr+3,W-rr-2));
-  // it starts under the floor and climbs through it, which is what makes it
-  // read as arriving from below rather than appearing out of nothing
-  const y=AR.y1+rr+rnd(SPAWN.under[0],SPAWN.under[1]);
+  const m=muzzleAt();
+  const x=clamp(m.x+rnd(-6,6), rr+2, Math.max(rr+3,W-rr-2));
+  const y=m.y+rr*0.35;
 
   // the heavy ones leave slower, or a yellow would be off the top of the dish
   const kick=clamp(1-up*.075,.66,1.12);
-  // a little sideways, so it climbs an arc and not a line - and always away
-  // from the wall it is nearest, so nothing is thrown straight into one
-  const away=x<(AR.x0+AR.x1)*0.5?1:-1;
+  // the fan: every shot leaves at a different angle, and the angles are
+  // spread deliberately rather than rolled, so two in a row never share a
+  // lane and the paths stay separate all the way up
+  VENT.fan=(VENT.fan|0)+1;
+  const slot=(VENT.fan*0.618034)%1;                  // golden ratio, so it never repeats
+  const spread=SPAWN.fan*(slot*2-1)+rnd(-0.05,0.05);
+  const sp=rnd(SPAWN.speed[0],SPAWN.speed[1])*S*kick;
   const b=makeBall(t, x, y,
-                   (rnd(0,SPAWN.drift)*away+rnd(-16,16))*S,
-                   -rnd(SPAWN.speed[0],SPAWN.speed[1])*S*kick, cls,
+                   Math.sin(spread)*sp,
+                   -Math.cos(spread)*sp, cls,
                    VENT.mass*Math.pow(1.6,up), kind);
   b.wob=.26; b.sq=.30; b.sqA=Math.PI/2; b.bead=el; b.luck=kind==="golden";
   b.entering=1;                       // the floor lets it through, once
   b.arc=SPAWN.arcT;                   // and it arcs over on the way in
+  CN.kick=1;                          // and the cannon sits down under it
   balls.push(b);
   const col=b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FF9A3D":PAL()[t]);
   // the nozzle: a tight ring at the lip, and a wider one a beat later as the
   // bead clears it — two rings read as something letting go, one reads as a hit
   const big=1+up*.34;
-  rings.push({x, y:AR.y1-1, r:3*S,  R:17*S*big, t:0, life:.20+up*.02, col, w:2.6});
-  rings.push({x, y:AR.y1-1, r:11*S, R:42*S*big, t:0, life:.36+up*.03, col, w:1.5});
+  const my=muzzleAt().y;
+  rings.push({x, y:my, r:3*S,  R:19*S*big, t:0, life:.20+up*.02, col:"#7CE0FF", w:2.6});
+  rings.push({x, y:my, r:11*S, R:46*S*big, t:0, life:.36+up*.03, col, w:1.5});
   // the squeeze throws a little of itself sideways along the floor
-  for(let k=0;k<10+up*3;k++){
-    const a=-Math.PI/2+rnd(-1.25,1.25), sp=rnd(90,250)*S*big;
-    parts.push({x, y:AR.y1-3, vx:Math.cos(a)*sp*1.3, vy:Math.sin(a)*sp*.42,
-      r:rnd(1.2,2.8)*S, col, t:0, life:rnd(.16,.34), goo:false, drag:.83});
+  // liquid out of the mouth, thrown up and outward like something spat
+  for(let k=0;k<14+up*4;k++){
+    const a=-Math.PI/2+rnd(-1.05,1.05), sp=rnd(120,330)*S*big;
+    parts.push({x:x+rnd(-5,5), y:my, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp*.85,
+      r:rnd(1.4,3.4)*S, col:k%3?col:"#7CE0FF", t:0, life:rnd(.20,.44),
+      goo:k%2===0, drag:.86});
   }
   // and a thread of goo still attached, which snaps as the ball climbs
   for(let k=0;k<4;k++)
-    goo(x+rnd(-2,2)*S, AR.y1-2-k*3*S, (2.6-k*.45)*S, col, .20+k*.04,
+    goo(x+rnd(-2,2)*S, my-k*3*S, (2.6-k*.45)*S, col, .20+k*.04,
         rnd(-16,16)*S, -rnd(40,120)*S);
   pop(NOTE[t]*1.35,{pan:panAt(x),vol:.11,wet:.18});
   pop(NOTE[t]*2.02,{pan:panAt(x),vol:.06,wet:.26,delay:.05});
@@ -5017,8 +5237,12 @@ function blockedArea(){
 const usableArea=()=>Math.max(1, arenaArea()-blockedArea());
 const dishFill=()=>Math.max(areaSum()/(usableArea()*dishMax()), balls.length/ballCeil());
 /* room for one more of this size, not merely room for one more */
+const liveBalls=()=>{ let n=0; for(const b of balls) if(!b.gone) n++; return n; };
 const roomFor=r=>balls.length<ballCeil() &&
   areaSum()+Math.PI*r*r <= usableArea()*dishMax();
+/* what the cannon is allowed to add, which is stricter than what the dish
+   can physically hold - splitting is allowed to exceed it, spawning is not */
+const roomToSpawn=r=>liveBalls()<SPAWN.maxOut && roomFor(r);
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
@@ -5086,6 +5310,8 @@ function step(dt){
   // not to flicker between one ball and the next
   psRate += (psFrame/dt - psRate) * (1-Math.pow(0.5, dt/4));
   psFrame=0;
+  stepFlow(dt);
+  CN.kick=Math.max(0,CN.kick-dt*5.5);
   VENT.t-=dt;
   if(VENT.t<=0){
     if(ventBall(spawnTier())){
@@ -5826,7 +6052,8 @@ function draw(){
     }
     xFx.restore();
 
-    // toughness, read as pips around the rim — one segment per remaining hit
+    // toughness, read as pips around the rim — one segment per remaining hit.
+    // Only armour has any, which is what makes a ring worth looking at.
     if(b.maxHp>1 && r>10*S){
       const segs=Math.min(b.maxHp,14);
       const left=Math.ceil(b.hp/b.maxHp*segs);
@@ -7018,7 +7245,7 @@ function sheetTurrets(type){
   if(type==="ufo") turTab="ufo";
   else if(type&&TUR_TYPES[type]) turTab=type;
   const KCOL=k=>k==="ufo"?"#7CE0FF":TUR_TYPES[k].col;
-  const KNAME=k=>k==="ufo"?"Spawner":TUR_TYPES[k].nm;
+  const KNAME=k=>k==="ufo"?"Cannon":TUR_TYPES[k].nm;
   const ICO=k=>'<span style="color:'+KCOL(k)+'">'+
     (k==="sniper"?"\u25C6":k==="hive"?"\u2B22":k==="ufo"?"\u25CF":"\u25C9")+'</span>';
   openSheet('<svg viewBox="0 0 24 24" style="width:19px;height:19px;display:block;color:#2FA3FF">'+
@@ -7045,8 +7272,8 @@ function sheetTurrets(type){
     const head=document.createElement("div");
     head.className="turHead";
     head.innerHTML='<b>'+KNAME(turTab)+'</b><span>'+
-      (turTab==="ufo"?"sends the balls up on its own"
-       :(owned?owned+" deployed":"not deployed \u2014 upgrades still stick"))+'</span>';
+      (turTab==="ufo"?"throws every cell into the dish"
+       :(owned?"on the rig":"not on the rig \u2014 upgrades still stick"))+'</span>';
     b.appendChild(head);
     // the spawner's two existing tracks, driven straight off the panel's own
     // so a level bought here is the same level bought there
@@ -7066,10 +7293,10 @@ function sheetTurrets(type){
 
     // buying one: the two corners are the only places it can stand
     if(turTab!=="ufo"){
-      const free=(G.rig||[]).findIndex((v,i)=>i<rigSlots()&&!v);
+      const free=(G.rig&&G.rig[0]===turTab)?-1:0;
       if(free>=0){
         const price=gunPrice(turTab), can=G.bio>=price;
-        b.appendChild(row({ic:ICO(turTab), t:"Deploy a "+TUR_TYPES[turTab].nm,
+        b.appendChild(row({ic:ICO(turTab), t:(G.rig&&G.rig[0]?"Swap to the ":"Deploy a ")+TUR_TYPES[turTab].nm,
           s:TUR_TYPES[turTab].d,
           btn:fmt(price), btnOn:can,
           fn:()=>{
@@ -7077,16 +7304,6 @@ function sheetTurrets(type){
             G.bio-=price; G.rig[free]=turTab; rebuildRig();
             buySound(2); haptic(12); save(); syncTop();
             toast(TUR_TYPES[turTab].nm+" deployed");
-            sheetSync&&sheetSync();
-          }}));
-      } else if(owned){
-        b.appendChild(row({ic:"\u2715", t:"Take it down",
-          s:"Frees the corner. You do not get the cash back.",
-          btn:"Remove", btnOn:true,
-          fn:()=>{
-            const at=(G.rig||[]).lastIndexOf(turTab);
-            if(at<0) return;
-            G.rig[at]=null; rebuildRig(); save(); haptic(10);
             sheetSync&&sheetSync();
           }}));
       }
@@ -7121,8 +7338,8 @@ function sheetUpgrades(){
     upRows={};
     b.appendChild(lbl("The rig"));
     b.appendChild(row({ic:'<span style="color:#7CE0FF">◉</span>',
-      t:"Spawner and turrets",
-      s:"How the balls arrive, and the two guns that help you cut them.",
+      t:"Cannon and breaker",
+      s:"How fast the cannon throws, and the gun that helps you cut.",
       btn:"Open", btnOn:true,
       fn:()=>{ closeSheet(); setTimeout(()=>sheetTurrets("ufo"),200); }}));
     for(const grp of UP_GROUPS){
