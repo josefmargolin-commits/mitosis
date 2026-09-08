@@ -2266,7 +2266,7 @@ const GRX=1.35;          // every upgrade's growth rate, raised to this power
    means something that can be checked rather than assumed. INCOME is
    measured, not guessed, and has to be re-measured whenever what feeds the
    dish changes — it has been wrong by six times once already. */
-const SCALE_INCOME=6.5e3;   // measured: the spawner alone feeding the dish
+const SCALE_INCOME=635;     // re-measured 2026-09-08: idle, no upgrades, no turret
 const SCALE_MINUTES=[40, 85, 140, 200, 260];
 const scaleMul=()=>curScale().mult;
 const cost=k=>Math.ceil(UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
@@ -2284,9 +2284,9 @@ const LUCK_SECS=30;
 const yieldMul=()=>val("yield")*curScale().mult*(x2On()?2:1);
 /* a hundred breaks to double your money — and inside a rainbow window the
    same hundred take you to five, because the step goes up with the ceiling */
-const COMBO_STEP=0.01;
+const COMBO_STEP=0.02;
 const comboStep=()=>luckOn()?COMBO_STEP*4:COMBO_STEP;
-const comboCap=()=>luckOn()?5:2;
+const comboCap=()=>luckOn()?12:6;
 const comboMul=()=>Math.min(comboCap(), 1+combo*comboStep());
 /* what the player actually earns, and what the popup shows: the streak caps
    at 2x, 5x inside a rainbow window, and the ad doubles on top of either */
@@ -3171,7 +3171,7 @@ function dropKind(bonus){
 }
 const VENT_LUCKY=P_RAINBOW;
 function bumpCombo(){
-  combo++; comboT=1.55;   // Streak used to stretch this
+  combo++; comboT=1.05;   // tighter: a chain has to be kept, not just started
   if(combo>G.stat.bestCombo) G.stat.bestCombo=combo;
   objProg("combo",0,combo);
   const c=document.getElementById("combo"), m=totalMul(), cap=comboCap()*(x2On()?2:1);
@@ -4032,7 +4032,11 @@ const SPAWN={
   under:      [8,26],   // how far below the floor line it starts
   arcG:       620,      // the pull that bends the launch into an arc
   arcT:       0.95,     // how long that pull lasts, in seconds
-  fan:        0.72,     // how wide the cannon throws, in radians either side
+  fan:        0.72,     // how wide it throws, in radians either side
+  wavePeriod: 46,       // seconds for one full breath
+  waveCalm:   1.35,     // the gap between cells at the quietest
+  waveRush:   0.40,     // and at the peak of a rush
+  waveSharp:  3,        // how much of the cycle is calm rather than rush
   edge:       0.10,     // how far in from each wall it may appear
 };
 /* what a turret's kill is worth against your own. Slicing has to stay the
@@ -4258,10 +4262,16 @@ function bossPull(dt){
 /* how long until the next one. An empty dish sends them at SPAWN.gap; a full
    one stretches that out, so a crowded screen stops getting worse on its own
    and recovers as soon as you cut something. */
+/* where in the breath we are: 0 through the long calm, 1 at the peak */
+function wavePeak(){
+  const p=(el%SPAWN.wavePeriod)/SPAWN.wavePeriod;
+  return Math.pow(0.5-0.5*Math.cos(TAU*p), SPAWN.waveSharp);
+}
 function spawnGap(){
   const base=SPAWN.gap*(val("reload")/10)*(FLOW.on>0?FLOW.spawnMul:1);
+  const wave=SPAWN.waveCalm+(SPAWN.waveRush-SPAWN.waveCalm)*wavePeak();
   const f=clamp(dishFill(),0,1);
-  return base*(1+f*f*SPAWN.crowdSlow);
+  return base*wave*(1+f*f*SPAWN.crowdSlow);
 }
 /* the core: it fills, it fires itself, it runs down, and it never asks */
 function stepFlow(dt){
@@ -4982,7 +4992,7 @@ const roomFor=r=>balls.length<ballCeil() &&
   areaSum()+Math.PI*r*r <= usableArea()*dishMax();
 /* what the cannon is allowed to add, which is stricter than what the dish
    can physically hold - splitting is allowed to exceed it, spawning is not */
-const roomToSpawn=r=>liveBalls()<SPAWN.maxOut && roomFor(r);
+const roomToSpawn=r=>liveBalls()<SPAWN.maxOut+Math.round(4*wavePeak()) && roomFor(r);
 const dishFull=()=>dishFill()>=1;
 
 /* ---- the chrome is solid ------------------------------------------------
