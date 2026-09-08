@@ -2379,8 +2379,8 @@ function rigBaseY(){ return H - safeBottom() - 30; }
 function turretY(){ return rigBaseY(); }
 function dishFloor(){
   // clear of whichever machine stands taller - the barrel, as it turns out
-  const funnel = rigBaseY() - CANNON_R()*1.55;
-  const barrel = rigBaseY() - BREAKER_R()*2.90;
+  const funnel = rigBaseY() - CANNON_R()*1.36;
+  const barrel = rigBaseY() - BREAKER_R()*1.62;
   return Math.max(H*.35, Math.round(Math.min(funnel,barrel) - 8));
 }
 /* where the chrome actually ends today, not where it ended at boot */
@@ -2857,13 +2857,8 @@ function drawTurrets(x){
 /* just the shadow they stand in. No cable, no rail, no panel. */
 function drawGround(x){
   const y=rigBaseY();
-  for(const [p,r] of [[cannonAt(),CANNON_R()],[breakerAt(),BREAKER_R()]]){
-    const g=x.createRadialGradient(p.x,y+4,0,p.x,y+4,r*1.5);
-    g.addColorStop(0,"rgba(10,18,32,.26)");
-    g.addColorStop(1,"rgba(10,18,32,0)");
-    x.fillStyle=g;
-    x.beginPath(); x.ellipse(p.x,y+4,r*1.5,r*0.34,0,0,TAU); x.fill();
-  }
+  for(const [p,r] of [[cannonAt(),CANNON_R()],[breakerAt(),BREAKER_R()]])
+    groundShadow(x,p.x,y+3,r*1.15);
 }
 /* the gold a machine wears while overdrive runs - the only tell it needs */
 function machGlow(x,cx,cy,r){
@@ -2879,212 +2874,246 @@ function machGlow(x,cx,cy,r){
 }
 
 
+/* --------------------------------------------------- the shared body language
+   Everything the machines are made of goes through here, so the outline
+   weight and the highlights cannot drift from the cells'. */
+function blobPath(x,cx,cy,rx,ry,seed,amp,lobes,segs){
+  x.beginPath();
+  const L=lobes||3, A=amp===undefined?0.052:amp, N=segs||54;
+  for(let i=0;i<=N;i++){
+    const a=i/N*TAU;
+    const w=1+A*(Math.sin(a*L+seed)*.46+Math.sin(a*(L*2+1)-seed*1.3)*.27
+                +Math.sin(a*(L*3+2)+seed*.6)*.15);
+    const px=cx+Math.cos(a)*rx*w, py=cy+Math.sin(a)*ry*w;
+    i?x.lineTo(px,py):x.moveTo(px,py);
+  }
+  x.closePath();
+}
+/* ---- the machines' palette, one entry per world -------------------------
+   Recolouring both machines for a new scale is two hex values here and
+   nothing else; a world that says nothing falls back to cyan and coral. */
+const MACH_SKIN={
+  Cellular:{ inc:"#2FC8E8", brk:"#FF6B6B" },
+};
+const machCol=w=>{
+  const sk=MACH_SKIN[curScale().n]||{};
+  return w==="inc" ? (sk.inc||"#2FC8E8") : (sk.brk||"#FF6B6B");
+};
+/* one soft organic mass, finished exactly the way a cell is finished */
+function softBody(x,cx,cy,rx,ry,col,seed,opt){
+  const o=opt||{}, amp=o.amp===undefined?0.052:o.amp;
+  const ink=RIM(col), r=Math.max(rx,ry);
+  blobPath(x,cx,cy,rx,ry,seed,amp,o.lobes);
+  const g=x.createLinearGradient(0,cy-ry,0,cy+ry);
+  g.addColorStop(0,shade(col,.34)); g.addColorStop(.55,col); g.addColorStop(1,shade(col,-.24));
+  x.fillStyle=g; x.fill();
+  if(o.sheen!==false){
+    x.save();
+    blobPath(x,cx,cy,rx,ry,seed,amp,o.lobes); x.clip();
+    const sg=x.createRadialGradient(cx-rx*.34,cy-ry*.46,0,cx-rx*.30,cy-ry*.40,r*1.15);
+    sg.addColorStop(0,"rgba(255,255,255,.40)");
+    sg.addColorStop(1,"rgba(255,255,255,0)");
+    x.fillStyle=sg; x.fillRect(cx-rx*1.4,cy-ry*1.4,rx*2.8,ry*2.8);
+    x.restore();
+  }
+  blobPath(x,cx,cy,rx,ry,seed,amp,o.lobes);
+  x.lineWidth=Math.max(1.4,r*.075);            // the cells' own rim weight
+  x.strokeStyle=ink; x.stroke();
+  if(o.spec!==false){
+    x.fillStyle="rgba(255,255,255,.46)";
+    x.beginPath(); x.ellipse(cx-rx*.40,cy-ry*.44,rx*.17,ry*.13,-0.6,0,TAU); x.fill();
+    x.beginPath(); x.ellipse(cx-rx*.17,cy-ry*.58,rx*.09,ry*.07,-0.6,0,TAU); x.fill();
+  }
+}
+/* the shadow that puts a machine on the ground rather than beside it */
+function groundShadow(x,cx,y,rx){
+  const g=x.createRadialGradient(cx,y,0,cx,y,rx);
+  g.addColorStop(0,"rgba(10,18,32,.34)");
+  g.addColorStop(.6,"rgba(10,18,32,.16)");
+  g.addColorStop(1,"rgba(10,18,32,0)");
+  x.fillStyle=g;
+  x.beginPath(); x.ellipse(cx,y,rx,rx*0.26,0,0,TAU); x.fill();
+}
 /* ------------------------------------------------------------- the cannon
    Wide, short, fixed. A funnel with a lit chamber under it that fills as the
    next cell loads, then kicks and throws liquid when it goes. */
 function drawCannon(x){
   const p=cannonAt(), R=CANNON_R();
-  machGlow(x,p.x,p.y-R*0.7,R);
+  const COL=machCol("inc"), INK=RIM(COL);
+  machGlow(x,p.x,p.y-R*0.55,R);
   if(sprOK("incubator")){
-    // the artwork, breathing as the next cell loads and sitting down when it
-    // throws one. Nothing is drawn over it.
     const load=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
-    x.save();
-    x.translate(0, CN.kick*R*0.12);
+    x.save(); x.translate(0, CN.kick*R*0.12);
     drawSpr(x,"incubator",p.x,p.y,machScale()*(1+load*0.012+CN.kick*0.03),0);
-    x.restore();
-    return;
+    x.restore(); return;
   }
-  const COL="#2FC8E8", INK=RIM(COL);
-  const load=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1);
-  const kick=CN.kick;
-  const lw=Math.max(2.6,R*0.095);
+  const load=clamp(1-VENT.t/Math.max(.001,VENT.max),0,1), kick=CN.kick;
   x.save();
   x.translate(p.x,p.y);
-  x.translate(0, kick*R*0.16);                 // the whole thing sits down
+  x.translate(0, kick*R*0.14);
   x.lineJoin="round";
+  // it breathes slowly, and the whole body swells as the cell forms - then
+  // the kick pulls it back in, so a launch reads as a release
+  const breathe=1+Math.sin(el*1.25)*0.013;
+  const swell=1+load*load*0.070-kick*0.10;
+  const bx=R*0.95*breathe*swell, by=R*0.52*breathe*swell, cy=-R*0.48;
 
-  // the glow it throws while a cell is loading
-  const gg=x.createRadialGradient(0,-R*0.95,0,0,-R*0.95,R*1.9);
-  gg.addColorStop(0,hexA(COL,0.10+load*0.26+kick*0.4));
-  gg.addColorStop(1,hexA(COL,0));
-  x.fillStyle=gg;
-  x.beginPath(); x.arc(0,-R*0.95,R*1.9,0,TAU); x.fill();
-
-  // --- the body: a squat drum
-  const bg=x.createLinearGradient(0,-R*0.72,0,R*0.22);
-  bg.addColorStop(0,shade(COL,.36)); bg.addColorStop(1,shade(COL,-.30));
-  x.fillStyle=bg;
-  x.beginPath(); x.roundRect(-R*0.86,-R*0.72,R*1.72,R*0.94,R*0.26); x.fill();
-  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
-
-  // --- the chamber: a window in the drum that fills before it fires
-  const cw=R*0.62, chh=R*0.30, cy=-R*0.26;
+  // --- the body: one wide low mass, and a paler membrane layer inside it
+  softBody(x,0,cy,bx,by,COL,1.7);
   x.save();
-  x.beginPath(); x.roundRect(-cw,cy-chh,cw*2,chh*2,R*0.12); x.clip();
-  x.fillStyle="rgba(6,16,28,.85)"; x.fillRect(-cw,cy-chh,cw*2,chh*2);
-  const fh=chh*2*load;
-  const lg=x.createLinearGradient(0,cy+chh-fh,0,cy+chh);
-  lg.addColorStop(0,shade(COL,.55)); lg.addColorStop(1,COL);
-  x.fillStyle=lg; x.fillRect(-cw,cy+chh-fh,cw*2,fh);
-  if(load>0.03){                                // a meniscus, so it reads as liquid
-    x.fillStyle="rgba(255,255,255,"+(0.35+load*0.4).toFixed(2)+")";
-    x.fillRect(-cw,cy+chh-fh,cw*2,1.6);
+  blobPath(x,0,cy,bx,by,1.7,0.052); x.clip();
+  x.fillStyle=hexA(shade(COL,.34),.55);
+  blobPath(x,0,cy+by*0.30,bx*0.86,by*0.80,4.4,0.06); x.fill();
+  x.restore();
+
+  // --- the opening: a bowl scooped out of the top, not a spout on top of it
+  const oy=cy-by*0.72, ox=bx*0.60, oh=by*0.42;
+  x.save();
+  // the cavity
+  blobPath(x,0,oy,ox,oh,2.8,0.05);
+  const cavg=x.createLinearGradient(0,oy-oh,0,oy+oh);
+  cavg.addColorStop(0,shade(COL,-.52)); cavg.addColorStop(1,shade(COL,-.22));
+  x.fillStyle=cavg; x.fill();
+  // the light coming up out of it
+  blobPath(x,0,oy,ox,oh,2.8,0.05); x.clip();
+  const gl=x.createRadialGradient(0,oy+oh*0.2,0,0,oy+oh*0.2,ox*1.2);
+  gl.addColorStop(0,"rgba(200,252,255,"+(0.30+load*0.55+kick*0.4).toFixed(2)+")");
+  gl.addColorStop(1,"rgba(140,236,255,0)");
+  x.fillStyle=gl; x.fillRect(-ox*1.3,oy-oh*1.4,ox*2.6,oh*3);
+  // --- the cell forming in it, growing as it loads
+  {
+    const nt=clamp(VENT.nextTier===undefined?4:VENT.nextTier,0,LAST);
+    const ncol=PAL()[nt], nr=oh*(0.62+0.55*load);
+    const keep=FORM; FORM=curScale().form;
+    const fake={wob:0.05,wp:el*0.6,sq:0,sqA:0,rot:0};
+    x.save();
+    x.translate(0, oy+oh*0.20 - load*oh*0.34 + Math.sin(el*2.1)*oh*0.05);
+    membrane(x,fake,nr); x.fillStyle=ncol; x.fill();
+    x.save(); x.beginPath(); x.arc(0,0,nr*0.87,0,TAU); x.clip();
+    scalePaint(x,nr,ncol,-0.35,null); x.restore();
+    membrane(x,fake,nr);
+    x.lineWidth=Math.max(1.2,nr*0.075); x.strokeStyle=RIM(ncol); x.stroke();
+    x.restore();
+    FORM=keep;
   }
   x.restore();
-  x.lineWidth=Math.max(1.6,R*0.055); x.strokeStyle=INK;
-  x.beginPath(); x.roundRect(-cw,cy-chh,cw*2,chh*2,R*0.12); x.stroke();
-
-  // --- the funnel: wide at the mouth, always straight up
-  const my=-R*1.36, mw=R*0.92, nw=R*0.40;
-  const fg=x.createLinearGradient(-mw,0,mw,0);
-  fg.addColorStop(0,shade(COL,-.24)); fg.addColorStop(.45,shade(COL,.40));
-  fg.addColorStop(1,shade(COL,-.10));
-  x.fillStyle=fg;
+  // the lip: the near edge drawn over the cell, so the cell sits IN the bowl
   x.beginPath();
-  x.moveTo(-nw,-R*0.66);
-  x.lineTo(-mw*(1+kick*0.06), my);
-  x.lineTo( mw*(1+kick*0.06), my);
-  x.lineTo( nw,-R*0.66);
-  x.closePath(); x.fill();
-  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
-  // the bore, lit from inside
-  const bore=x.createLinearGradient(0,my,0,my+R*0.30);
-  bore.addColorStop(0,"rgba(255,255,255,"+(0.30+load*0.30+kick*0.6).toFixed(2)+")");
-  bore.addColorStop(1,"rgba(6,16,28,.9)");
-  x.fillStyle=bore;
-  x.beginPath(); x.ellipse(0,my,mw*(1+kick*0.06)*0.94,R*0.15,0,0,TAU); x.fill();
-  x.lineWidth=Math.max(1.6,R*0.05); x.strokeStyle=INK;
-  x.beginPath(); x.ellipse(0,my,mw*(1+kick*0.06)*0.94,R*0.15,0,0,TAU); x.stroke();
+  x.ellipse(0,oy,ox,oh,0,0.10,Math.PI-0.10);
+  x.lineWidth=Math.max(1.8,R*.085); x.strokeStyle=INK; x.stroke();
+  // and the far edge, lit
+  x.beginPath();
+  x.ellipse(0,oy,ox,oh,0,Math.PI+0.14,TAU-0.14);
+  x.lineWidth=Math.max(1.6,R*.070);
+  x.strokeStyle=hexA(shade(COL,.62),.85+load*0.15); x.stroke();
 
-  // two stubby legs, so a wide thing does not look like it is floating
-  x.fillStyle=shade(COL,-.34);
-  for(const q of [-1,1]){
-    x.beginPath(); x.roundRect(q*R*0.62-R*0.13,R*0.10,R*0.26,R*0.20,R*0.07); x.fill();
-    x.lineWidth=lw*0.7; x.strokeStyle=INK; x.stroke();
-  }
+  // --- two soft feet
+  for(const q of [-1,1])
+    softBody(x,q*R*0.54,R*0.00,R*0.24,R*0.16,shade(COL,-.16),q>0?3.3:5.1,{spec:false});
   x.restore();
 }
-
-/* ------------------------------------------------------------- the breaker
-   Long barrel, narrow head, and it turns. Everything about it is thinner and
-   sharper than the cannon, which is the point. */
 function drawBreaker(x,p,kind,t){
   const R=p.r;
-  machGlow(x,p.x,p.y-R*0.9,R*1.1);
+  const COL=machCol("brk"), ACC=TUR_TYPES[kind]?TUR_TYPES[kind].col:COL;
+  const INK=RIM(COL);
+  machGlow(x,p.x,p.y-R*0.6,R*1.05);
   if(sprOK("turret")){
-    let ang=(t&&t.aim!==undefined)?t.aim:-Math.PI/2;
-    ang=clamp(ang, -Math.PI/2-0.80, -Math.PI/2+0.80);
-    const k=Math.max(0,(t&&t.k)||0);
-    // the barrel first if it should sit behind the body, then the body
-    const pin=barrelPin();
+    let ang0=(t&&t.aim!==undefined)?t.aim:-Math.PI/2;
+    ang0=clamp(ang0, -Math.PI/2-0.80, -Math.PI/2+0.80);
+    const k0=Math.max(0,(t&&t.k)||0), pin=barrelPin();
     if(sprOK("barrel")){
-      x.save();
-      x.translate(pin.x, pin.y);
-      x.rotate(ang+Math.PI/2);
-      x.translate(0, k*R*0.20);                 // recoil, down its own bore
+      x.save(); x.translate(pin.x,pin.y); x.rotate(ang0+Math.PI/2);
+      x.translate(0,k0*R*0.20);
       drawSpr(x,"barrel",0,0,machScale(),0,MACH.barrel.pin);
       x.restore();
     }
     drawSpr(x,"turret",p.x,p.y,machScale(),0);
-    if(k>0.02 && sprOK("barrel")){
-      // the flash sits at the muzzle, which is the far end of the barrel
-      const im=SPR.barrel, bw=W*MACH.barrel.w*machScale();
-      const bh=bw*(im.naturalHeight/im.naturalWidth);
-      const reach=bh*MACH.barrel.pin[1];
-      const mx=pin.x+Math.cos(ang)*reach, my=pin.y+Math.sin(ang)*reach;
-      const fg=x.createRadialGradient(mx,my,0,mx,my,bw*1.6*k);
-      fg.addColorStop(0,"rgba(255,255,255,"+(0.95*k).toFixed(2)+")");
-      fg.addColorStop(.35,"rgba(255,208,160,"+(0.8*k).toFixed(2)+")");
-      fg.addColorStop(1,"rgba(255,107,107,0)");
-      x.save(); x.globalCompositeOperation="lighter";
-      x.fillStyle=fg; x.beginPath(); x.arc(mx,my,Math.max(1,bw*1.6*k),0,TAU); x.fill();
-      x.restore();
-    }
     return;
   }
-  const COL="#FF6B6B", ACC=TUR_TYPES[kind]?TUR_TYPES[kind].col:COL;
-  const INK=RIM(COL), lw=Math.max(2.4,R*0.115);
   const k=Math.max(0,(t&&t.k)||0);
+  // a barrel only reads as pointing up if it stays near up
   let ang=(t&&t.aim!==undefined)?t.aim:-Math.PI/2;
-  ang=clamp(ang, -Math.PI/2-0.80, -Math.PI/2+0.80);
+  ang=clamp(ang, -Math.PI/2-0.60, -Math.PI/2+0.60);
+  const spec=TUR_TYPES[kind];
+  const gap=(turVal(kind,"rate")||(spec?spec.gap:9))*(FLOW.on>0?FLOW.fireMul:1);
+  const chg=clamp(1-(t&&t.cd!==undefined?t.cd:gap)/Math.max(.001,gap),0,1);
+  const hot=Math.pow(clamp((chg-0.62)/0.38,0,1),1.6);   // it winds up before it fires
+  const breathe=1+Math.sin(el*1.25+1.6)*0.012;
   x.save();
   x.translate(p.x,p.y);
-  x.lineJoin="round"; x.lineCap="round";
+  x.lineJoin="round";
+  const bx=R*0.86*breathe, by=R*0.46*breathe, cy=-R*0.42;
 
-  // --- the barrel: long, thin, and it comes to a point
+  // --- the shoulder the barrel is grown out of, and the barrel itself
+  const sy=cy-by*0.46;
   x.save();
+  x.translate(0,sy);
   x.rotate(ang+Math.PI/2);
-  x.translate(0, k*R*0.22);                        // recoil down the bore
-  const bw=R*(kind==="sniper"?0.15:kind==="hive"?0.24:0.19), bl=R*2.90;
-  const bg=x.createLinearGradient(-bw,0,bw,0);
-  bg.addColorStop(0,shade(COL,-.30)); bg.addColorStop(.45,shade(COL,.38));
-  bg.addColorStop(1,shade(COL,-.14));
-  x.fillStyle=bg;
-  x.beginPath();
-  x.moveTo(-bw*1.45,-bl);                          // the flared brake
-  x.lineTo( bw*1.45,-bl);
-  x.lineTo( bw*1.45,-bl+bw*1.5);
-  x.lineTo( bw*0.80,-bl+bw*2.4);
-  x.lineTo( bw*0.80, R*0.20);
-  x.lineTo(-bw*0.80, R*0.20);
-  x.lineTo(-bw*0.80,-bl+bw*2.4);
-  x.lineTo(-bw*1.45,-bl+bw*1.5);
-  x.closePath(); x.fill();
-  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
-  // two cooling bands, which read as machined
-  x.strokeStyle=hexA(ACC,.75); x.lineWidth=Math.max(1.6,R*0.07);
-  for(const f of [0.42,0.58]){
-    x.beginPath(); x.moveTo(-bw*0.80,-bl*f); x.lineTo(bw*0.80,-bl*f); x.stroke();
-  }
-  x.fillStyle="rgba(8,14,26,.7)";
-  x.beginPath(); x.ellipse(0,-bl+bw*0.5,bw*1.0,bw*0.42,0,0,TAU); x.fill();
-  // the muzzle flash, right after it fires
-  if(k>0.02){
-    const fg=x.createRadialGradient(0,-bl,0,0,-bl,bw*5*k);
-    fg.addColorStop(0,"rgba(255,255,255,"+(0.95*k).toFixed(2)+")");
-    fg.addColorStop(.35,hexA("#FFD0A0",0.8*k));
-    fg.addColorStop(1,hexA(COL,0));
-    x.fillStyle=fg;
-    x.beginPath(); x.arc(0,-bl,Math.max(1,bw*5*k),0,TAU); x.fill();
-    // and two spikes of it out of the brake
-    x.strokeStyle="rgba(255,240,210,"+(0.8*k).toFixed(2)+")";
-    x.lineWidth=Math.max(1.6,bw*0.5);
-    for(const q of [-1,1]){
-      x.beginPath(); x.moveTo(q*bw*1.1,-bl);
-      x.lineTo(q*bw*(1.1+3.2*k),-bl-bw*2.4*k); x.stroke();
+  x.translate(0,k*R*0.16);
+  {
+    const bw=R*(kind==="sniper"?0.34:kind==="hive"?0.44:0.39), bl=R*0.98;
+    // one mass from shoulder to tip, so it is grown rather than bolted on
+    softBody(x,0,-bl*0.42,bw,bl*0.62,shade(COL,-.06),4.2,{amp:0.038,lobes:2,spec:false});
+    // the emitter: a lit nub, not an eye
+    const eg=x.createRadialGradient(0,-bl*0.94,0,0,-bl*0.94,bw*(1.5+hot));
+    eg.addColorStop(0,hexA(shade("#FFB08A",.2),0.40+hot*0.40+k*0.5));
+    eg.addColorStop(1,hexA(COL,0));
+    x.save(); x.globalCompositeOperation="lighter"; x.fillStyle=eg;
+    x.beginPath(); x.arc(0,-bl*0.94,bw*(1.5+hot),0,TAU); x.fill(); x.restore();
+    softBody(x,0,-bl*0.94,bw*0.46,bw*0.40,shade(COL,.34+hot*0.30),2.6,{amp:0.05,spec:false});
+    if(k>0.02){
+      const fg=x.createRadialGradient(0,-bl*1.05,0,0,-bl*1.05,bw*3.6*k);
+      fg.addColorStop(0,"rgba(255,255,255,"+(0.95*k).toFixed(2)+")");
+      fg.addColorStop(.35,"rgba(255,206,170,"+(0.8*k).toFixed(2)+")");
+      fg.addColorStop(1,hexA(COL,0));
+      x.save(); x.globalCompositeOperation="lighter"; x.fillStyle=fg;
+      x.beginPath(); x.arc(0,-bl*1.05,Math.max(1,bw*3.6*k),0,TAU); x.fill(); x.restore();
     }
   }
   x.restore();
+  // the collar it turns in, drawn after so the barrel appears to enter it
+  softBody(x,0,sy+R*0.06,R*0.44*breathe,R*0.30*breathe,shade(COL,.14),6.4,
+           {amp:0.05,spec:false});
+  x.strokeStyle=hexA(RIM(COL),.5); x.lineWidth=Math.max(1.2,R*.05);
+  x.beginPath(); x.ellipse(0,sy+R*0.02,R*0.30,R*0.11,0,0.2,Math.PI-0.2); x.stroke();
 
-  // --- the head it turns on
+  // --- the base, and a paler membrane layer inside it
+  softBody(x,0,cy,bx,by,COL,2.9);
   x.save();
-  x.rotate((ang+Math.PI/2)*0.55);
-  const hg=x.createLinearGradient(0,-R*0.55,0,R*0.30);
-  hg.addColorStop(0,shade(COL,.42)); hg.addColorStop(1,shade(COL,-.26));
-  x.fillStyle=hg;
-  x.beginPath(); x.roundRect(-R*0.56,-R*0.52,R*1.12,R*0.92,R*0.26); x.fill();
-  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
-  x.fillStyle=shade(ACC,.35);
-  x.beginPath(); x.arc(0,-R*0.10,R*0.19,0,TAU); x.fill();
-  x.lineWidth=Math.max(1.4,R*0.07); x.strokeStyle=INK; x.stroke();
+  blobPath(x,0,cy,bx,by,2.9,0.052); x.clip();
+  x.fillStyle=hexA(shade(COL,.30),.50);
+  blobPath(x,0,cy+by*0.34,bx*0.84,by*0.78,7.1,0.06); x.fill();
   x.restore();
 
-  // --- the mount, which does not turn: a narrow pedestal
-  const pg=x.createLinearGradient(0,-R*0.2,0,R*0.66);
-  pg.addColorStop(0,shade(COL,.10)); pg.addColorStop(1,shade(COL,-.38));
-  x.fillStyle=pg;
-  x.beginPath();
-  x.moveTo(-R*0.34,-R*0.14); x.lineTo(R*0.34,-R*0.14);
-  x.lineTo(R*0.62,R*0.52); x.quadraticCurveTo(R*0.66,R*0.68,R*0.44,R*0.68);
-  x.lineTo(-R*0.44,R*0.68); x.quadraticCurveTo(-R*0.66,R*0.68,-R*0.62,R*0.52);
-  x.closePath(); x.fill();
-  x.lineWidth=lw; x.strokeStyle=INK; x.stroke();
+  // --- the core, which brightens over the last of the cooldown
+  if(hot>0.01){
+    const cg=x.createRadialGradient(0,cy,0,0,cy,R*0.60);
+    cg.addColorStop(0,hexA("#FFB07A",0.42*hot+k*0.30));
+    cg.addColorStop(1,hexA(COL,0));
+    x.save(); x.globalCompositeOperation="lighter"; x.fillStyle=cg;
+    x.beginPath(); x.arc(0,cy,R*0.60,0,TAU); x.fill(); x.restore();
+  }
+  softBody(x,0,cy,R*0.145*(1+hot*0.14),R*0.115*(1+hot*0.14),
+           shade("#FF9A6A",.10+hot*0.42),1.2,{amp:0.07,spec:false});
+  x.fillStyle="rgba(255,255,255,"+(0.30+hot*0.34).toFixed(2)+")";
+  x.beginPath(); x.ellipse(-R*0.035,cy-R*0.035,R*0.038,R*0.028,-0.5,0,TAU); x.fill();
+
+  // --- two soft feet, the same as the incubator's
+  for(const q of [-1,1])
+    softBody(x,q*R*0.50,R*0.14,R*0.22,R*0.15,shade(COL,-.16),q>0?7.7:8.9,{spec:false});
   x.restore();
 }
 function hexA(h,a){
+  const A=Math.max(0,Math.min(1,a)).toFixed(2);
+  if(h[0]!=="#"){
+    // shade() hands back "rgb(r,g,b)" - accept it rather than parsing to NaN
+    const m=/rgba?(([^)]+))/.exec(h);
+    if(m){ const p=m[1].split(",").map(v=>parseFloat(v)); 
+           return "rgba("+(p[0]|0)+","+(p[1]|0)+","+(p[2]|0)+","+A+")"; }
+    return h;
+  }
   const n=parseInt(h.slice(1),16);
-  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+Math.max(0,Math.min(1,a)).toFixed(2)+")";
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+A+")";
 }
 
 /* --------------------------------------------------------------- the clocks */
@@ -4319,11 +4348,12 @@ const TURRET_KEEPS_COMBO=false;    // and a turret kill does not feed the streak
 
 /* the two guns stand in the lower corners and nothing stands between them */
 const machScale=()=>1.30;                       // a third bigger than they were
-const CANNON_R  = ()=>clamp(W*0.098, 32, 42)*machScale();
-const BREAKER_R = ()=>clamp(W*0.074, 24, 32)*machScale();
+const CANNON_R  = ()=>clamp(W*0.100, 33, 43)*machScale();
+const BREAKER_R = ()=>clamp(W*0.092, 30, 40)*machScale();
 const TURR = ()=>BREAKER_R();                   // the one gun on the rig
-const cannonAt =()=>({x:AR.x0+CANNON_R()+16,  y:rigBaseY()});
-const breakerAt=()=>({x:AR.x1-BREAKER_R()-18, y:rigBaseY()});
+const MACH_IN=0.085;                            // in off the wall, as a fraction of W
+const cannonAt =()=>({x:AR.x0+CANNON_R()*0.95+W*MACH_IN,  y:rigBaseY()});
+const breakerAt=()=>({x:AR.x1-BREAKER_R()*0.95-W*MACH_IN, y:rigBaseY()});
 /* where a cell actually leaves the cannon */
 const muzzleAt =()=>{ const c=cannonAt(), R=CANNON_R();
                       return {x:c.x, y:c.y-R*1.36}; };
@@ -4477,7 +4507,7 @@ function spawnBoss(which){
   const b=makeBall(0, W*.5, AR.y0+(AR.y1-AR.y0)*.40, rnd(-7,7)*S, rnd(-4,4)*S,
                    cls, VENT.mass*T.mass, "boss");
   b.bt=BOSSES.indexOf(T);
-  b.r=Math.min(W*T.r, TIER[0].r*S*(T.r/.21)*1.35);
+  b.r=Math.min(W*T.r, TIER[0].r*S*(T.r/.21)*1.35)*0.82;
   b.maxHp=T.hp; b.hp=T.hp;
   b.spin=rnd(0,TAU); b.shT=0; b.shield=false; b.hits=0; b.dashT=rnd(.4,1);
   clampIn(b); balls.push(b);
@@ -5339,10 +5369,14 @@ function step(dt){
   CN.kick=Math.max(0,CN.kick-dt*5.5);
   VENT.t-=dt;
   if(VENT.t<=0){
-    if(ventBall(spawnTier())){
+    if(VENT.nextTier===undefined) VENT.nextTier=spawnTier();
+    const t0=VENT.nextTier;
+    VENT.nextTier=undefined;
+    if(ventBall(t0)){
+      VENT.nextTier=spawnTier();
       if(Math.random()<turVal("ufo","twin")) ventBall(spawnTier());
       VENT.t=spawnGap();
-    } else VENT.t=2.5;
+    } else { VENT.nextTier=t0; VENT.t=2.5; }
     VENT.max=VENT.t;
   }
   bossGate(); bossPull(dt); stepNeedles(dt); stepShells(dt); stepDrones(dt); stepTurrets(dt);
@@ -5737,19 +5771,10 @@ function ballXform(x,b){
 /* the agar membrane: many points, a slow low-amplitude undulation */
 let MSEG=44;
 function membrane(x,b,r){
-  x.beginPath();
-  const L=FORM.lobes;
-  const amp0=(b.wob+FORM.rough)*clamp(r/(26*S),.25,1);
+  const amp=(b.wob+FORM.rough)*clamp(r/(26*S),.25,1);
   // a nearly round ball reads the same at half the segments
-  const N=Math.max(14, Math.round(MSEG*(amp0<.05?.45:amp0<.12?.7:1)));
-  const amp=amp0;
-  for(let i=0;i<=N;i++){
-    const a=i/N*TAU;
-    const w=1+amp*(Math.sin(a*L+b.wp)*.46+Math.sin(a*(L*2+1)-b.wp*1.3)*.27+Math.sin(a*(L*3+2)+b.wp*.6)*.15);
-    const rr=r*w, px=Math.cos(a)*rr, py=Math.sin(a)*rr;
-    i?x.lineTo(px,py):x.moveTo(px,py);
-  }
-  x.closePath();
+  const N=Math.max(14, Math.round(MSEG*(amp<.05?.45:amp<.12?.7:1)));
+  blobPath(x,0,0,r,r,b.wp,amp,FORM.lobes,N);
 }
 /* Eight ball designs. Each paints inside the membrane clip, in tints of the
    ball's own colour so the size ladder still reads at a glance. */
