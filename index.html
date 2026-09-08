@@ -74,6 +74,9 @@ input{font:inherit;color:inherit}
 /* true metaballs: blur, then threshold ALPHA so touching balls fuse and
    pull a neck between them — the magnetised look */
 #goo{z-index:2;filter:url(#gooF)}
+/* a flat sky is a background colour, not a canvas layer */
+#roomArena{background:#FFFFFF}
+#app.flatsky #bg{display:none}
 #app.lowfx #goo{filter:none;opacity:.9}
 #fx{z-index:3}
 #burst{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:26;pointer-events:none}
@@ -1745,7 +1748,7 @@ input{font:inherit;color:inherit}
 
 <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs>
   <filter id="gooF" x="-14%" y="-14%" width="128%" height="128%" color-interpolation-filters="sRGB">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="b"/>
+    <feGaussianBlur in="SourceGraphic" stdDeviation="4.4" result="b"/>
     <feColorMatrix in="b" type="matrix"
       values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10"/>
   </filter>
@@ -2369,10 +2372,11 @@ function resize(){
     c.width=Math.round(W*s); c.height=Math.round(H*s);
     x.setTransform(s,0,0,s,0,0);
   }
-  const ws=document.getElementById("wizStage").getBoundingClientRect();
-  WSW=Math.max(1,Math.round(ws.width)); WSH=Math.max(1,Math.round(ws.height));
-  cWz.width=Math.round(WSW*DPR); cWz.height=Math.round(WSH*DPR);
-  xWz.setTransform(DPR,0,0,DPR,0,0);
+  // the tower is closed, so its canvas is kept at one pixel rather than at
+  // full screen: nothing draws to it and the compositor need not hold it
+  WSW=1; WSH=1;
+  cWz.width=1; cWz.height=1;
+  xWz.setTransform(1,0,0,1,0,0);
   measureArena();
   drawBg();
 }
@@ -2394,6 +2398,14 @@ if(window.ResizeObserver){
    far out you are. */
 function srnd(seed){ let x=seed>>>0; return ()=>{ x=(x*1664525+1013904223)>>>0; return x/4294967296; }; }
 function paintSky(x,sc,alpha){
+  // a light scale is flat white: let CSS paint it and drop the layer
+  if(!sc.dark && alpha===undefined){
+    app.classList.add("flatsky");
+    document.getElementById("roomArena").style.background="#FFFFFF";
+    return;
+  }
+  app.classList.remove("flatsky");
+  document.getElementById("roomArena").style.background="";
   x.save();
   if(alpha!==undefined) x.globalAlpha=alpha;
   if(sc.dark){
@@ -5361,10 +5373,21 @@ function stepCele(dt){
     }
   }
 }
+let celeShown=true;
 function drawCele(){
+  if(!cele.length){
+    // nothing to show: clear once, then drop the layer entirely
+    if(celeShown){
+      celeShown=false;
+      xBu.setTransform(DPR,0,0,DPR,0,0);
+      xBu.clearRect(0,0,W,H);
+      cBu.style.display="none";
+    }
+    return;
+  }
+  if(!celeShown){ celeShown=true; cBu.style.display=""; }
   xBu.setTransform(DPR,0,0,DPR,0,0);
   xBu.clearRect(0,0,W,H);
-  if(!cele.length) return;
   for(const c of cele){
     const k=1-c.t/c.life, fade=Math.min(1,k*3.2);
     if(c.kind==="orb"){
@@ -5932,9 +5955,9 @@ function frame(t){
   if(dt>.05) dt=.05;
   if(G.opt.goo){
     const lean=app.classList.contains("lowfx");
-    if(dt>.034){                      // worse than about thirty a second
+    if(dt>.026){                      // worse than about thirty-eight a second
       fastN=0;
-      if(!lean && ++slowN>60){ app.classList.add("lowfx"); slowN=0; }
+      if(!lean && ++slowN>24){ app.classList.add("lowfx"); slowN=0; }
     } else {
       if(slowN>0) slowN--;
       if(lean && ++fastN>180){ app.classList.remove("lowfx"); fastN=0; }
@@ -7120,6 +7143,15 @@ function sheetSettings(){
     b.appendChild(stgRow({t:"Screen Shake", svg:ICONS.shake, bg:"#FFEDD5", fg:"#EA580C",
       tone:"orange", sw:G.opt.shake,
       fn:()=>{G.opt.shake=!G.opt.shake; save();}}));
+    b.appendChild(stgRow({t:"Smooth blobs", svg:ICONS.sun, bg:"#DBEAFE", fg:"#2563EB",
+      tone:"blue", sw:G.opt.goo,
+      fn:()=>{
+        G.opt.goo=!G.opt.goo;
+        // the metaball blur is the one thing a slow phone cannot afford
+        app.classList.toggle("lowfx",!G.opt.goo);
+        toast(G.opt.goo?"Blobs merge smoothly":"Flat blobs — much faster");
+        save();
+      }}));
     b.appendChild(stgRow({t:"Sandbox", svg:ICONS.target, bg:"#DCFCE7", fg:"#16A34A",
       tone:"blue", sw:G.opt.sandbox,
       fn:()=>{G.opt.sandbox=!G.opt.sandbox; save();}}));
