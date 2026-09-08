@@ -2396,22 +2396,17 @@ function srnd(seed){ let x=seed>>>0; return ()=>{ x=(x*1664525+1013904223)>>>0; 
 function paintSky(x,sc,alpha){
   x.save();
   if(alpha!==undefined) x.globalAlpha=alpha;
-  const g=x.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,sc.bg[0]);
   if(sc.dark){
-    // already a dark sky: it only needs its floor deepened a little
+    const g=x.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,sc.bg[0]);
     g.addColorStop(0.62,sc.bg[1]);
     g.addColorStop(0.88,shade(sc.bg[1],-.42));
     g.addColorStop(1,   shade(sc.bg[1],-.66));
+    x.fillStyle=g;
   } else {
-    g.addColorStop(0.30,sc.bg[1]);
-    g.addColorStop(0.56,"#C4D4EE");
-    g.addColorStop(0.72,"#7C97C4");
-    g.addColorStop(0.86,"#33507E");
-    g.addColorStop(0.95,"#16294A");
-    g.addColorStop(1,   "#0A1526");
+    x.fillStyle="#FFFFFF";
   }
-  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.fillRect(0,0,W,H);
   const R=srnd(4517+SCALES.indexOf(sc)*7919);
   if(sc.neb){
     for(let i=0;i<6;i++){
@@ -2436,7 +2431,7 @@ function drawBg(){
   xBg.clearRect(0,0,W,H);
   paintSky(xBg,sc);
   const root=document.documentElement;
-  root.style.setProperty("--dishTop",sc.bg[0]);
+  root.style.setProperty("--dishTop",sc.dark?sc.bg[0]:"#FFFFFF");
   root.style.setProperty("--topInk",sc.dark?"#EAF1FA":"#0F1720");
   // the wizard room sits just above the sky, so it borrows its tone
   // the brickwork is tinted by the world it stands in
@@ -2450,7 +2445,8 @@ function blendBg(from,to,t){
   paintSky(xBg,to);
   if(t<1) paintSky(xBg,from,1-t);
   const root=document.documentElement;
-  root.style.setProperty("--dishTop",t>.5?to.bg[0]:from.bg[0]);
+  {const s2=t>.5?to:from;
+   root.style.setProperty("--dishTop",s2.dark?s2.bg[0]:"#FFFFFF");}
   root.style.setProperty("--topInk",(t>.5?to.dark:from.dark)?"#EAF1FA":"#0F1720");
 }
 /* ---------------------------------------------------------------- audio */
