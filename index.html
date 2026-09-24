@@ -2802,7 +2802,7 @@ const turretAt=t=>{
 };
 
 /* --------------------------------------------------------------- drawing */
-function drawTurrets(){}          // nothing stands at the bottom any more
+function drawTurrets(x){ drawBossEntry(x); }   // the only thing down there now
 /* --------------------------------------------------- the shared body language
    Everything the machines are made of goes through here, so the outline
    weight and the highlights cannot drift from the cells'. */
@@ -3333,8 +3333,9 @@ function strike(b,dmg,src,forced){
 
   if(b.kind==="unstable"){ detonate(b,0,b.by); return; }
 
-  if(b.kind==="boss"&&b.shield){
-    // it rings, it does not break
+  if(b.kind==="boss" && (b.arrive>0 || b.shield)){
+    // it turns the swipe. Shut bosses say what would open them instead of
+    // just ringing, so a wasted swipe is information rather than nothing.
     b.sq=.14; b.wob=.16;
     rings.push({x:b.x,y:b.y,r:b.r*1.0,R:b.r*1.5,t:0,life:.22,col:"#9CC3FF",w:3});
     for(let i=0;i<2;i++) spark(b.x,b.y,"#9CC3FF");
@@ -3343,34 +3344,9 @@ function strike(b,dmg,src,forced){
     haptic(5);
     return;
   }
-  b.hp -= b.kind==="boss" ? 1 : (dmg===undefined?val("force"):dmg);
-  if(b.kind==="boss"&&b.hp>0){
-    // the hydra sheds a pair of itself every sixth hit it takes
-    const BT=bossType(b);
-    b.hits=(b.hits|0)+1;
-    if(BT.calve && b.hits%6===0){
-      for(let i=0;i<2;i++){
-        const a=rnd(0,TAU), rr=TIER[3].r*S;
-        if(!roomFor(rr)) break;
-        const nb=makeBall(3, b.x+Math.cos(a)*b.r*1.1, b.y+Math.sin(a)*b.r*1.1,
-                          Math.cos(a)*rnd(200,340)*S, Math.sin(a)*rnd(200,340)*S,
-                          WRANK[0], TIER[3].m||1, "plain");
-        clampIn(nb); balls.push(nb);
-        for(let j=0;j<4;j++) spark(nb.x,nb.y,BT.col);
-      }
-      pop(240,{pan:panAt(b.x),vol:.10,wet:.2});
-    }
-    // it shudders, the dish jolts, and the ring tightens for a moment
-    b.sq=.34; b.wob=.30;
-    shake=Math.max(shake, 2.2+(1-b.hp/b.maxHp)*4);
-    rings.push({x:b.x,y:b.y,r:b.r*.86,R:b.r*1.16,t:0,life:.2,col:"#FF7A8A",w:2.4});
-    for(let i=0;i<3;i++) spark(b.x,b.y,"#FF7A8A");
-    const p=panAt(b.x);
-    pop(120+ (1-b.hp/b.maxHp)*260,{pan:p,vol:.09,wet:.1});
-    thud(54,{pan:p,vol:.10,len:.12});
-    haptic(9);
-    return;
-  }
+  if(b.kind==="boss") bossHurt(b, bossDmg()*(b.open?2:1), b.open);
+  else b.hp -= (dmg===undefined?val("force"):dmg);
+  if(b.kind==="boss"&&b.hp>0) return;     // bossHurt did the rest
   if(b.hp>0){
     // a glancing hit: the membrane snaps back but the ball holds
     shake=Math.max(shake,1.5);
@@ -3385,7 +3361,94 @@ function strike(b,dmg,src,forced){
   divide(b);
 }
 
+/* one landed hit. Everything that makes a hit feel like it landed is here. */
+function bossHurt(b,dmg,clean){
+  const T=bossType(b);
+  b.hp-=dmg; b.hits=(b.hits|0)+1;
+  const hurt=1-clamp(b.hp/b.maxHp,0,1);
+  // the hydra sheds its own colour, and fusing folds it back in
+  if(T.calve && b.hits%3===0 && b.hp>0){
+    for(let i=0;i<2;i++){
+      const a=rnd(0,TAU), rr=TIER[3].r*S;
+      if(!roomFor(rr)) break;
+      const nb=makeBall(3, b.x+Math.cos(a)*b.r*1.1, b.y+Math.sin(a)*b.r*1.1,
+                        Math.cos(a)*rnd(200,340)*S, Math.sin(a)*rnd(200,340)*S,
+                        WRANK[0], TIER[3].m||1, "plain");
+      clampIn(nb); balls.push(nb);
+      for(let j=0;j<4;j++) spark(nb.x,nb.y,T.col);
+    }
+    pop(240,{pan:panAt(b.x),vol:.10,wet:.2});
+  }
+  // the warden walks its phases as it comes apart
+  if(T.phases && b.hp>0){
+    const was=b.ph|0, want=hurt>=.66?2:hurt>=.33?1:0;
+    if(want!==was){
+      b.ph=want; b.stag=0.9; b.open=false; b.tell=0; b.run=0;
+      b.shield=(want===0); b.need=want===0?T.feed:0; b.openT=0;
+      banner(want===2?"CORE EXPOSED":"PHASE "+(want+1));
+      shake=Math.max(shake,9); flash=Math.max(flash,.22); freeze=Math.max(freeze,.05);
+      for(let i=0;i<5;i++)
+        rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*(1.8+i*.7),t:0,life:.45+i*.05,col:"#FFD34D",w:3});
+      chime(294,{vol:.14,len:1.1,wet:.5});
+      haptic([18,50,24]);
+    }
+  }
+  // the third clean hit on one opening shuts it; the last phase never shuts
+  if(b.open && --b.gulp<=0 && b.hp>0 && (b.ph|0)!==2){
+    b.openT=0; b.fuseW=0; if(b.run>0) b.run=.001;
+  }
+  // a clean hit on an opening staggers it: it stops, and the dish stops turning
+  if(clean && b.hp>0){
+    b.stag=Math.max(b.stag||0,0.42);
+    b.vx*=.25; b.vy*=.25;
+    freeze=Math.max(freeze,.04);
+    shake=Math.max(shake,5.5);
+    for(let i=0;i<9;i++) spark(b.x,b.y,"#FFE9A8");
+    rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*2.0,t:0,life:.34,col:"#FFE9A8",w:3.2});
+    pushPop(b.x,b.y-b.r*.6,"-"+dmg);
+    chime(523,{vol:.10,len:.4,wet:.3});
+    haptic(18);
+  } else {
+    b.sq=.34; b.wob=.30;
+    shake=Math.max(shake, 2.2+hurt*4);
+    rings.push({x:b.x,y:b.y,r:b.r*.86,R:b.r*1.16,t:0,life:.2,col:"#FF7A8A",w:2.4});
+    for(let i=0;i<3;i++) spark(b.x,b.y,"#FF7A8A");
+    haptic(9);
+  }
+  const p=panAt(b.x);
+  pop(120+hurt*260,{pan:p,vol:.09,wet:.1});
+  thud(54,{pan:p,vol:.10,len:.12});
+}
+/* the two things in the dish that a boss listens to */
+function bossFeed(){                      // a cell died
+  for(const b of balls){
+    if(b.kind!=="boss"||b.gone||!b.shield||!b.need||!bossType(b).shield) continue;
+    b.need--;
+    rings.push({x:b.x,y:b.y,r:b.r*1.35,R:b.r*1.0,t:0,life:.26,col:"#9CC3FF",w:2.6});
+    pop(300+ (5-b.need)*90,{pan:panAt(b.x),vol:.07,wet:.2});
+  }
+}
+function bossFused(o){                    // cells became one, at o
+  for(const b of balls){
+    const T=bossType(b);
+    if(b.kind!=="boss"||b.gone||!T.fuseDmg||b.arrive>0) continue;
+    if(Math.hypot(o.x-b.x,o.y-b.y)>b.r*3.6) continue;   // beside it, not anywhere
+    for(let i=0;i<9;i++){
+      const k=rnd(2.2,3.4);
+      goo(o.x,o.y,rnd(2.5,5)*S,T.col,rnd(.28,.4),(b.x-o.x)*k,(b.y-o.y)*k);
+    }
+    bossHurt(b, T.fuseDmg, false);
+    if(b.hp<=0){ divide(b); continue; }   // a merge can finish it
+    if(b.open || --b.need>0) continue;
+    b.fuseW=2.6;                          // enough of them: it opens for a beat
+    banner("FOLDED IN");
+    rings.push({x:b.x,y:b.y,r:b.r*.9,R:b.r*2.3,t:0,life:.42,col:"#FFE9A8",w:3.4});
+    chime(392,{vol:.12,len:.7,wet:.4});
+    haptic(16);
+  }
+}
 function divide(b){
+  if(b.kind!=="boss") bossFeed();      // any cell broken apart feeds a shut boss
   if(b.kind==="boss"){
     G.bossMark=Math.min(BOSSES.length,(G.bossMark|0)+1);
     G.chests=(G.chests|0)+1;
@@ -3402,9 +3465,13 @@ function divide(b){
     for(let i=0;i<4;i++) chime(392*semi(LADDER[i*2]),{vol:.16,len:1.8,delay:i*.08,wet:.62});
     thud(40,{vol:.4,len:1.4});
     haptic([26,60,26,60,40]);
-    const purse=b.mass*22;
+    // the purse stops short of the next gate, so the four stay four milestones
+    // instead of one kill paying for the next boss's arrival
+    const nx=BOSSES[G.bossMark];
+    const purse=nx ? Math.min(b.mass*22, Math.max(0, nextScaleCost()*(nx.at-.05)-G.earned)
+                                         /(yieldMul()*comboMul())) : b.mass*22;
     earn(purse,b.x,b.y,"#FFD34D");
-    pushPop(b.x,b.y-b.r*.5,"+"+fmt(purse*yieldMul()*comboMul()));
+    if(purse>0) pushPop(b.x,b.y-b.r*.5,"+"+fmt(purse*yieldMul()*comboMul()));
     const pip=document.querySelector("#bioWrap .pip");
     if(pip) celebrate({getBoundingClientRect:()=>({left:b.x,top:b.y,width:0,height:0})},
                       64,"#22C55E",pip,false);
@@ -4158,58 +4225,209 @@ function setFrenzy(on){
   if(t){ t.classList.toggle("on",!!on); if(!on) t.dataset.s=""; }
 }
 const BOSSES=[
-  /* a quarter of the way: small, quick, never where your thumb lands. It
-     barely holds the dish - it is busy running. */
-  {id:"darter", nm:"DARTER", at:.25, hp:40,  r:.125, pull:.34, mass:12,
+  /* a quarter up: it coils, then runs. Only the run is open - the tell is
+     that it brightens and stretches before it goes. Reads a path. */
+  {id:"darter", nm:"DARTER", at:.25, hits:14, r:.125, pull:.16, mass:12,
    col:"#F0A81E", goo:"#8A5A05", plates:5, dash:1,
-   tip:"It will not hold still. Lead it."},
-  /* halfway: it shutters itself every few seconds and a swipe on a closed
-     shutter does nothing. You have to wait for the opening. */
-  {id:"bulwark",nm:"BULWARK",at:.50, hp:75,  r:.185, pull:1.05, mass:22,
-   col:"#3B82F6", goo:"#123A78", plates:8, shield:1,
-   tip:"Closed is closed. Swipe when it opens."},
-  /* three quarters: every sixth hit it sheds two of itself into the dish,
-     so the longer you take the less room you have to work in. */
-  {id:"hydra",  nm:"HYDRA",  at:.75, hp:95,  r:.20, pull:.88, mass:26,
-   col:"#A855F7", goo:"#4A1173", plates:6, calve:1,
-   tip:"It sheds. Finish it before the dish fills."},
-  /* the line: the big one. Nothing clever, just the whole dish in orbit and
-     a hundred and twenty swipes to get through. */
-  {id:"warden", nm:"WARDEN", at:1.0, hp:120, r:.225, pull:1.30, mass:30,
-   col:"#E8434F", goo:"#8E1220", plates:7,
-   tip:"No tricks. Just outlast it."},
+   tip:"Open only while it runs."},
+  /* halfway: shut until you feed it. Popping cells is what opens it, so the
+     dish is the key rather than a timer you wait out. */
+  {id:"bulwark",nm:"BULWARK",at:.50, hits:14, r:.155, pull:.42, mass:22,
+   col:"#3B82F6", goo:"#123A78", plates:8, shield:1, feed:5,
+   tip:"Cut cells to crack it open."},
+  /* three quarters: it sheds its own colour into the dish, and fusing any
+     two cells folds that back into it. Tests merging, not swiping. */
+  {id:"hydra",  nm:"HYDRA",  at:.75, hits:24, r:.165, pull:.55, mass:26,
+   col:"#A855F7", goo:"#4A1173", plates:6, calve:1, fuseDmg:1, feed:3, ask:"MERGE NEARBY",
+   tip:"Merge cells beside it to open it."},
+  /* the line: all three in sequence, then an open core. A climax, not a
+     hundred and twenty of the same swipe. */
+  {id:"warden", nm:"WARDEN", at:1.0, hits:32, r:.185, pull:.62, mass:30,
+   col:"#E8434F", goo:"#8E1220", plates:7, shield:1, feed:3, dash:1, phases:1,
+   tip:"It borrows every trick. Last phase is open."},
 ];
+/* how many landed hits this run, and what one swipe is worth. Both move with
+   the scale and with Damage, so a boss stays a fight and upgrades still count. */
+const bossHits=T=>Math.round(T.hits*(1+G.strain*0.30));
+const bossDmg=()=>1+Math.floor(val("force")/3);
 const BOSS={hp:100};                  // kept for the old ladder maths
 function bossAlive(){ return balls.some(b=>b.kind==="boss"&&!b.gone); }
+/* One arrival language: the floor swells where it is coming through, then it
+   rises into the dish exactly the way a cell does. Never on a finger, never
+   inside anything, and short the second time you meet one. */
+const BOSSQ={t:0, x:0, bt:-1, dur:0};
+const bossQueued=()=>BOSSQ.bt>=0;
+function armBoss(n){
+  if(bossQueued()||bossAlive()) return;
+  const T=BOSSES[n], r=bossR(T);
+  // somewhere clear: away from the thumb, and out of the busiest column
+  let best=(AR.x0+AR.x1)*0.5, bestScore=-1;
+  for(let i=0;i<7;i++){
+    const x=rnd(AR.x0+r+8, AR.x1-r-8);
+    let score=ptrDown?Math.min(Math.abs(x-ptrX),260)-(Math.abs(x-ptrX)<r+60*S?1e4:0):260;
+    for(const b of balls) if(!b.gone && Math.abs(b.x-x)<b.r+r) score-=40;
+    if(score>bestScore){ bestScore=score; best=x; }
+  }
+  BOSSQ.bt=n; BOSSQ.x=best;
+  BOSSQ.dur=BOSSQ.t=(G.bossSeen&&G.bossSeen[T.id])?0.75:1.35;
+}
+/* the telegraph runs, then it comes through */
+function stepBossEntry(dt){
+  if(!bossQueued()) return;
+  // covered or paused: it waits, and starts its warning over when you are back
+  if(zoomPhase||!ready||room!=="arena"||$("sheet").classList.contains("on")){ BOSSQ.t=BOSSQ.dur; return; }
+  const T=BOSSES[BOSSQ.bt];
+  if(BOSSQ.t>=BOSSQ.dur){ haptic([10,60,10]); thud(38,{vol:.22,len:1.3}); }
+  BOSSQ.t-=dt;
+  // the floor boils where it is about to break through
+  if(Math.random()<dt*34){
+    const a=-Math.PI/2+rnd(-.9,.9), sp=rnd(90,260)*S;
+    parts.push({x:BOSSQ.x+rnd(-22,22)*S, y:AR.y1-2,
+      vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, r:rnd(1.4,3.4)*S,
+      col:T.col, t:0, life:rnd(.22,.5), goo:Math.random()<.5, drag:.88});
+  }
+  if(BOSSQ.t<=0){
+    // a finger over the spot holds it at the brink, but not for long
+    if(BOSSQ.t>-1.2 && ptrDown && Math.abs(ptrX-BOSSQ.x)<bossR(T)+40*S
+       && ptrY>AR.y1-(AR.y1-AR.y0)*.4) return;
+    const n=BOSSQ.bt; BOSSQ.bt=-1; spawnBoss(n);
+  }
+}
+/* hex or rgb() plus an alpha. Was removed with the bottom machines; the
+   boss telegraph is the only caller now. */
+function hexA(h,a){
+  const A=Math.max(0,Math.min(1,a)).toFixed(2);
+  if(h[0]!=="#"){ const m=/rgba?(([^)]+))/.exec(h);
+    return m?"rgba("+m[1].split(",").slice(0,3).map(v=>parseFloat(v)|0).join(",")+","+A+")":h; }
+  const n=parseInt(h.slice(1),16);
+  return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+A+")";
+}
+/* drawn on the fx layer, which already has a hook that does nothing else */
+function drawBossEntry(x){
+  if(!bossQueued()) return;
+  const T=BOSSES[BOSSQ.bt];
+  const k=1-clamp(BOSSQ.t/Math.max(.001,BOSSQ.dur),0,1);   // 0 -> 1
+  const r=bossR(T);
+  const y=AR.y1;
+  x.save();
+  // the lane it will climb, lit from below, so you know where before it comes
+  const top=y-r*(2.6+k*1.8), hw=r*(.75+k*.35);
+  const lg=x.createLinearGradient(0,y,0,top);
+  lg.addColorStop(0,hexA(T.col,.18+k*.30)); lg.addColorStop(1,hexA(T.col,0));
+  x.fillStyle=lg; x.fillRect(BOSSQ.x-hw,top,hw*2,y-top);
+  // a swelling bruise on the floor line, right where it will come up
+  const g=x.createRadialGradient(BOSSQ.x,y,0,BOSSQ.x,y,r*(1.1+k*1.5));
+  g.addColorStop(0,hexA(T.col,.25+k*.6));
+  g.addColorStop(1,hexA(T.col,0));
+  x.fillStyle=g;
+  x.beginPath(); x.ellipse(BOSSQ.x,y,r*(1.1+k*1.5),r*(.45+k*.6),0,0,TAU); x.fill();
+  // three rings closing on the spot, so the eye is pulled to it
+  x.lineWidth=Math.max(2.5,(3+k*2)*S); x.lineCap="round";
+  for(let i=0;i<3;i++){
+    const p=((el*1.5+i/3)%1);
+    x.strokeStyle=hexA(T.col,(1-p)*(.55+k*.4));
+    x.beginPath(); x.ellipse(BOSSQ.x,y,r*(2.2-p*1.5),r*(.9-p*.6),0,Math.PI,TAU); x.stroke();
+  }
+  // and the crack itself, opening
+  x.strokeStyle=hexA(T.goo,.45+k*.5);
+  x.lineWidth=Math.max(2,(2+k*5)*S);
+  x.beginPath(); x.moveTo(BOSSQ.x-r*k*.9,y); x.lineTo(BOSSQ.x+r*k*.9,y); x.stroke();
+  x.restore();
+}
 function bossType(b){ return BOSSES[b&&b.bt!==undefined?b.bt:0]; }
+function bossR(T){ return Math.min(W*T.r, TIER[0].r*S*(T.r/.21)*1.35)*0.82; }
+/* what makes each one read at a glance. Drawn behind the body, so the body's
+   own rim closes over the roots and it all reads as one creature. */
+function bossBody(x,b,r){
+  const T=bossType(b), sp=b.spin||0, rot=FORM.oval!==1?b.rot:0;
+  x.save();
+  x.fillStyle=T.col; x.strokeStyle=RIM(T.col);
+  x.lineWidth=Math.max(1.4,r*.075); x.lineJoin="round";
+  x.beginPath();
+  if(T.id==="darter"){
+    // a swept tail, trailing the way it last moved; it flares on the wind-up
+    if(Math.hypot(b.vx,b.vy)>40*S) b.head=Math.atan2(b.vy,b.vx);
+    const a=(b.head===undefined?-Math.PI/2:b.head)+Math.PI-rot;
+    const L=r*(2.2+(b.tell?.55:0)+(b.open?.3:0));
+    for(const k of [-1,0,1]){
+      const aa=a+k*.72, len=k?L*.78:L;
+      x.moveTo(Math.cos(aa-.44)*r*.8, Math.sin(aa-.44)*r*.8);
+      x.lineTo(Math.cos(aa)*len, Math.sin(aa)*len);
+      x.lineTo(Math.cos(aa+.44)*r*.8, Math.sin(aa+.44)*r*.8);
+    }
+  } else if(T.id==="bulwark"){
+    // eight studs of armour, drawn back in while it is open
+    const R1=r*(b.shield?1.26:1.06), w=r*.19;
+    for(let i=0;i<8;i++){
+      const a=sp+i/8*TAU, c=Math.cos(a), n=Math.sin(a);
+      x.moveTo(c*r*.7-n*w, n*r*.7+c*w); x.lineTo(c*R1-n*w, n*R1+c*w);
+      x.lineTo(c*R1+n*w, n*R1-c*w);     x.lineTo(c*r*.7+n*w, n*r*.7-c*w);
+      x.closePath();
+    }
+  } else if(T.id==="hydra"){
+    // three heads, each bobbing on its own, each with a nucleus like any cell
+    const H=[];
+    for(let i=0;i<3;i++){
+      const a=-Math.PI/2+(i-1)*.95+Math.sin(el*2.2+i*2.1)*.12-rot;
+      const d=r*(1.12+.06*Math.sin(el*3+i));
+      H.push([Math.cos(a)*d, Math.sin(a)*d]);
+      x.moveTo(H[i][0]+r*.4,H[i][1]); x.arc(H[i][0],H[i][1],r*.4,0,TAU);
+    }
+    x.fill(); x.stroke();
+    x.fillStyle=hexA(T.goo,.55); x.strokeStyle="rgba(0,0,0,0)"; x.beginPath();
+    for(const [hx,hy] of H){ x.moveTo(hx+r*.13,hy); x.arc(hx,hy,r*.13,0,TAU); }
+  } else {
+    // a crown of spikes that comes off as it loses its phases
+    const k=[1,.55,0][b.ph|0];
+    for(let i=0;k&&i<7;i++){
+      const a=sp*.5+i/7*TAU;
+      x.moveTo(Math.cos(a-.22)*r*.85, Math.sin(a-.22)*r*.85);
+      x.lineTo(Math.cos(a)*r*(1+.5*k), Math.sin(a)*r*(1+.5*k));
+      x.lineTo(Math.cos(a+.22)*r*.85, Math.sin(a+.22)*r*.85);
+    }
+  }
+  x.fill(); x.stroke();
+  x.restore();
+}
 /* how far up the scale you are, and therefore which gate is next */
 function bossGate(){
-  if(zoomPhase||!ready||bossAlive()) return;
+  if(zoomPhase||!ready||bossAlive()||bossQueued()) return;
   if(G.strain>=SCALES.length-1) return;          // nothing above the last one
   const n=G.bossMark|0; if(n>=BOSSES.length) return;
   const k=clamp(G.earned/nextScaleCost(),0,1);
-  if(k>=BOSSES[n].at) spawnBoss(n);
+  if(k>=BOSSES[n].at) armBoss(n);
 }
 function spawnBoss(which){
   if(bossAlive()||!ready||W<10) return false;
   const T=BOSSES[clamp(which|0,0,BOSSES.length-1)];
   const cls=WRANK[0];
-  const b=makeBall(0, W*.5, AR.y0+(AR.y1-AR.y0)*.40, rnd(-7,7)*S, rnd(-4,4)*S,
-                   cls, VENT.mass*T.mass, "boss");
+  const r0=bossR(T);
+  const sx=BOSSQ.x||((AR.x0+AR.x1)*0.5);
+  const b=makeBall(0, clamp(sx,r0+2,W-r0-2), AR.y1+r0+14*S,
+                   rnd(-12,12)*S, -rnd(285,340)*S, cls, VENT.mass*T.mass, "boss");
   b.bt=BOSSES.indexOf(T);
-  b.r=Math.min(W*T.r, TIER[0].r*S*(T.r/.21)*1.35)*0.82;
-  b.maxHp=T.hp; b.hp=T.hp;
-  b.spin=rnd(0,TAU); b.shT=0; b.shield=false; b.hits=0; b.dashT=rnd(.4,1);
-  clampIn(b); balls.push(b);
+  b.r=r0;
+  const HP=bossHits(T);
+  b.maxHp=HP; b.hp=HP;
+  b.spin=rnd(0,TAU); b.shT=0; b.hits=0; b.dashT=rnd(.5,1.1);
+  b.entering=1;                       // the floor lets it through, once
+  b.arrive=b.arriveT=0.85;            // and it cannot be hurt on the way in
+  b.x0=b.x; b.y0=b.y; b.xTo=b.x;
+  b.yTo=AR.y1-r0-(AR.y1-AR.y0)*0.16;  // where it settles, well inside the dish
+  b.ph=0; b.open=false; b.stag=0;
+  // every boss climbs in shut, and the shut ones carry the count that opens them
+  b.shield=true; b.need=T.feed||0;
+  balls.push(b);
+  G.bossSeen=G.bossSeen||{}; G.bossSeen[T.id]=1;
   banner(T.nm);
   setTimeout(()=>{ if(!b.gone) toast(T.tip); }, 900);
   shake=Math.max(shake,9); flash=Math.max(flash,.20);
-  for(let i=0;i<34;i++){
-    const a=rnd(0,TAU), sp=rnd(120,520)*S;
-    goo(b.x,b.y,rnd(3,7)*S,T.col,rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
+  for(let i=0;i<30;i++){
+    const a=-Math.PI/2+rnd(-1.3,1.3), sp=rnd(150,460)*S;
+    goo(b.x,AR.y1,rnd(3,7)*S,T.col,rnd(.3,.6),Math.cos(a)*sp,Math.sin(a)*sp);
   }
-  for(let i=0;i<5;i++)
-    rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*(2.4+i*.7),t:-0,life:.55+i*.07,col:T.col,w:2.6});
+  for(let i=0;i<4;i++)
+    rings.push({x:b.x,y:AR.y1,r:b.r*.5,R:b.r*(2.2+i*.8),t:0,life:.5+i*.07,col:T.col,w:2.6});
   thud(46,{vol:.34,len:1.1});
   chime(196,{vol:.16,len:1.6,wet:.6});
   chime(147,{vol:.12,len:1.9,delay:.1,wet:.6});
@@ -4223,27 +4441,65 @@ function bossPull(dt){
     if(B.kind!=="boss"||B.gone) continue;
     const T=bossType(B);
     B.spin=(B.spin||0)+dt*1.4;
-    // the shutter, on a five and a half second cycle: open, then closed
-    if(T.shield){
-      B.shT=(B.shT||0)+dt;
-      const was=B.shield, ph=B.shT%5.4;
-      B.shield=ph>3.2;
-      if(B.shield!==was){
-        rings.push({x:B.x,y:B.y,r:B.r*.9,R:B.r*(B.shield?1.5:2.1),t:0,life:.3,
-                    col:B.shield?"#9CC3FF":"#FFE9A8",w:3});
-        pop(B.shield?150:420,{pan:panAt(B.x),vol:.08,wet:.2});
-      }
+    if(B.arrive>0){
+      // a fixed climb from under the floor onto its mark, eased out
+      B.arrive-=dt;
+      const k=clamp(1-B.arrive/B.arriveT,0,1), e=1-Math.pow(1-k,3);
+      B.x=B.x0+(B.xTo-B.x0)*e;
+      B.y=B.y0+(B.yTo-B.y0)*e;
+      B.vx=0; B.vy=0;
+      if(B.arrive<=0){ B.entering=0; B.arrive=0; shake=Math.max(shake,6); }
+      continue;
     }
-    // the darter will not be pinned: it lunges somewhere new every second
-    if(T.dash){
+    if(B.stag>0) B.stag-=dt;                    // staggered: wide open, holds still
+    if(!B.open) B.gulp=3;                       // each opening takes three clean hits
+    const ph=T.phases?(B.ph|0):-1;              // the warden walks its phases
+
+    // --- coil and run. Only the run is open, and it says so before it goes.
+    if(T.dash && (ph<0 || ph===1)){
       B.dashT=(B.dashT||0)-dt;
-      if(B.dashT<=0){
-        B.dashT=rnd(.75,1.35);
+      if(B.run>0){
+        B.run-=dt;
+        if(B.run<=0){ B.open=false; B.dashT=T.phases?rnd(.35,.6):rnd(.85,1.3); }
+      } else if(B.dashT<=0.34 && !B.tell){      // the wind-up
+        B.tell=1;
+        pop(300,{pan:panAt(B.x),vol:.07,wet:.2});
+        rings.push({x:B.x,y:B.y,r:B.r*1.5,R:B.r*.95,t:0,life:.34,col:T.col,w:3});
+      } else if(B.dashT<=0){
+        B.tell=0; B.run=0.72; B.open=true;      // and it is open while it runs
         const a=rnd(0,TAU);
-        B.vx=Math.cos(a)*rnd(250,430)*S; B.vy=Math.sin(a)*rnd(180,330)*S;
-        for(let i=0;i<4;i++) spark(B.x,B.y,T.col);
+        B.vx=Math.cos(a)*rnd(300,470)*S; B.vy=Math.sin(a)*rnd(200,360)*S;
+        for(let i=0;i<7;i++) spark(B.x,B.y,T.col);
+        pop(620,{pan:panAt(B.x),vol:.09,wet:.25});
+      }
+      B.shield=!B.open && B.stag<=0;
+    }
+    // --- shut until the dish feeds it. B.need counts cells you still owe.
+    if(T.shield && (ph<0 || ph===0)){
+      if(B.need<=0 && B.shield){
+        B.shield=false; B.open=true; B.openT=4.2;
+        rings.push({x:B.x,y:B.y,r:B.r*.9,R:B.r*2.3,t:0,life:.42,col:"#FFE9A8",w:3.4});
+        pop(520,{pan:panAt(B.x),vol:.11,wet:.28});
+        chime(392,{vol:.12,len:.7,wet:.4});
+        haptic(16);
+      } else if(!B.shield){
+        B.openT-=dt;
+        if(B.openT<=0){                          // it clamps shut again
+          B.shield=true; B.open=false; B.need=T.feed;
+          rings.push({x:B.x,y:B.y,r:B.r*1.6,R:B.r*.92,t:0,life:.3,col:"#9CC3FF",w:3});
+          pop(150,{pan:panAt(B.x),vol:.08,wet:.2});
+        }
       }
     }
+    // the hydra answers to merging: a fuse opens it, swipes alone only chip
+    if(T.fuseDmg){
+      B.fuseW=(B.fuseW||0)-dt;
+      B.open=B.fuseW>0;
+      B.shield=!B.open && B.stag<=0;
+      if(!B.open && B.need<=0) B.need=T.feed;    // shut again: it owes more merges
+    }
+    if(ph===2){ B.shield=false; B.open=true; }   // the warden's last phase is bare
+    if(B.arrive>0||B.stag>0) continue;
     const R=Math.min(W*.9, B.r*7*T.pull);
     for(const b of balls){
       if(b===B||b.gone) continue;
@@ -4963,7 +5219,9 @@ function goRoom(to){
 function clampIn(b){
   if(b.r*2>=W) b.x=W/2;
   else b.x=clamp(b.x,b.r,W-b.r);
-  b.y=clamp(b.y,AR.y0+b.r,Math.max(AR.y0+b.r,AR.y1-b.r));
+  const lo=AR.y0+b.r, hi=Math.max(lo,AR.y1-b.r);
+  // a ball still coming up through the floor is allowed to be under it
+  b.y = b.arrive>0 ? Math.max(lo,b.y) : clamp(b.y,lo,hi);   // bossPull drives the climb
 }
 function areaSum(){ let a=0; for(const b of balls) a+=b.r*b.r*Math.PI; return a; }
 function arenaArea(){ return W*Math.max(1, AR.y1-AR.y0); }
@@ -5074,7 +5332,7 @@ function step(dt){
     } else { VENT.nextTier=t0; VENT.t=2.5; }
     VENT.max=VENT.t;
   }
-  bossGate(); bossPull(dt); stepNeedles(dt); stepShells(dt); stepDrones(dt); stepTurrets(dt);
+  bossGate(); stepBossEntry(dt); bossPull(dt); stepNeedles(dt); stepShells(dt); stepDrones(dt); stepTurrets(dt);
   G.stat.play+=dt;
   if(obsDirty) measureObstacles();
   if(zoomPhase){ stepZoom(dt); return; }
@@ -5151,6 +5409,12 @@ function step(dt){
     for(let j=i+1;j<balls.length;j++){
       const b=balls[j];
       if(b.x-b.r>reach) break;
+      if(a.arrive>0||b.arrive>0){               // it climbs; the dish eases aside
+        const B=a.arrive>0?a:b, o=B===a?b:a;
+        const ex=o.x-B.x, ey=o.y-B.y, ed=Math.hypot(ex,ey)||1, eo=B.r+o.r-ed;
+        if(eo>0 && !(o.arrive>0)){ const k=Math.min(1,dt*9); o.x+=ex/ed*eo*k; o.y+=ey/ed*eo*k; }
+        continue;
+      }
       const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy, rr=a.r+b.r;
       const same=canFuse(a,b);
 
@@ -5225,7 +5489,7 @@ function step(dt){
     a.fuseT+=dt; b.fuseT=a.fuseT;
     if(a.fuseT>=fuseTime(a.tier)*1.2){
       const crew=fuseCrew(a,b);
-      if(crew) fuse(crew);
+      if(crew){ fuse(crew); bossFused(a); }
       else a.fuseT=fuseTime(a.tier);      // hold at the line until two more come
     }
   }
@@ -5714,6 +5978,7 @@ function draw(){
     const col=b.kind==="boss"?bossType(b).col:(b.kind==="golden"?rbIdx(b,0):(b.kind==="unstable"?"#FFE9A8":pal[b.tier]));
     xFx.save();
     ballXform(xFx,b);
+    if(b.kind==="boss") bossBody(xFx,b,r);
     membrane(xFx,b,r);
     xFx.fillStyle=b.kind==="golden"?rbGrad(xFx,b,r):col; xFx.fill();
     // the design stops short of the rim, leaving a flat band of the ball's own
@@ -5756,6 +6021,22 @@ function draw(){
     if(b.kind==="boss"){
       const left=clamp(b.hp/b.maxHp,0,1);
       const hurt=1-left;
+      const BT=bossType(b);
+      // open: a hot corona nothing else on screen has. Shut: it is just armour.
+      if(b.open&&b.arrive<=0){
+        const pu=0.5+0.5*Math.sin(el*11);
+        xFx.save(); xFx.globalCompositeOperation="lighter";
+        const og=xFx.createRadialGradient(0,0,r*.5,0,0,r*1.9);
+        og.addColorStop(0,"rgba(255,233,168,"+(0.30+pu*0.20).toFixed(2)+")");
+        og.addColorStop(1,"rgba(255,180,60,0)");
+        xFx.fillStyle=og; xFx.beginPath(); xFx.arc(0,0,r*1.9,0,TAU); xFx.fill();
+        xFx.restore();
+      }
+      if(b.stag>0){                       // staggered: it flashes white and holds
+        xFx.save(); xFx.globalCompositeOperation="lighter";
+        xFx.fillStyle="rgba(255,255,255,"+(0.35*clamp(b.stag/0.42,0,1)).toFixed(2)+")";
+        xFx.beginPath(); xFx.arc(0,0,r*1.05,0,TAU); xFx.fill(); xFx.restore();
+      }
       // the shutter: solid while it is closed, so a swipe reads as wasted
       if(b.shield){
         xFx.save();
@@ -5796,7 +6077,23 @@ function draw(){
       xFx.strokeStyle=left>.35?"#FFD34D":"#FF4B6E";
       xFx.beginPath(); xFx.arc(0,0,r*1.13,0,TAU*left); xFx.stroke();
       xFx.restore();
+      // shut: the number is what the dish still owes it, not its health
+      const shutFace=b.shield&&b.need>0&&b.arrive<=0;
+      if(shutFace){
+        xFx.save();
+        xFx.rotate(FORM.oval!==1?-b.rot:0);
+        xFx.font="800 "+Math.round(r*.40)+"px Poppins,system-ui,sans-serif";
+        xFx.textAlign="center"; xFx.textBaseline="middle";
+        xFx.lineWidth=Math.max(3,r*.07); xFx.strokeStyle="rgba(9,13,22,.55)";
+        xFx.strokeText(b.need,0,0); xFx.fillStyle="#DCEBFF";
+        xFx.fillText(b.need,0,0);
+        xFx.font="700 "+Math.max(11,Math.round(r*.15))+"px Poppins,system-ui,sans-serif";
+        xFx.fillStyle="rgba(220,235,255,.85)";
+        xFx.fillText(BT.ask||"CUT CELLS",0,r*.34);
+        xFx.restore();
+      }
       // how many swipes are left, in the middle of it
+      if(!shutFace){
       xFx.save();
       xFx.rotate(FORM.oval!==1?-b.rot:0);
       xFx.font="800 "+Math.round(r*.42)+"px Poppins,system-ui,sans-serif";
@@ -5805,6 +6102,7 @@ function draw(){
       xFx.strokeText(b.hp,0,0);
       xFx.fillStyle="#FFF3C4"; xFx.fillText(b.hp,0,0);
       xFx.restore();
+      }
     }
     xFx.restore();
 
@@ -5958,6 +6256,7 @@ function draw(){
 let last=0,slowN=0,fastN=0;
 function frame(t){
   requestAnimationFrame(frame);
+  if(!G) return;                      // mid-wipe: the reload is on its way
   if(!last){ last=t; return; }
   let dt=(t-last)/1000; last=t;
   if(dt>.05) dt=.05;
@@ -7190,7 +7489,7 @@ function sheetSettings(){
     const d=document.createElement("button");
     d.className="dangerBtn"; d.textContent="Reset everything";
     d.onclick=()=>{
-      if(d.dataset.armed){ try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); }
+      if(d.dataset.armed){ G=null; try{localStorage.removeItem(SAVE_KEY);}catch(e){} location.reload(); }
       else { d.dataset.armed="1"; d.textContent="Tap again to wipe the dish"; }
     };
     b.appendChild(d);
