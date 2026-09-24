@@ -497,7 +497,7 @@ input{font:inherit;color:inherit}
   text-shadow:0 3px 22px rgba(255,255,255,.95);
 }
 #toast{
-  position:absolute;z-index:9;left:50%;bottom:calc(var(--chrome-b,152px) + 14px);
+  position:absolute;z-index:22;left:50%;bottom:calc(var(--chrome-b,152px) + 14px);
   transform:translateX(-50%) translateY(10px);
   background:var(--ink);color:#fff;
   padding:9px 16px;border-radius:999px;font-size:11px;box-shadow:var(--shadow);
@@ -2109,7 +2109,7 @@ const UP={
   reload: {tab:"arena",g:aimg("up_reload"),
            nm:"Reload", base:400, gr:1.22, max:30,
            d:"How often a new ball is sent up from below the dish.",
-           v:l=>Math.max(3.5, 10-l*0.22), fmt:l=>Math.max(3.5,10-l*0.22).toFixed(1)+"s"},
+           v:l=>Math.max(3.5, 10-l*0.22), fmt:l=>"×"+(10/Math.max(3.5,10-l*0.22)).toFixed(2)},   // the real effect is a rate, not a 10s gap
   payload:{tab:"arena",g:aimg("up_payload"),
            nm:"Payload", base:260, gr:1.20, max:30,
            d:"Chance a ball arrives one whole rung bigger than it rolled.",
@@ -2267,10 +2267,13 @@ const GRX=1.35;          // every upgrade's growth rate, raised to this power
    means something that can be checked rather than assumed. INCOME is
    measured, not guessed, and has to be re-measured whenever what feeds the
    dish changes — it has been wrong by six times once already. */
-const SCALE_INCOME=635;     // re-measured 2026-09-08: idle, no upgrades, no turret
-const SCALE_MINUTES=[40, 85, 140, 200, 260];
+const SCALE_INCOME=30000;   // 2026-09-24: sized on a playing bot, not idle. Steady (a swipe
+                            // every 0.55s, shop every minute): 6/13/14/18/20 min, ~70 min in all.
+                            // Casual (1.2s, shop every 3 min): 14 min, then 46. Upgrades compound,
+                            // so time is not linear in this number: re-measure, do not scale it.
+const SCALE_MINUTES=[15, 85, 140, 200, 260];   // the first rung is short: a first boss inside ~3-7 min
 const scaleMul=()=>curScale().mult;
-const cost=k=>Math.ceil(UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
+const cost=k=>Math.ceil(10*UP[k].base*Math.pow(Math.pow(UP[k].gr,GRX),lv(k))*scaleMul());
 const maxed=k=>lv(k)>=UP[k].max;
 const curScale=()=>SCALES[Math.min(G.strain,SCALES.length-1)];
 /* a rewarded-ad window. The multiplier and the countdown are real; only the
@@ -2282,7 +2285,8 @@ function adWait(k){ return Math.ceil((G.ad[k]-el)/60)+"m"; }
 const x2On=()=>x2Until>el;
 const luckOn=()=>luckUntil>el;
 const LUCK_SECS=30;
-const yieldMul=()=>val("yield")*curScale().mult*(x2On()?2:1);
+const ASCENT_KEEP=1.2;        // income kept per scale climbed; upgrades still reset
+const yieldMul=()=>val("yield")*curScale().mult*Math.pow(ASCENT_KEEP,G.strain)*(x2On()?2:1);
 /* a hundred breaks to double your money — and inside a rainbow window the
    same hundred take you to five, because the step goes up with the ceiling */
 const COMBO_STEP=0.02;
@@ -3211,7 +3215,7 @@ function colonyTick(dt){
   for(const b of balls){ if(!b.gone && b.kind!=="boss") m+=Math.pow(b.mass,COLONY_POW); }
   if(m<=0) return;
   const v=m*COLONY_K*rate*yieldMul()*dt;
-  G.bio+=v; G.earned+=v; G.totalEarned+=v; psFrame+=v; rentAcc+=v;
+  G.bio+=v; G.earned+=v; G.totalEarned+=v; psFrame+=v; rentAcc+=v; bioSeen+=v;
   objProg("earn",v);
   // one number every so often, off whichever ball is paying the most
   rentT-=dt;
@@ -3513,7 +3517,7 @@ function divide(b){
   const kids=[];
   // one roll for the whole slice, and only if there is somewhere to put them
   const dbl = (b.kind==="split" || (b.kind==="plain" && Math.random()<val("cascade")))
-              && roomFor(tierRadius(t2,b.cls));
+              && roomFor(tierRadius(t2,b.cls)) && balls.length+4<=hard;
   for(let i=0;i<(dbl?4:2);i++){
     if(balls.length>=hard) break;
     const j=i&1;
@@ -3523,12 +3527,13 @@ function divide(b){
     const sp=kick*(j?1.18:.86)*(i>1?1.22:1);
     const nb=makeBall(ct,b.x+Math.cos(a)*off,b.y+Math.sin(a)*off,
       b.vx*.55+Math.cos(a)*sp, b.vy*.55+Math.sin(a)*sp,
-      b.cls, b.mass*share[j], "plain");
+      b.cls, b.mass*share[j]*(dbl?.5:1), "plain");
     nb.wob=.24; nb.sq=.20; nb.sqA=a; nb.lastHit=el;
     clampIn(nb);
     balls.push(nb); kids.push(nb);
   }
   if(dbl){
+    earn(b.mass,b.x,b.y,"#3FD6C4");             // what Double is worth, paid now
     // it has to be legible or it is just occasionally more mess
     rings.push({x:b.x,y:b.y,r:b.r*.5,R:b.r*3.1,t:0,life:.32,col:"#0E9488",w:2.6});
     for(let i=0;i<5;i++) spark(b.x,b.y,"#3FD6C4");
@@ -3917,7 +3922,7 @@ function applyAscent(){
   const sc=SCALES[G.strain];
   FORM=sc.form;
   banner(sc.n.toUpperCase());
-  setTimeout(()=>toast("One ball is now "+sc.ball+" · yield ×"+fmt(sc.mult)),1100);
+  setTimeout(()=>toast("One ball is now "+sc.ball+" · income ×"+fmt(Math.pow(ASCENT_KEEP,G.strain))+" kept"),1100);
   thud(42,{vol:.34,len:1.2});
   for(let i=0;i<4;i++) chime(261*semi(LADDER[i]),{vol:.13,len:1.9,delay:i*.11,wet:.66});
   save(); buildTabs();
@@ -4253,19 +4258,21 @@ function setFrenzy(on){
   if(t){ t.classList.toggle("on",!!on); if(!on) t.dataset.s=""; }
 }
 const BOSSES=[
-  /* a quarter up: it coils, then runs. Only the run is open - the tell is
+  /* the gates sit early because income climbs inside a scale: .15/.40/.70/1.0
+     lands them roughly evenly in time rather than bunched at the end.
+     First: it coils, then runs. Only the run is open - the tell is
      that it brightens and stretches before it goes. Reads a path. */
-  {id:"darter", nm:"DARTER", at:.25, hits:14, r:.125, pull:.16, mass:12,
+  {id:"darter", nm:"DARTER", at:.15, hits:14, r:.125, pull:.16, mass:12,
    col:"#F0A81E", goo:"#8A5A05", plates:5, dash:1,
    tip:"Open only while it runs."},
-  /* halfway: shut until you feed it. Popping cells is what opens it, so the
+  /* second: shut until you feed it. Popping cells is what opens it, so the
      dish is the key rather than a timer you wait out. */
-  {id:"bulwark",nm:"BULWARK",at:.50, hits:14, r:.155, pull:.42, mass:22,
+  {id:"bulwark",nm:"BULWARK",at:.40, hits:14, r:.155, pull:.42, mass:22,
    col:"#3B82F6", goo:"#123A78", plates:8, shield:1, feed:5,
    tip:"Cut cells to crack it open."},
-  /* three quarters: it sheds its own colour into the dish, and fusing any
+  /* third: it sheds its own colour into the dish, and fusing any
      two cells folds that back into it. Tests merging, not swiping. */
-  {id:"hydra",  nm:"HYDRA",  at:.75, hits:24, r:.165, pull:.55, mass:26,
+  {id:"hydra",  nm:"HYDRA",  at:.70, hits:24, r:.165, pull:.55, mass:26,
    col:"#A855F7", goo:"#4A1173", plates:6, calve:1, fuseDmg:1, feed:2, ask:"MERGE NEARBY",
    tip:"Merge cells beside it to open it."},
   /* the line: all three in sequence, then an open core. A climax, not a
@@ -7050,7 +7057,8 @@ function syncUpRows(){
 /* the badge on the button: something down there is affordable */
 function syncUpBtn(){
   const b=document.getElementById("upBtn"); if(!b) return;
-  b.classList.toggle("can", SHOP_UP.some(k=>!maxed(k)&&G.bio>=cost(k)));
+  // lit when a visit can take a level of every track, so the dot means "go now"
+  b.classList.toggle("can", SHOP_UP.every(k=>maxed(k)||G.bio>=cost(k)));
 }
 /* ======================================================== the boss crate
    Twenty things behind one lid, on five rarities, and the strip scrolls
